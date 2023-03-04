@@ -9,6 +9,7 @@
 #include "ECEditorLogging.h"
 #include "MGErrorCategory.h"
 #include "MGErrorFunctionLibrary.h"
+#include "Kismet2/CompilerResultsLog.h"
 
 UECK2Node_SwitchErrorCode::UECK2Node_SwitchErrorCode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -69,12 +70,19 @@ FString UECK2Node_SwitchErrorCode::GetExportTextForPin(const UEdGraphPin* Pin) c
 	return ExportText;
 }
 
-// void UECK2Node_SwitchErrorCode::ValidateNodeDuringCompilation(FCompilerResultsLog& MessageLog) const
-// {
-// 	Super::ValidateNodeDuringCompilation(MessageLog);
-//
-// 	UE_LOG(LogErrorCodesEditor, Warning, TEXT("%s"), *FString(__FUNCTION__));
-// }
+void UECK2Node_SwitchErrorCode::ValidateNodeDuringCompilation(FCompilerResultsLog& MessageLog) const
+{
+	Super::ValidateNodeDuringCompilation(MessageLog);
+
+	for (const FMGErrorCode& PinErrorCode : PinErrorCodes)
+	{
+		if (!PinErrorCode.IsError())
+		{
+			MessageLog.Error(*NSLOCTEXT("ErrorCodes", "SwitchErrorCode_SuccessCase", "@@ contains invalid case(s).").ToString(), this);
+			return;
+		}
+	}
+}
 
 void UECK2Node_SwitchErrorCode::GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegistrar) const
 {
@@ -179,18 +187,25 @@ void UECK2Node_SwitchErrorCode::CreateCasePins()
 		PinNames.SetNum(PinErrorCodes.Num());
 	}
 
+	// Always have a success pin
+	UEdGraphPin* SuccessPin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, TEXT("Success"));
+	SuccessPin->PinToolTip = TEXT("No error.");
+
 	for (int32 Index = 0; Index < PinErrorCodes.Num(); ++Index)
 	{
-		if (PinErrorCodes[Index].IsSuccess())
-		{
-			PinNames[Index] = FName(TEXT("Success"));
-		}
-		else
+		if (PinErrorCodes[Index].IsError())
 		{
 			PinNames[Index] = FName(*PinErrorCodes[Index].GetErrorTitle().ToString());
 		}
 
-		CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, PinNames[Index]);
+		UEdGraphPin* CasePin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, PinNames[Index]);
+
+		if (PinErrorCodes[Index].IsError())
+		{
+			// Include error message and category in tooltip
+			CasePin->PinToolTip = FString::Printf(TEXT("%s:%s%s%s"), *PinErrorCodes[Index].GetTrimmedCategoryName(),
+				*PinErrorCodes[Index].GetErrorTitle().ToString(), LINE_TERMINATOR, *PinErrorCodes[Index].GetErrorMessage().ToString());
+		}
 	}
 }
 
