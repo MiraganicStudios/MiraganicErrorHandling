@@ -4,17 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
-#include "MGErrorCategory.generated.h"
+#include "ECErrorCategory.generated.h"
 
 USTRUCT(BlueprintType)
-struct ERRORCODES_API FMGErrorCodeData
+struct ERRORCODES_API FECErrorCodeData
 {
 	GENERATED_BODY()
 
 public:
-	FMGErrorCodeData() {}
+	FECErrorCodeData() {}
 
-	FMGErrorCodeData(const FText& InTitle, const FText& InMessage)
+	FECErrorCodeData(const FText& InTitle, const FText& InMessage)
 		: Title(InTitle)
 		, Message(InMessage)
 	{}
@@ -36,12 +36,12 @@ public:
  * Represents a category of errors. Stores error messages for each error code.
  */
 UCLASS(Const, Blueprintable, BlueprintType)
-class ERRORCODES_API UMGErrorCategory : public UObject
+class ERRORCODES_API UECErrorCategory : public UObject
 {
 	GENERATED_BODY()
 
 public:
-	UMGErrorCategory(const FObjectInitializer& ObjectInitializer);
+	UECErrorCategory(const FObjectInitializer& ObjectInitializer);
 
 	FString GetTrimmedName() const;
 	
@@ -50,5 +50,5 @@ public:
 
 	/** All errors in this category. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Errors")
-	TMap<int64, FMGErrorCodeData> Errors;
+	TMap<int64, FECErrorCodeData> Errors;
 };

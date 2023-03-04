@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 
 class SECErrorCodeWidget;
-struct FMGErrorCode;
+struct FECErrorCode;
 
 class FECCustomization_ErrorCode : public IPropertyTypeCustomization
 {
@@ -22,7 +22,7 @@ public:
 		) override;
 
 private:
-	void UpdateErrorCodeProperties(FMGErrorCode NewErrorCode);
+	void UpdateErrorCodeProperties(FECErrorCode NewErrorCode);
 	void SyncErrorCodeWidgetToProperty();
 
 	TSharedPtr<IPropertyHandle> StructProperty;

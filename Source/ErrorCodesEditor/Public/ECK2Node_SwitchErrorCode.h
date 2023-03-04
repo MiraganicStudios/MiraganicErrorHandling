@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "K2Node_Switch.h"
-#include "MGErrorCode.h"
+#include "ECErrorCode.h"
 #include "UObject/Object.h"
 #include "ECK2Node_SwitchErrorCode.generated.h"
 
@@ -52,7 +52,7 @@ protected:
 
 public:
 	UPROPERTY(EditAnywhere, Category = PinOptions)
-	TArray<FMGErrorCode> PinErrorCodes;
+	TArray<FECErrorCode> PinErrorCodes;
 
 	UPROPERTY()
 	TArray<FName> PinNames;

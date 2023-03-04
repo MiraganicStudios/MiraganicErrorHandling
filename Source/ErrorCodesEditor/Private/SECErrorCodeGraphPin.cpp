@@ -3,7 +3,7 @@
 
 #include "SECErrorCodeGraphPin.h"
 
-#include "MGErrorCode.h"
+#include "ECErrorCode.h"
 #include "SECErrorCodeWidget.h"
 #include "SlateOptMacros.h"
 
@@ -17,9 +17,9 @@ void SECErrorCodeGraphPin::Construct(const FArguments& InArgs, UEdGraphPin* InGr
 TSharedRef<SWidget> SECErrorCodeGraphPin::GetDefaultValueWidget()
 {
 	FString DefaultString = GraphPinObj->GetDefaultAsString();
-	FMGErrorCode DefaultErrorCode;
+	FECErrorCode DefaultErrorCode;
 
-	UScriptStruct* PinStructType = FMGErrorCode::StaticStruct();
+	UScriptStruct* PinStructType = FECErrorCode::StaticStruct();
 	if (!DefaultString.IsEmpty())
 	{
 		PinStructType->ImportText(*DefaultString, &DefaultErrorCode, nullptr,
@@ -38,11 +38,11 @@ TSharedRef<SWidget> SECErrorCodeGraphPin::GetDefaultValueWidget()
 		];
 }
 
-void SECErrorCodeGraphPin::UpdatePinValue(FMGErrorCode NewValue)
+void SECErrorCodeGraphPin::UpdatePinValue(FECErrorCode NewValue)
 {
 	FString StringValue;
-	FMGErrorCode DefaultValue;
-	FMGErrorCode::StaticStruct()->ExportText(StringValue, &NewValue, &DefaultValue, nullptr,
+	FECErrorCode DefaultValue;
+	FECErrorCode::StaticStruct()->ExportText(StringValue, &NewValue, &DefaultValue, nullptr,
 		EPropertyPortFlags::PPF_SerializedAsImportText, nullptr);
 
 	if (StringValue != GraphPinObj->GetDefaultAsString())

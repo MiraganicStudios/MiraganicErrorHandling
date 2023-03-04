@@ -1,30 +1,30 @@
 ﻿// Copyright 2022 Miraganic Studios. All rights reserved.
 
 
-#include "MGErrorCode.h"
-#include "MGErrorCategory.h"
+#include "ECErrorCode.h"
+#include "ECErrorCategory.h"
 
-FMGErrorCode::FMGErrorCode()
+FECErrorCode::FECErrorCode()
 	: Category(nullptr)
 	, Code(0)
 {}
 
-FMGErrorCode::FMGErrorCode(const UMGErrorCategory& InCategory, int64 InCode)
+FECErrorCode::FECErrorCode(const UECErrorCategory& InCategory, int64 InCode)
 	: Category(&InCategory)
 	, Code(InCode)
 {}
 
-bool FMGErrorCode::IsSuccess() const
+bool FECErrorCode::IsSuccess() const
 {
 	return !IsError();
 }
 
-bool FMGErrorCode::IsError() const
+bool FECErrorCode::IsError() const
 {
 	return IsValid(Category) && Code != 0;
 }
 
-FString FMGErrorCode::GetTrimmedCategoryName() const
+FString FECErrorCode::GetTrimmedCategoryName() const
 {
 	if (IsSuccess())
 	{
@@ -34,7 +34,7 @@ FString FMGErrorCode::GetTrimmedCategoryName() const
 	return Category->GetTrimmedName();
 }
 
-FText FMGErrorCode::GetErrorMessage() const
+FText FECErrorCode::GetErrorMessage() const
 {
 	if (IsSuccess())
 	{
@@ -44,7 +44,7 @@ FText FMGErrorCode::GetErrorMessage() const
 	return Category->GetErrorMessage(Code);
 }
 
-FText FMGErrorCode::GetErrorTitle() const
+FText FECErrorCode::GetErrorTitle() const
 {
 	if (IsSuccess())
 	{
@@ -54,7 +54,7 @@ FText FMGErrorCode::GetErrorTitle() const
 	return Category->GetErrorTitle(Code);
 }
 
-FString FMGErrorCode::ToShortString() const
+FString FECErrorCode::ToShortString() const
 {
 	if (IsSuccess())
 	{
@@ -66,7 +66,7 @@ FString FMGErrorCode::ToShortString() const
 	}
 }
 
-FString FMGErrorCode::ToString() const
+FString FECErrorCode::ToString() const
 {
 	if (IsError())
 	{
@@ -79,7 +79,7 @@ FString FMGErrorCode::ToString() const
 	}
 }
 
-FMGErrorCode FMGErrorCode::Success()
+FECErrorCode FECErrorCode::Success()
 {
-	return FMGErrorCode();
+	return FECErrorCode();
 }

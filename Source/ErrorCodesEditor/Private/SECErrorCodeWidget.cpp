@@ -3,7 +3,7 @@
 
 #include "SECErrorCodeWidget.h"
 
-#include "MGErrorCategory.h"
+#include "ECErrorCategory.h"
 #include "SlateOptMacros.h"
 #include "Misc/TextFilter.h"
 #include "Widgets/Input/SSearchBox.h"
@@ -13,7 +13,7 @@
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
-FString GetErrorCodeDisplayName(const FMGErrorCode& ErrorCode)
+FString GetErrorCodeDisplayName(const FECErrorCode& ErrorCode)
 {
 	if (ErrorCode.IsSuccess())
 	{
@@ -25,7 +25,7 @@ FString GetErrorCodeDisplayName(const FMGErrorCode& ErrorCode)
 	}
 }
 
-FText GetErrorCodeDisplayNameText(const FMGErrorCode& ErrorCode)
+FText GetErrorCodeDisplayNameText(const FECErrorCode& ErrorCode)
 {
 	if (ErrorCode.IsSuccess())
 	{
@@ -38,7 +38,7 @@ FText GetErrorCodeDisplayNameText(const FMGErrorCode& ErrorCode)
 	}
 }
 
-FText GetErrorCodeTooltip(const FMGErrorCode& ErrorCode)
+FText GetErrorCodeTooltip(const FECErrorCode& ErrorCode)
 {
 	if (ErrorCode.IsSuccess())
 	{
@@ -52,7 +52,7 @@ FText GetErrorCodeTooltip(const FMGErrorCode& ErrorCode)
 	}
 }
 
-class SECErrorCodeEntry : public SComboRow<TSharedPtr<FMGErrorCode>>
+class SECErrorCodeEntry : public SComboRow<TSharedPtr<FECErrorCode>>
 {
 public:
 	SLATE_BEGIN_ARGS(SECErrorCodeEntry)
@@ -64,7 +64,7 @@ public:
 	/** The color text this item will use. */
 	SLATE_ARGUMENT(FSlateColor, TextColor)
 	/** The node this item is associated with. */
-	SLATE_ARGUMENT(TSharedPtr<FMGErrorCode>, ErrorCode)
+	SLATE_ARGUMENT(TSharedPtr<FECErrorCode>, ErrorCode)
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView)
@@ -89,14 +89,14 @@ public:
 				]
 			];
 
-		STableRow<TSharedPtr<FMGErrorCode>>::ConstructInternal(
+		STableRow<TSharedPtr<FECErrorCode>>::ConstructInternal(
 			STableRow::FArguments().ShowSelection(true),
 			InOwnerTableView);
 	}
 
 	FSlateColor GetTextColor() const
 	{
-		const TSharedPtr< ITypedTableView< TSharedPtr<FMGErrorCode> > > OwnerWidget = OwnerTablePtr.Pin();
+		const TSharedPtr< ITypedTableView< TSharedPtr<FECErrorCode> > > OwnerWidget = OwnerTablePtr.Pin();
 		const bool bIsSelected = OwnerWidget->Private_IsItemSelected(ErrorCode);
 
 		if (bIsSelected)
@@ -108,7 +108,7 @@ public:
 
 private:
 	FSlateColor TextColor;
-	TSharedPtr<FMGErrorCode> ErrorCode;
+	TSharedPtr<FECErrorCode> ErrorCode;
 };
 
 class SECErrorCodeListWidget : public SCompoundWidget
@@ -132,7 +132,7 @@ public:
 		}
 	}
 
-	static void GetErrorCodeSearchTerms(const FMGErrorCode& ErrorCode, TArray<FString>& OutSearchTerms)
+	static void GetErrorCodeSearchTerms(const FECErrorCode& ErrorCode, TArray<FString>& OutSearchTerms)
 	{
 		if (ErrorCode.IsSuccess())
 		{
@@ -150,19 +150,19 @@ private:
 
 	void UpdateFilterText(const FText& InFilterText);
 
-	TSharedRef<ITableRow> GenerateListRowWidget(TSharedPtr<FMGErrorCode> Data,
+	TSharedRef<ITableRow> GenerateListRowWidget(TSharedPtr<FECErrorCode> Data,
 		const TSharedRef<STableViewBase>& OwnerTable
 		);
 
-	void BroadcastErrorCodeSelected(TSharedPtr<FMGErrorCode> Item, ESelectInfo::Type SelectInfo);
+	void BroadcastErrorCodeSelected(TSharedPtr<FECErrorCode> Item, ESelectInfo::Type SelectInfo);
 	
-	using FECErrorCodeTextFilter = TTextFilter<const FMGErrorCode&>;
+	using FECErrorCodeTextFilter = TTextFilter<const FECErrorCode&>;
 	
 	TSharedPtr<SSearchBox> SearchBox;
 
-	TSharedPtr<SListView<TSharedPtr<FMGErrorCode>>> ErrorCodeListView;
+	TSharedPtr<SListView<TSharedPtr<FECErrorCode>>> ErrorCodeListView;
 
-	TArray<TSharedPtr<FMGErrorCode>> ListDatum;
+	TArray<TSharedPtr<FECErrorCode>> ListDatum;
 
 	TSharedPtr<FECErrorCodeTextFilter> SearchFilter;
 	
@@ -200,7 +200,7 @@ void SECErrorCodeListWidget::Construct(const FArguments& InArgs)
 			+SVerticalBox::Slot()
 			.FillHeight(1.f)
 			[
-				SAssignNew(ErrorCodeListView, SListView<TSharedPtr<FMGErrorCode>>)
+				SAssignNew(ErrorCodeListView, SListView<TSharedPtr<FECErrorCode>>)
 				.Visibility(EVisibility::Visible)
 				.SelectionMode(ESelectionMode::Single)
 				.ListItemsSource(&ListDatum)
@@ -213,14 +213,14 @@ void SECErrorCodeListWidget::Construct(const FArguments& InArgs)
 void SECErrorCodeListWidget::UpdateErrorCodeOptions()
 {
 	ListDatum.Reset();
-	TSharedPtr<FMGErrorCode> SuccessCode = MakeShareable(new FMGErrorCode(FMGErrorCode::Success()));
+	TSharedPtr<FECErrorCode> SuccessCode = MakeShareable(new FECErrorCode(FECErrorCode::Success()));
 
 	ListDatum.Emplace(SuccessCode);
 
 	for (TObjectIterator<UClass> ClassIt; ClassIt; ++ClassIt)
 	{
 		UClass* Class = *ClassIt;
-		if (!IsValid(Class) || !Class->IsChildOf(UMGErrorCategory::StaticClass()))
+		if (!IsValid(Class) || !Class->IsChildOf(UECErrorCategory::StaticClass()))
 		{
 			continue;
 		}
@@ -232,7 +232,7 @@ void SECErrorCodeListWidget::UpdateErrorCodeOptions()
 			continue;
 		}
 
-		const UMGErrorCategory* CategoryCDO = Class->GetDefaultObject<UMGErrorCategory>();
+		const UECErrorCategory* CategoryCDO = Class->GetDefaultObject<UECErrorCategory>();
 		if (!CategoryCDO)
 		{
 			continue;
@@ -240,13 +240,13 @@ void SECErrorCodeListWidget::UpdateErrorCodeOptions()
 
 		for (const auto& ErrorCodePair : CategoryCDO->Errors)
 		{
-			FMGErrorCode ErrorCode(*CategoryCDO, ErrorCodePair.Key);
+			FECErrorCode ErrorCode(*CategoryCDO, ErrorCodePair.Key);
 			if (SearchFilter.IsValid() && !SearchFilter->PassesFilter(ErrorCode))
 			{
 				continue;
 			}
 
-			TSharedPtr<FMGErrorCode> Entry = MakeShareable(new FMGErrorCode(ErrorCode));
+			TSharedPtr<FECErrorCode> Entry = MakeShareable(new FECErrorCode(ErrorCode));
 			ListDatum.Emplace(Entry);
 		}
 	}
@@ -260,7 +260,7 @@ void SECErrorCodeListWidget::UpdateFilterText(const FText& InFilterText)
 	UpdateErrorCodeOptions();
 }
 
-TSharedRef<ITableRow> SECErrorCodeListWidget::GenerateListRowWidget(TSharedPtr<FMGErrorCode> Data,
+TSharedRef<ITableRow> SECErrorCodeListWidget::GenerateListRowWidget(TSharedPtr<FECErrorCode> Data,
 	const TSharedRef<STableViewBase>& OwnerTable
 	)
 {
@@ -270,7 +270,7 @@ TSharedRef<ITableRow> SECErrorCodeListWidget::GenerateListRowWidget(TSharedPtr<F
 		.ErrorCode(Data);
 }
 
-void SECErrorCodeListWidget::BroadcastErrorCodeSelected(TSharedPtr<FMGErrorCode> Item,
+void SECErrorCodeListWidget::BroadcastErrorCodeSelected(TSharedPtr<FECErrorCode> Item,
 	ESelectInfo::Type SelectInfo
 	)
 {
@@ -299,7 +299,7 @@ void SECErrorCodeWidget::Construct(const FArguments& InArgs)
 		];
 }
 
-void SECErrorCodeWidget::SetCurrentValue(const FMGErrorCode& ErrorCode)
+void SECErrorCodeWidget::SetCurrentValue(const FECErrorCode& ErrorCode)
 {
 	SelectedErrorCode = ErrorCode;
 }
@@ -331,7 +331,7 @@ FText SECErrorCodeWidget::GetSelectedValueDisplayName() const
 	return GetErrorCodeDisplayNameText(SelectedErrorCode);
 }
 
-void SECErrorCodeWidget::BroadcastErrorCodeChanged(FMGErrorCode NewErrorCode)
+void SECErrorCodeWidget::BroadcastErrorCodeChanged(FECErrorCode NewErrorCode)
 {
 	PostErrorCodeChanged.ExecuteIfBound(NewErrorCode);
 	SelectedErrorCode = NewErrorCode;

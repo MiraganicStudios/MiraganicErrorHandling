@@ -1,50 +1,50 @@
 ﻿// Copyright 2022 Miraganic Studios. All rights reserved.
 
-#include "MGErrorFunctionLibrary.h"
+#include "ECErrorFunctionLibrary.h"
 
 #include "ECLogging.h"
 
-void UMGErrorFunctionLibrary::LogErrorToOutputLog(EMGLogVerbosity Verbosity, FMGErrorCode Error)
+void UECErrorFunctionLibrary::LogErrorToOutputLog(EECLogVerbosity Verbosity, FECErrorCode Error)
 {
 	switch (Verbosity)
 	{
 		default:
-		case EMGLogVerbosity::Normal:
+		case EECLogVerbosity::Normal:
 			UE_LOG(LogErrorCodes, Display, TEXT("%s"), *Error.ToString());
 			return;
-		case EMGLogVerbosity::Warning:
+		case EECLogVerbosity::Warning:
 			UE_LOG(LogErrorCodes, Warning, TEXT("%s"), *Error.ToString());
 			return;
-		case EMGLogVerbosity::Error:
+		case EECLogVerbosity::Error:
 			UE_LOG(LogErrorCodes, Error, TEXT("%s"), *Error.ToString());
 			return;
 	}
 }
 
-void UMGErrorFunctionLibrary::LogErrorToMessageLog(EMGLogVerbosity Verbosity, FMGErrorCode Error)
+void UECErrorFunctionLibrary::LogErrorToMessageLog(EECLogVerbosity Verbosity, FECErrorCode Error)
 {
 	FMessageLog MessageLog("PIE");
 	switch (Verbosity)
 	{
 		default:
-		case EMGLogVerbosity::Normal:
+		case EECLogVerbosity::Normal:
 			MessageLog.Info(Error.GetErrorMessage());
 		return;
-		case EMGLogVerbosity::Warning:
+		case EECLogVerbosity::Warning:
 			MessageLog.Warning(Error.GetErrorMessage());
 		return;
-		case EMGLogVerbosity::Error:
+		case EECLogVerbosity::Error:
 			MessageLog.Error(Error.GetErrorMessage());
 		return;
 	}
 }
 
-bool UMGErrorFunctionLibrary::Equal_ErrorCodeErrorCode(FMGErrorCode A, FMGErrorCode B)
+bool UECErrorFunctionLibrary::Equal_ErrorCodeErrorCode(FECErrorCode A, FECErrorCode B)
 {
 	return A == B;
 }
 
-bool UMGErrorFunctionLibrary::NotEqual_ErrorCodeErrorCode(FMGErrorCode A, FMGErrorCode B)
+bool UECErrorFunctionLibrary::NotEqual_ErrorCodeErrorCode(FECErrorCode A, FECErrorCode B)
 {
 	bool bResult = A != B;
 	const FString ResultStr = bResult ? TEXT("true") : TEXT("false");
@@ -53,7 +53,7 @@ bool UMGErrorFunctionLibrary::NotEqual_ErrorCodeErrorCode(FMGErrorCode A, FMGErr
 	return A != B;
 }
 
-bool UMGErrorFunctionLibrary::NotEqual_ErrorCodeInner(FMGErrorCode A, FMGErrorCode B)
+bool UECErrorFunctionLibrary::NotEqual_ErrorCodeInner(FECErrorCode A, FECErrorCode B)
 {
 	return A != B;
 }

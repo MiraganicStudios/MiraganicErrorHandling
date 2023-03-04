@@ -1,10 +1,12 @@
 ﻿#include "ECErrorCodesEditorModule.h"
 
 #include "AssetToolsModule.h"
+#include "ECCustomization_ErrorCategory.h"
 #include "ECCustomization_ErrorCode.h"
+#include "ECErrorCategory.h"
 #include "ECGraphPinFactory_ErrorCode.h"
 #include "EdGraphUtilities.h"
-#include "MGErrorCode.h"
+#include "ECErrorCode.h"
 
 void FECErrorCodesEditorModule::StartupModule()
 {
@@ -12,8 +14,11 @@ void FECErrorCodesEditorModule::StartupModule()
 	FEdGraphUtilities::RegisterVisualPinFactory(ErrorCodePinFactory);
 
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-	PropertyModule.RegisterCustomPropertyTypeLayout(FMGErrorCode::StaticStruct()->GetFName(),
+	PropertyModule.RegisterCustomPropertyTypeLayout(FECErrorCode::StaticStruct()->GetFName(),
 		FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FECCustomization_ErrorCode::MakeInstance));
+	PropertyModule.RegisterCustomClassLayout("ECErrorCategory",
+		FOnGetDetailCustomizationInstance::CreateStatic(&FECCustomization_ErrorCategory::MakeInstance));
+	
 	//IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
 	
 }
@@ -28,7 +33,7 @@ void FECErrorCodesEditorModule::ShutdownModule()
 
 	if (FPropertyEditorModule* PropertyModule = FModuleManager::LoadModulePtr<FPropertyEditorModule>("PropertyEditor"))
 	{
-		PropertyModule->UnregisterCustomPropertyTypeLayout(FMGErrorCode::StaticStruct()->GetFName());
+		PropertyModule->UnregisterCustomPropertyTypeLayout(FECErrorCode::StaticStruct()->GetFName());
 	}
 }
     

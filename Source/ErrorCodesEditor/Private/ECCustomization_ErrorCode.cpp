@@ -5,8 +5,8 @@
 
 #include "DetailWidgetRow.h"
 #include "ECEditorLogging.h"
-#include "MGErrorCategory.h"
-#include "MGErrorCode.h"
+#include "ECErrorCategory.h"
+#include "ECErrorCode.h"
 #include "SECErrorCodeWidget.h"
 
 TSharedRef<IPropertyTypeCustomization> FECCustomization_ErrorCode::MakeInstance()
@@ -20,23 +20,23 @@ void FECCustomization_ErrorCode::CustomizeHeader(TSharedRef<IPropertyHandle> Pro
 	)
 {
 	StructProperty = PropertyHandle;
-	CategoryProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FMGErrorCode, Category));
-	CodeProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FMGErrorCode, Code));
+	CategoryProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FECErrorCode, Category));
+	CodeProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FECErrorCode, Code));
 
 	// E.g., if the property receives a paste, we must sync the dropdown widget.
 	FSimpleDelegate OnErrorCodeChanged = FSimpleDelegate::CreateSP(this,
 		&FECCustomization_ErrorCode::SyncErrorCodeWidgetToProperty);
 	PropertyHandle->SetOnPropertyValueChanged(OnErrorCodeChanged);
 
-	FMGErrorCode DefaultValue;
+	FECErrorCode DefaultValue;
 	UObject* CategoryObj = nullptr;
 	int64 Code = 0;
 	CategoryProperty->GetValue(CategoryObj);
 	CodeProperty->GetValue(Code);
-	const UMGErrorCategory* Category = Cast<UMGErrorCategory>(CategoryObj);
+	const UECErrorCategory* Category = Cast<UECErrorCategory>(CategoryObj);
 	if (Category && Code > 0)
 	{
-		DefaultValue = FMGErrorCode(*Category, Code);
+		DefaultValue = FECErrorCode(*Category, Code);
 	}
 
 	HeaderRow
@@ -68,7 +68,7 @@ void FECCustomization_ErrorCode::CustomizeChildren(TSharedRef<IPropertyHandle> P
 	
 }
 
-void FECCustomization_ErrorCode::UpdateErrorCodeProperties(FMGErrorCode NewErrorCode)
+void FECCustomization_ErrorCode::UpdateErrorCodeProperties(FECErrorCode NewErrorCode)
 {
 	if (!StructProperty.IsValid() || !StructProperty->GetProperty())
 	{
@@ -78,10 +78,10 @@ void FECCustomization_ErrorCode::UpdateErrorCodeProperties(FMGErrorCode NewError
 
 	TArray<void*> RawData;
 	StructProperty->AccessRawData(RawData);
-	FMGErrorCode* PreviousErrorCode = static_cast<FMGErrorCode*>(RawData[0]);
+	FECErrorCode* PreviousErrorCode = static_cast<FECErrorCode*>(RawData[0]);
 
 	FString TextValue;
-	FMGErrorCode::StaticStruct()->ExportText(TextValue, &NewErrorCode, PreviousErrorCode, nullptr, PPF_None, nullptr);
+	FECErrorCode::StaticStruct()->ExportText(TextValue, &NewErrorCode, PreviousErrorCode, nullptr, PPF_None, nullptr);
 	ensure(StructProperty->SetValueFromFormattedString(TextValue) == FPropertyAccess::Success);
 }
 
@@ -93,7 +93,7 @@ void FECCustomization_ErrorCode::SyncErrorCodeWidgetToProperty()
 		StructProperty->AccessRawData(RawStructData);
 		if (RawStructData.Num() > 0)
 		{
-			FMGErrorCode* ErrorCodePtr = static_cast<FMGErrorCode*>(RawStructData[0]);
+			FECErrorCode* ErrorCodePtr = static_cast<FECErrorCode*>(RawStructData[0]);
 			if (ErrorCodePtr && ErrorCodeWidget)
 			{
 				ErrorCodeWidget->SetCurrentValue(*ErrorCodePtr);

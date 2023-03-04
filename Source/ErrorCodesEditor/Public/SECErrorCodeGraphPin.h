@@ -6,7 +6,7 @@
 #include "SGraphPin.h"
 #include "Widgets/SCompoundWidget.h"
 
-struct FMGErrorCode;
+struct FECErrorCode;
 /**
  * 
  */
@@ -21,5 +21,5 @@ public:
 
 	virtual TSharedRef<SWidget> GetDefaultValueWidget() override;
 
-	void UpdatePinValue(FMGErrorCode NewValue);
+	void UpdatePinValue(FECErrorCode NewValue);
 };

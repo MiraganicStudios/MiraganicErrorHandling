@@ -3,13 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MGErrorCode.h"
+#include "ECErrorCode.h"
 #include "UObject/Object.h"
 
-#include "MGErrorFunctionLibrary.generated.h"
+#include "ECErrorFunctionLibrary.generated.h"
 
 UENUM(BlueprintType)
-enum class EMGLogVerbosity : uint8
+enum class EECLogVerbosity : uint8
 {
 	// Normal (Printed in white)
 	Normal,
@@ -23,7 +23,7 @@ enum class EMGLogVerbosity : uint8
  * Function library for blueprint error handling.
  */
 UCLASS()
-class ERRORCODES_API UMGErrorFunctionLibrary : public UBlueprintFunctionLibrary
+class ERRORCODES_API UECErrorFunctionLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
@@ -34,7 +34,7 @@ public:
 	 * @param Error Error to log.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Errors", DisplayName = "Log Error (Output Log)")
-	static void LogErrorToOutputLog(EMGLogVerbosity Verbosity, FMGErrorCode Error);
+	static void LogErrorToOutputLog(EECLogVerbosity Verbosity, FECErrorCode Error);
 
 	/**
 	 * Prints an error code's message to the message log.
@@ -42,16 +42,16 @@ public:
 	 * @param Error Error to log.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Errors", DisplayName = "Log Error (Message Log)")
-	static void LogErrorToMessageLog(EMGLogVerbosity Verbosity, FMGErrorCode Error);
+	static void LogErrorToMessageLog(EECLogVerbosity Verbosity, FECErrorCode Error);
 
 	UFUNCTION(BlueprintPure, Category = "Errors", DisplayName = "Equal (Error Code)", meta = (CompactNodeTitle = "==", BlueprintThreadSafe))
-	static bool Equal_ErrorCodeErrorCode(FMGErrorCode A, FMGErrorCode B);
+	static bool Equal_ErrorCodeErrorCode(FECErrorCode A, FECErrorCode B);
 
 	UFUNCTION(BlueprintPure, Category = "Errors", DisplayName = "Not Equal (Error Code)", meta = (CompactNodeTitle = "!=", BlueprintThreadSafe))
-	static bool NotEqual_ErrorCodeErrorCode(FMGErrorCode A, FMGErrorCode B);
+	static bool NotEqual_ErrorCodeErrorCode(FECErrorCode A, FECErrorCode B);
 
 	UFUNCTION(BlueprintPure, Category = "PinOptions", meta = (BlueprintInternalUseOnly = "true"))
-	static bool NotEqual_ErrorCodeInner(FMGErrorCode A, FMGErrorCode B);
+	static bool NotEqual_ErrorCodeInner(FECErrorCode A, FECErrorCode B);
 	
 	// /**
 	//  *  Prints a generic gameplay error to the output log.
