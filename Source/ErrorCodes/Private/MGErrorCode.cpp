@@ -24,6 +24,16 @@ bool FMGErrorCode::IsError() const
 	return IsValid(Category) && Code != 0;
 }
 
+FString FMGErrorCode::GetTrimmedCategoryName() const
+{
+	if (IsSuccess())
+	{
+		return FString();
+	}
+
+	return Category->GetTrimmedName();
+}
+
 FText FMGErrorCode::GetErrorMessage() const
 {
 	if (IsSuccess())
@@ -42,6 +52,18 @@ FText FMGErrorCode::GetErrorTitle() const
 	}
 	
 	return Category->GetErrorTitle(Code);
+}
+
+FString FMGErrorCode::ToShortString() const
+{
+	if (IsSuccess())
+	{
+		return TEXT("Success");
+	}
+	else
+	{
+		return FString::Printf(TEXT("%s:%s"), *Category->GetTrimmedName(), *Category->GetErrorTitle(Code).ToString());
+	}
 }
 
 FString FMGErrorCode::ToString() const

@@ -43,6 +43,15 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Errors", DisplayName = "Log Error (Message Log)")
 	static void LogErrorToMessageLog(EMGLogVerbosity Verbosity, FMGErrorCode Error);
+
+	UFUNCTION(BlueprintPure, Category = "Errors", DisplayName = "Equal (Error Code)", meta = (CompactNodeTitle = "==", BlueprintThreadSafe))
+	static bool Equal_ErrorCodeErrorCode(FMGErrorCode A, FMGErrorCode B);
+
+	UFUNCTION(BlueprintPure, Category = "Errors", DisplayName = "Not Equal (Error Code)", meta = (CompactNodeTitle = "!=", BlueprintThreadSafe))
+	static bool NotEqual_ErrorCodeErrorCode(FMGErrorCode A, FMGErrorCode B);
+
+	UFUNCTION(BlueprintPure, Category = "PinOptions", meta = (BlueprintInternalUseOnly = "true"))
+	static bool NotEqual_ErrorCodeInner(FMGErrorCode A, FMGErrorCode B);
 	
 	// /**
 	//  *  Prints a generic gameplay error to the output log.

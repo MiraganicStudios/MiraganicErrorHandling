@@ -23,10 +23,12 @@ public:
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs);
 
+	void SetCurrentValue(const FMGErrorCode& ErrorCode);
+
 protected:
 	TSharedRef<SWidget> GenerateDropdownWidget();
 	FText FormatToolTipText() const;
-	FText GetSelectedValueAsText() const;
+	FText GetSelectedValueDisplayName() const;
 	void BroadcastErrorCodeChanged(FMGErrorCode NewErrorCode);
 
 	FECErrorCodeChangedDelegate PostErrorCodeChanged;

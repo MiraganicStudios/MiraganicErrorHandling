@@ -12,6 +12,13 @@ struct ERRORCODES_API FMGErrorCodeData
 	GENERATED_BODY()
 
 public:
+	FMGErrorCodeData() {}
+
+	FMGErrorCodeData(const FText& InTitle, const FText& InMessage)
+		: Title(InTitle)
+		, Message(InMessage)
+	{}
+
 	/**
 	 * Short title of the error.
 	 */

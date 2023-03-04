@@ -39,6 +39,25 @@ void UMGErrorFunctionLibrary::LogErrorToMessageLog(EMGLogVerbosity Verbosity, FM
 	}
 }
 
+bool UMGErrorFunctionLibrary::Equal_ErrorCodeErrorCode(FMGErrorCode A, FMGErrorCode B)
+{
+	return A == B;
+}
+
+bool UMGErrorFunctionLibrary::NotEqual_ErrorCodeErrorCode(FMGErrorCode A, FMGErrorCode B)
+{
+	bool bResult = A != B;
+	const FString ResultStr = bResult ? TEXT("true") : TEXT("false");
+	UE_LOG(LogErrorCodes, Warning, TEXT("%s: %s != %s -> %s"), *FString(__FUNCTION__), *A.ToShortString(),
+		*B.ToShortString(), *ResultStr);
+	return A != B;
+}
+
+bool UMGErrorFunctionLibrary::NotEqual_ErrorCodeInner(FMGErrorCode A, FMGErrorCode B)
+{
+	return A != B;
+}
+
 // void UMGErrorFunctionLibrary::LogError(EMGLogVerbosity Verbosity, const FMGGenericGameplayError& Error)
 // {
 // 	// Note that we can't simply map the verbosity to ELogVerbosity because the macro takes the 'verbosity'
