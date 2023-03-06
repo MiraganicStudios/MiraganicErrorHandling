@@ -3,8 +3,11 @@
 
 #include "SECErrorCodeWidget.h"
 
+#include "ClassViewerModule.h"
 #include "ECErrorCategory.h"
 #include "SlateOptMacros.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "Kismet2/KismetEditorUtilities.h"
 #include "Misc/TextFilter.h"
 #include "Widgets/Input/SSearchBox.h"
 #include "Widgets/Layout/SSeparator.h"
@@ -115,14 +118,18 @@ class SECErrorCodeListWidget : public SCompoundWidget
 {
 public:
 	SLATE_BEGIN_ARGS(SECErrorCodeListWidget)
+		: _bAutoFocus(true)
 	{
 	}
 
 	SLATE_ARGUMENT(FString, FilterString)
 	SLATE_EVENT(FECErrorCodeChangedDelegate, PostErrorCodeSelected)
+	SLATE_ARGUMENT(bool, bAutoFocus)
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs);
+
+	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
 
 	virtual ~SECErrorCodeListWidget()
 	{
@@ -145,6 +152,8 @@ public:
 		}
 	}
 
+	TSharedPtr<SSearchBox> GetSearchBox() const { return SearchBox; }
+
 private:
 	void UpdateErrorCodeOptions();
 
@@ -162,19 +171,22 @@ private:
 
 	TSharedPtr<SListView<TSharedPtr<FECErrorCode>>> ErrorCodeListView;
 
-	TArray<TSharedPtr<FECErrorCode>> ListDatum;
+	TArray<TSharedPtr<FECErrorCode>> ListRows;
 
 	TSharedPtr<FECErrorCodeTextFilter> SearchFilter;
 	
 	FString FilterString;
 	
 	FECErrorCodeChangedDelegate PostErrorCodeSelected;
+
+	bool bAwaitingFocus = false;
 };
 
 void SECErrorCodeListWidget::Construct(const FArguments& InArgs)
 {
 	FilterString = InArgs._FilterString;
 	PostErrorCodeSelected = InArgs._PostErrorCodeSelected;
+	bAwaitingFocus = InArgs._bAutoFocus;
 	SearchFilter = MakeShareable(new FECErrorCodeTextFilter(
 		FECErrorCodeTextFilter::FItemToStringArray::CreateStatic(&SECErrorCodeListWidget::GetErrorCodeSearchTerms)));
 
@@ -203,20 +215,66 @@ void SECErrorCodeListWidget::Construct(const FArguments& InArgs)
 				SAssignNew(ErrorCodeListView, SListView<TSharedPtr<FECErrorCode>>)
 				.Visibility(EVisibility::Visible)
 				.SelectionMode(ESelectionMode::Single)
-				.ListItemsSource(&ListDatum)
+				.ListItemsSource(&ListRows)
 				.OnGenerateRow(this, &SECErrorCodeListWidget::GenerateListRowWidget)
 				.OnSelectionChanged(this, &SECErrorCodeListWidget::BroadcastErrorCodeSelected)
 			]
 		];
 }
 
+void SECErrorCodeListWidget::Tick(const FGeometry& AllottedGeometry,
+	const double InCurrentTime,
+	const float InDeltaTime
+	)
+{
+	if (bAwaitingFocus)
+	{
+		bAwaitingFocus = false;
+		FSlateApplication::Get().SetKeyboardFocus(SearchBox);
+	}
+}
+
 void SECErrorCodeListWidget::UpdateErrorCodeOptions()
 {
-	ListDatum.Reset();
+	ListRows.Reset();
 	TSharedPtr<FECErrorCode> SuccessCode = MakeShareable(new FECErrorCode(FECErrorCode::Success()));
 
-	ListDatum.Emplace(SuccessCode);
+	ListRows.Emplace(SuccessCode);
 
+	// Gather loaded and unloaded ErrorCategory blueprints
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+	TArray<FAssetData> BlueprintList;
+	FARFilter AssetFilter;
+	AssetFilter.ClassNames.Add(UECErrorCategory::StaticClass()->GetFName());
+	AssetFilter.bRecursiveClasses = true;
+	AssetRegistryModule.Get().GetAssets(AssetFilter, BlueprintList);
+	for (const FAssetData& AssetData : BlueprintList)
+	{
+		if (!AssetData.IsInstanceOf(UECErrorCategory::StaticClass()))
+		{
+			continue;
+		}
+
+		const UECErrorCategory* Category = Cast<UECErrorCategory>(AssetData.FastGetAsset(true));
+		if (!Category)
+		{
+			continue;
+		}
+		
+		for (const auto& ErrorCodePair : Category->Errors)
+		{
+			FECErrorCode ErrorCode(*Category, ErrorCodePair.Key);
+			if (SearchFilter.IsValid() && !SearchFilter->PassesFilter(ErrorCode))
+			{
+				continue;
+			}
+
+			TSharedPtr<FECErrorCode> Entry = MakeShareable(new FECErrorCode(ErrorCode));
+			ListRows.Emplace(Entry);
+		}
+	}
+
+	// Gather all C++ classes
 	for (TObjectIterator<UClass> ClassIt; ClassIt; ++ClassIt)
 	{
 		UClass* Class = *ClassIt;
@@ -225,9 +283,8 @@ void SECErrorCodeListWidget::UpdateErrorCodeOptions()
 			continue;
 		}
 
-		// Ignore dead classes or duplicates of blueprint classes
-		if (Class->GetClass()->IsChildOf<UBlueprintGeneratedClass>() && (!IsValid(Class->ClassGeneratedBy) ||
-			Class->GetAuthoritativeClass() != Class))
+		// BP classes were already added
+		if (Cast<UBlueprintGeneratedClass>(Class))
 		{
 			continue;
 		}
@@ -247,8 +304,20 @@ void SECErrorCodeListWidget::UpdateErrorCodeOptions()
 			}
 
 			TSharedPtr<FECErrorCode> Entry = MakeShareable(new FECErrorCode(ErrorCode));
-			ListDatum.Emplace(Entry);
+			ListRows.Emplace(Entry);
 		}
+	}
+
+	// Sort all error codes; always leave 'Success' at the top
+	if (ListRows.Num() > 1)
+	{
+		TArrayView<TSharedPtr<FECErrorCode>> ErrorCodes(ListRows.GetData() + 1, ListRows.Num() - 1);
+		ErrorCodes.Sort([](const TSharedPtr<FECErrorCode>& A, const TSharedPtr<FECErrorCode>& B)
+		{
+			const FString StrA = A->ToShortString();
+			const FString StrB = B->ToShortString();
+			return StrA.Compare(StrB) < 0;
+		});
 	}
 }
 
@@ -317,6 +386,7 @@ TSharedRef<SWidget> SECErrorCodeWidget::GenerateDropdownWidget()
 				SNew(SECErrorCodeListWidget)
 				.PostErrorCodeSelected(this, &SECErrorCodeWidget::BroadcastErrorCodeChanged)
 				.FilterString(FilterString)
+				.bAutoFocus(true)
 			]
 		];
 }
