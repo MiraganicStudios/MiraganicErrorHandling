@@ -4,6 +4,27 @@
 
 #include "ECLogging.h"
 
+FECErrorCode UECErrorFunctionLibrary::MakeErrorCode(FECErrorCode ErrorCode)
+{
+	return ErrorCode;
+}
+
+UECErrorCategory* UECErrorFunctionLibrary::BreakErrorCode(const FECErrorCode& ErrorCode, int64& Code)
+{
+	if (ErrorCode.IsSuccess())
+	{
+		// For invalid codes, we want to always return {Null, 0}, even if the value was serialized as
+		// something else.
+		Code = 0;
+		return nullptr;
+	}
+	else
+	{
+		Code = ErrorCode.Code;
+		return const_cast<UECErrorCategory*>(ErrorCode.Category.Get());
+	}
+}
+
 void UECErrorFunctionLibrary::LogErrorToOutputLog(EECLogVerbosity Verbosity, FECErrorCode Error)
 {
 	switch (Verbosity)
@@ -46,16 +67,32 @@ bool UECErrorFunctionLibrary::Equal_ErrorCodeErrorCode(FECErrorCode A, FECErrorC
 
 bool UECErrorFunctionLibrary::NotEqual_ErrorCodeErrorCode(FECErrorCode A, FECErrorCode B)
 {
-	bool bResult = A != B;
-	const FString ResultStr = bResult ? TEXT("true") : TEXT("false");
-	UE_LOG(LogErrorCodes, Warning, TEXT("%s: %s != %s -> %s"), *FString(__FUNCTION__), *A.ToShortString(),
-		*B.ToShortString(), *ResultStr);
 	return A != B;
 }
 
-bool UECErrorFunctionLibrary::NotEqual_ErrorCodeInner(FECErrorCode A, FECErrorCode B)
+FText UECErrorFunctionLibrary::GetErrorMessage(FECErrorCode ErrorCode)
 {
-	return A != B;
+	return ErrorCode.GetErrorMessage();
+}
+
+FText UECErrorFunctionLibrary::GetErrorTitle(FECErrorCode ErrorCode)
+{
+	return ErrorCode.GetErrorTitle();
+}
+
+bool UECErrorFunctionLibrary::IsSuccess(FECErrorCode ErrorCode)
+{
+	return ErrorCode.IsSuccess();
+}
+
+bool UECErrorFunctionLibrary::IsError(FECErrorCode ErrorCode)
+{
+	return ErrorCode.IsError();
+}
+
+FString UECErrorFunctionLibrary::Conv_ErrorCodeToString(FECErrorCode ErrorCode)
+{
+	return ErrorCode.ToShortString();
 }
 
 // void UMGErrorFunctionLibrary::LogError(EMGLogVerbosity Verbosity, const FMGGenericGameplayError& Error)

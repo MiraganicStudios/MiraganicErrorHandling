@@ -84,6 +84,16 @@ void UECK2Node_SwitchErrorCode::ValidateNodeDuringCompilation(FCompilerResultsLo
 	}
 }
 
+void UECK2Node_SwitchErrorCode::PreloadRequiredAssets()
+{
+	for (const FECErrorCode& ErrorCode : PinErrorCodes)
+	{
+		UECErrorCategory* ErrorCategoryMut = const_cast<UECErrorCategory*>(ErrorCode.Category.Get());
+		PreloadObject(ErrorCategoryMut);
+	}
+	Super::PreloadRequiredAssets();
+}
+
 void UECK2Node_SwitchErrorCode::GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegistrar) const
 {
 	// actions get registered under specific object-keys; the idea is that 

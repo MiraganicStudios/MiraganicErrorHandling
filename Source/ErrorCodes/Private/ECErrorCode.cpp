@@ -56,13 +56,13 @@ FText FECErrorCode::GetErrorTitle() const
 
 FString FECErrorCode::ToShortString() const
 {
-	if (IsSuccess())
+	if (IsError())
 	{
-		return TEXT("Success");
+		return FString::Printf(TEXT("%s:%s"), *Category->GetTrimmedName(), *Category->GetErrorTitle(Code).ToString());
 	}
 	else
 	{
-		return FString::Printf(TEXT("%s:%s"), *Category->GetTrimmedName(), *Category->GetErrorTitle(Code).ToString());
+		return TEXT("Success");
 	}
 }
 
@@ -75,7 +75,7 @@ FString FECErrorCode::ToString() const
 	}
 	else
 	{
-		return TEXT("ErrorCode{Success}");
+		return TEXT("Success");
 	}
 }
 

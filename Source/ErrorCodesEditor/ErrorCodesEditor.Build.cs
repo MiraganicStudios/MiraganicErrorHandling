@@ -26,7 +26,8 @@ public class ErrorCodesEditor : ModuleRules
 				"BlueprintGraph",
 				"InputCore",
 				"PropertyEditor",
-				"EditorStyle"
+				"EditorStyle",
+				"EditorWidgets"
 			}
 		);
 	}

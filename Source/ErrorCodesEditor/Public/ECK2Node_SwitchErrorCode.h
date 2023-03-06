@@ -30,6 +30,7 @@ public:
 	virtual bool ShouldShowNodeProperties() const override { return true; }
 	virtual FString GetExportTextForPin(const UEdGraphPin* Pin) const override;
 	virtual void ValidateNodeDuringCompilation(FCompilerResultsLog& MessageLog) const override;
+	virtual void PreloadRequiredAssets() override;
 	// End of UEdGraphNode interface
 
 	// UK2Node interface

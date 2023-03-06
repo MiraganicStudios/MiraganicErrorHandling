@@ -11,4 +11,6 @@ public:
 
 private:
 	TSharedPtr<class FECGraphPinFactory_ErrorCode> ErrorCodePinFactory;
+
+	TSharedPtr<class IAssetTypeActions> ErrorCategoryAssetActions;
 };

@@ -10,8 +10,117 @@
 #include "ECErrorCategory.h"
 #include "IDetailChildrenBuilder.h"
 #include "PropertyCustomizationHelpers.h"
+#include "STextPropertyEditableTextBox.h"
 
 #define LOCTEXT_NAMESPACE "ErrorCodes_ErrorCategoryCustomization"
+
+namespace
+{
+	/**
+	 * Allows STextPropertyEditableTextBox to edit a property handle
+	 * Copied from TextCustomization.cpp, but changed 'RequestRefresh' to 'RefreshDelegate'.
+	 */
+	class FEditableTextPropertyHandle : public IEditableTextProperty
+	{
+	public:
+		FEditableTextPropertyHandle(const TSharedRef<IPropertyHandle>& InPropertyHandle, FSimpleDelegate InRefreshDelegate)
+			: PropertyHandle(InPropertyHandle)
+			, RefreshDelegate(InRefreshDelegate)
+		{
+		}
+
+		virtual bool IsMultiLineText() const override
+		{
+			return PropertyHandle->IsValidHandle() && PropertyHandle->GetMetaDataProperty()->GetBoolMetaData("MultiLine");
+		}
+
+		virtual bool IsPassword() const override
+		{
+			return PropertyHandle->IsValidHandle() && PropertyHandle->GetMetaDataProperty()->GetBoolMetaData("PasswordField");
+		}
+
+		virtual bool IsReadOnly() const override
+		{
+			return !PropertyHandle->IsValidHandle() || PropertyHandle->IsEditConst();
+		}
+
+		virtual bool IsDefaultValue() const override
+		{
+			return PropertyHandle->IsValidHandle() && !PropertyHandle->DiffersFromDefault();
+		}
+
+		virtual FText GetToolTipText() const override
+		{
+			return (PropertyHandle->IsValidHandle())
+				? PropertyHandle->GetToolTipText()
+				: FText::GetEmpty();
+		}
+
+		virtual int32 GetNumTexts() const override
+		{
+			return (PropertyHandle->IsValidHandle())
+				? PropertyHandle->GetNumPerObjectValues() 
+				: 0;
+		}
+
+		virtual FText GetText(const int32 InIndex) const override
+		{
+			if (PropertyHandle->IsValidHandle())
+			{
+				FString ObjectValue;
+				if (PropertyHandle->GetPerObjectValue(InIndex, ObjectValue) == FPropertyAccess::Success)
+				{
+					FText TextValue;
+					if (FTextStringHelper::ReadFromBuffer(*ObjectValue, TextValue))
+					{
+						return TextValue;
+					}
+				}
+			}
+
+			return FText::GetEmpty();
+		}
+
+		virtual void SetText(const int32 InIndex, const FText& InText) override
+		{
+			if (PropertyHandle->IsValidHandle())
+			{
+				FString ObjectValue;
+				FTextStringHelper::WriteToBuffer(ObjectValue, InText);
+				PropertyHandle->SetPerObjectValue(InIndex, ObjectValue);
+			}
+		}
+
+		virtual bool IsValidText(const FText& InText, FText& OutErrorMsg) const override
+		{
+			return true;
+		}
+
+#if USE_STABLE_LOCALIZATION_KEYS
+		virtual void GetStableTextId(const int32 InIndex, const ETextPropertyEditAction InEditAction, const FString& InTextSource, const FString& InProposedNamespace, const FString& InProposedKey, FString& OutStableNamespace, FString& OutStableKey) const override
+		{
+			if (PropertyHandle->IsValidHandle())
+			{
+				TArray<UPackage*> PropertyPackages;
+				PropertyHandle->GetOuterPackages(PropertyPackages);
+
+				check(PropertyPackages.IsValidIndex(InIndex));
+
+				StaticStableTextId(PropertyPackages[InIndex], InEditAction, InTextSource, InProposedNamespace, InProposedKey, OutStableNamespace, OutStableKey);
+			}
+		}
+#endif // USE_STABLE_LOCALIZATION_KEYS
+
+		virtual void RequestRefresh() override
+		{
+			RefreshDelegate.ExecuteIfBound();
+		}
+
+	private:
+		TSharedRef<IPropertyHandle> PropertyHandle;
+		FSimpleDelegate RefreshDelegate;
+	};
+}
 
 class FECErrorMapNodeBuilder : public IDetailCustomNodeBuilder, public TSharedFromThis<FECErrorMapNodeBuilder>
 {
@@ -22,7 +131,7 @@ public:
 		: DetailLayoutBuilder(&InDetailLayoutBuilder)
 		, ErrorsPropertyHandle(InPropertyHandle)
 		, MapPropertyHandle(InPropertyHandle->AsMap())
-		, NextId(1)
+		, NextId(1LL)
 	{}
 
 	virtual void GenerateHeaderRowContent(FDetailWidgetRow& NodeRow) override;
@@ -127,11 +236,21 @@ void FECErrorMapNodeBuilder::GenerateChildContent(IDetailChildrenBuilder& Childr
 		int64 ErrorId;
 		KeyHandle->GetValue(ErrorId);
 		FText IdText = FText::AsNumber(ErrorId);
+		FText IdTooltip = LOCTEXT("ErrorIdTooltip", "This error's unique id. This is internal data which you don't need to change.");
 		
 		TSharedRef<SWidget> RemoveButton = PropertyCustomizationHelpers::MakeDeleteButton(FSimpleDelegate::CreateSP(this, &FECErrorMapNodeBuilder::RemoveErrorEntryAtIndex, ElemIdx),
 			LOCTEXT("RemoveErrorCode_Tooltip", "Remove Error Code"));
 
-		ChildrenBuilder.AddCustomRow(ElemHandle->GetDefaultCategoryText())
+		TSharedRef<IEditableTextProperty> TitleTextProperty = MakeShareable(new FEditableTextPropertyHandle(TitleHandle.ToSharedRef(), OnRebuildChildren));
+		TSharedRef<IEditableTextProperty> MessageTextProperty = MakeShareable(new FEditableTextPropertyHandle(MessageHandle.ToSharedRef(), OnRebuildChildren));
+
+		FText TitleText;
+		TitleHandle->GetValue(TitleText);
+		FText MessageText;
+		MessageHandle->GetValue(MessageText);
+		FText SearchString = FText::Format(LOCTEXT("SearchStringFmt", "{0}: {1}"), {TitleText, MessageText});
+		
+		ChildrenBuilder.AddCustomRow(SearchString)
 		.NameContent()
 		[
 			SNew(SHorizontalBox)
@@ -145,17 +264,18 @@ void FECErrorMapNodeBuilder::GenerateChildContent(IDetailChildrenBuilder& Childr
 					.Justification(ETextJustify::Center)
 					.Text(IdText)
 					.IsEnabled(false)
+					.ToolTipText(IdTooltip)
 				]
 			]
 			+SHorizontalBox::Slot()
 			.Padding(2.f, 0.f)
 			.FillWidth(1.f)
 			[
-				SNew(SBox)
+				SNew(STextPropertyEditableTextBox, TitleTextProperty)
 				.MinDesiredWidth(200.f)
-				[
-					TitleHandle->CreatePropertyValueWidget()
-				]
+				.MaxDesiredHeight(600.f)
+				.Font(FEditorStyle::GetFontStyle("PropertyWindow.NormalFont"))
+				.AutoWrapText(true)
 			]
 		]
 		.ValueContent()
@@ -165,11 +285,11 @@ void FECErrorMapNodeBuilder::GenerateChildContent(IDetailChildrenBuilder& Childr
 			.MaxWidth(800.f)
 			.FillWidth(1.f)
 			[
-				SNew(SBox)
+				SNew(STextPropertyEditableTextBox, MessageTextProperty)
 				.MinDesiredWidth(600.f)
-				[
-					MessageHandle->CreatePropertyValueWidget()
-				]
+				.MaxDesiredHeight(1000.f)
+				.Font(FEditorStyle::GetFontStyle("PropertyWindow.NormalFont"))
+				.AutoWrapText(true)
 			]
 			+SHorizontalBox::Slot()
 			.Padding(2.f, 0.f, 2.f, 0.f)
@@ -217,6 +337,7 @@ void FECErrorMapNodeBuilder::AddErrorEntry()
 				TSharedPtr<IPropertyHandle> KeyHandle = Handle->GetKeyHandle();
 				KeyHandle->SetValue(NextId);
 				++NextId;
+				// We assume we'll never reach the maximum
 				check(NextId > 0);
 				
 				OnRebuildChildren.ExecuteIfBound();

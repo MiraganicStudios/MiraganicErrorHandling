@@ -6,7 +6,7 @@
 #include "UObject/Object.h"
 #include "ECErrorCategory.generated.h"
 
-USTRUCT(BlueprintType)
+USTRUCT()
 struct ERRORCODES_API FECErrorCodeData
 {
 	GENERATED_BODY()
@@ -22,20 +22,20 @@ public:
 	/**
 	 * Short title of the error.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Errors")
+	UPROPERTY(EditAnywhere, Category = "Errors")
 	FText Title;
 
 	/**
 	 * Error message displayed in logs.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Errors")
+	UPROPERTY(EditAnywhere, Category = "Errors")
 	FText Message;
 };
 
 /**
  * Represents a category of errors. Stores error messages for each error code.
  */
-UCLASS(Const, Blueprintable, BlueprintType)
+UCLASS(Const, NotBlueprintable, BlueprintType)
 class ERRORCODES_API UECErrorCategory : public UObject
 {
 	GENERATED_BODY()
@@ -49,6 +49,6 @@ public:
 	FText GetErrorTitle(int64 ErrorCode) const;
 
 	/** All errors in this category. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Errors")
+	UPROPERTY(EditAnywhere, Category = "Errors")
 	TMap<int64, FECErrorCodeData> Errors;
 };

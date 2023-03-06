@@ -22,12 +22,24 @@ enum class EECLogVerbosity : uint8
 /**
  * Function library for blueprint error handling.
  */
-UCLASS()
+UCLASS(meta=(ScriptName="ECErrorFunctionLibrary"))
 class ERRORCODES_API UECErrorFunctionLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
 public:
+	/**
+	 * Create an error code.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Errors", meta = (BlueprintThreadSafe, NativeMakeFunc))
+	static FECErrorCode MakeErrorCode(FECErrorCode ErrorCode);
+
+	/**
+	 * Break an error code, returning its Category and Code.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Errors", meta = (BlueprintThreadSafe, NativeBreakFunc))
+	static UECErrorCategory* BreakErrorCode(const FECErrorCode& ErrorCode, int64& Code);
+	
 	/**
 	 * Prints an error code's message to the output log.
 	 * @param Verbosity Verbosity of the message.
@@ -44,14 +56,48 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Errors", DisplayName = "Log Error (Message Log)")
 	static void LogErrorToMessageLog(EECLogVerbosity Verbosity, FECErrorCode Error);
 
+	/**
+	 * Check if two error codes are equal.
+	 */
 	UFUNCTION(BlueprintPure, Category = "Errors", DisplayName = "Equal (Error Code)", meta = (CompactNodeTitle = "==", BlueprintThreadSafe))
 	static bool Equal_ErrorCodeErrorCode(FECErrorCode A, FECErrorCode B);
 
+	/**
+	 * Check if two error codes are not equal.
+	 */
 	UFUNCTION(BlueprintPure, Category = "Errors", DisplayName = "Not Equal (Error Code)", meta = (CompactNodeTitle = "!=", BlueprintThreadSafe))
 	static bool NotEqual_ErrorCodeErrorCode(FECErrorCode A, FECErrorCode B);
 
-	UFUNCTION(BlueprintPure, Category = "PinOptions", meta = (BlueprintInternalUseOnly = "true"))
-	static bool NotEqual_ErrorCodeInner(FECErrorCode A, FECErrorCode B);
+	/**
+	 * Get the message for an error code.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Errors")
+	static FText GetErrorMessage(FECErrorCode ErrorCode);
+
+	/**
+	 * Get the title for an error code.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Errors")
+	static FText GetErrorTitle(FECErrorCode ErrorCode);
+
+	/**
+	 * Check if an error code is a success (no error).
+	 */
+	UFUNCTION(BlueprintPure, Category = "Errors")
+	static bool IsSuccess(FECErrorCode ErrorCode);
+
+	/**
+	 * Check if an error code is an error (it has a valid category and code).
+	 */
+	UFUNCTION(BlueprintPure, Category = "Errors")
+	static bool IsError(FECErrorCode ErrorCode);
+
+	/**
+	 * Convert an error code to a short string (category and title only).
+	 */
+	UFUNCTION(BlueprintPure, Category = "Errors", meta = (BlueprintAutocast, Keywords = "cast convert",
+		CompactNodeTitle = "->"))
+	static FString Conv_ErrorCodeToString(FECErrorCode ErrorCode);
 	
 	// /**
 	//  *  Prints a generic gameplay error to the output log.
