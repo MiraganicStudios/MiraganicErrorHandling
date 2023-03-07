@@ -25,7 +25,7 @@ public:
 	// 'MakeErrorCode(MyEnumType)' using your enum type and return the correct error code(s) and categories.
 	// Usually this involves static_casting your enum to uint64 for the code.
 	// The constructor will automatically find your overload and call it.
-	template<typename T, typename = typename TEnableIf<TIsEnumClass<T>::Value>::Type>
+	template<typename T, typename = typename TEnableIf<TIsEnumClass<T>::Value || TIsEnum<T>::Value>::Type>
 	FECErrorCode(T InCode)
 		: FECErrorCode(MakeErrorCode(InCode))
 	{}
