@@ -1,9 +1,11 @@
-﻿#include "ECErrorCodesEditorModule.h"
+﻿// Copyright 2022 Miraganic Studios. All rights reserved.
+
+#include "ECErrorCodesEditorModule.h"
 
 #include "AssetToolsModule.h"
-#include "ECAssetTypeActions_ErrorCategory.h"
 #include "ECCustomization_ErrorCategory.h"
 #include "ECCustomization_ErrorCode.h"
+#include "ECEditorLogging.h"
 #include "ECErrorCategory.h"
 #include "ECGraphPinFactory_ErrorCode.h"
 #include "EdGraphUtilities.h"
@@ -19,10 +21,6 @@ void FECErrorCodesEditorModule::StartupModule()
 		FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FECCustomization_ErrorCode::MakeInstance));
 	PropertyModule.RegisterCustomClassLayout(UECErrorCategory::StaticClass()->GetFName(),
 		FOnGetDetailCustomizationInstance::CreateStatic(&FECCustomization_ErrorCategory::MakeInstance));
-
-	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
-	ErrorCategoryAssetActions = MakeShareable(new FECAssetTypeActions_ErrorCategory());
-	AssetTools.RegisterAssetTypeActions(ErrorCategoryAssetActions.ToSharedRef());
 }
 
 void FECErrorCodesEditorModule::ShutdownModule()
@@ -39,15 +37,6 @@ void FECErrorCodesEditorModule::ShutdownModule()
 		PropertyModule.UnregisterCustomPropertyTypeLayout(FECErrorCode::StaticStruct()->GetFName());
 		PropertyModule.UnregisterCustomClassLayout(UECErrorCategory::StaticClass()->GetFName());
 	}
-
-	if (FModuleManager::Get().IsModuleLoaded("AssetTools"))
-	{
-		IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
-		if (ErrorCategoryAssetActions.IsValid())
-		{
-			AssetTools.UnregisterAssetTypeActions(ErrorCategoryAssetActions.ToSharedRef());
-		}
-	}
 }
-    
+
 IMPLEMENT_MODULE(FECErrorCodesEditorModule, ErrorCodesEditor)

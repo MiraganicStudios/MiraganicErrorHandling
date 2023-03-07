@@ -7,7 +7,7 @@
 #define EC_DEFINE_ERROR_CONVERSION(Category, Enum) \
 	FORCEINLINE FECErrorCode MakeErrorCode(Category::Enum ErrorEnum) \
 	{ \
-		return FECErrorCode(*GetDefault<Category>(), static_cast<int64>(ErrorEnum)); \
+		return FECErrorCode(Category::StaticClass(), static_cast<int64>(ErrorEnum)); \
 	}
 
 #define EC_DEFINE_ERROR(Title, Message) \

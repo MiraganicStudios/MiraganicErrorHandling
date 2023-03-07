@@ -88,7 +88,7 @@ void UECK2Node_SwitchErrorCode::PreloadRequiredAssets()
 {
 	for (const FECErrorCode& ErrorCode : PinErrorCodes)
 	{
-		UECErrorCategory* ErrorCategoryMut = const_cast<UECErrorCategory*>(ErrorCode.Category.Get());
+		UECErrorCategory* ErrorCategoryMut = const_cast<UECErrorCategory*>(ErrorCode.GetCategory());
 		PreloadObject(ErrorCategoryMut);
 	}
 	Super::PreloadRequiredAssets();

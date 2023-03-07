@@ -12,6 +12,10 @@
 #include "IPropertyUtilities.h"
 #include "PropertyCustomizationHelpers.h"
 #include "STextPropertyEditableTextBox.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
 #include "HAL/PlatformApplicationMisc.h"
 
 #define LOCTEXT_NAMESPACE "ErrorCodes_ErrorCategoryCustomization"
@@ -161,6 +165,9 @@ private:
 
 	void CopyEntryAtIndex(uint32 Index);
 	void PasteToEntryAtIndex(uint32 Index);
+
+	bool IsMapDifferentFromDefault(TSharedPtr<IPropertyHandle>) const;
+	void ResetMapToDefault(TSharedPtr<IPropertyHandle>);
 	
 	IDetailLayoutBuilder* DetailLayoutBuilder;
 	TSharedPtr<IPropertyHandle> ErrorsPropertyHandle;
@@ -179,8 +186,14 @@ void FECErrorMapNodeBuilder::GenerateHeaderRowContent(FDetailWidgetRow& NodeRow)
 		LOCTEXT("AddErrorCodeTooltip", "Add Error Code"));
 	TSharedRef<SWidget> ClearButton = PropertyCustomizationHelpers::MakeEmptyButton(FSimpleDelegate::CreateSP(this, &FECErrorMapNodeBuilder::ClearErrorEntries),
 		LOCTEXT("ClearErrorCodeTooltip", "Remove All Error Codes"));
+
+	FResetToDefaultOverride ResetToDefaultOverride = FResetToDefaultOverride::Create(
+		FIsResetToDefaultVisible::CreateSP(this, &FECErrorMapNodeBuilder::IsMapDifferentFromDefault),
+		FResetToDefaultHandler::CreateSP(this, &FECErrorMapNodeBuilder::ResetMapToDefault));
+	
 	NodeRow
 		.FilterString(ErrorsPropertyHandle->GetPropertyDisplayName())
+		.OverrideResetToDefault(ResetToDefaultOverride)
 		[
 			SNew(SHorizontalBox)
 			+SHorizontalBox::Slot()
@@ -401,7 +414,6 @@ void FECErrorMapNodeBuilder::ClearErrorEntries()
 	{
 		PropertyUtilities.Pin()->ForceRefresh();
 	}
-	//OnRebuildChildren.ExecuteIfBound();
 }
 
 void FECErrorMapNodeBuilder::RemoveErrorEntryAtIndex(uint32 Index)
@@ -446,6 +458,20 @@ void FECErrorMapNodeBuilder::PasteToEntryAtIndex(uint32 Index)
 	FPlatformApplicationMisc::ClipboardPaste(ClipboardStr);
 	
 	EntryPropertyHandle->SetValueFromFormattedString(ClipboardStr);
+}
+
+bool FECErrorMapNodeBuilder::IsMapDifferentFromDefault(TSharedPtr<IPropertyHandle> PropertyHandle) const
+{
+	return ErrorsPropertyHandle->DiffersFromDefault();
+}
+
+void FECErrorMapNodeBuilder::ResetMapToDefault(TSharedPtr<IPropertyHandle> PropertyHandle)
+{
+	ErrorsPropertyHandle->ResetToDefault();
+	if (PropertyUtilities.IsValid())
+	{
+		PropertyUtilities.Pin()->ForceRefresh();
+	}
 }
 
 TSharedRef<IDetailCustomization> FECCustomization_ErrorCategory::MakeInstance()

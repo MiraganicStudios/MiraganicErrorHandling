@@ -24,7 +24,7 @@ FString GetErrorCodeDisplayName(const FECErrorCode& ErrorCode)
 	}
 	else
 	{
-		return FString::Printf(TEXT("%s:%s"), *ErrorCode.Category->GetTrimmedName(), *ErrorCode.GetErrorTitle().ToString());
+		return FString::Printf(TEXT("%s:%s"), *ErrorCode.GetCategory()->GetTrimmedName(), *ErrorCode.GetErrorTitle().ToString());
 	}
 }
 
@@ -37,7 +37,7 @@ FText GetErrorCodeDisplayNameText(const FECErrorCode& ErrorCode)
 	else
 	{
 		return FText::Format(LOCTEXT("ErrorCodeWidget_TooltipFormat", "{0}:{1}"),
-		{FText::FromString(ErrorCode.Category->GetTrimmedName()), ErrorCode.GetErrorTitle()});
+		{FText::FromString(ErrorCode.GetCategory()->GetTrimmedName()), ErrorCode.GetErrorTitle()});
 	}
 }
 
@@ -50,7 +50,7 @@ FText GetErrorCodeTooltip(const FECErrorCode& ErrorCode)
 	else
 	{
 		return FText::Format(LOCTEXT("ErrorCodeWidget_TooltipFormat", "{0}:{1}\n{2}"),
-		{FText::FromString(ErrorCode.Category->GetTrimmedName()), ErrorCode.GetErrorTitle(),
+		{FText::FromString(ErrorCode.GetCategory()->GetTrimmedName()), ErrorCode.GetErrorTitle(),
 		ErrorCode.GetErrorMessage()});
 	}
 }
@@ -147,7 +147,7 @@ public:
 		}
 		else
 		{
-			OutSearchTerms.Add(FString::Printf(TEXT("%s:%s\n%s"), *ErrorCode.Category->GetTrimmedName(),
+			OutSearchTerms.Add(FString::Printf(TEXT("%s:%s\n%s"), *ErrorCode.GetCategory()->GetTrimmedName(),
 				*ErrorCode.GetErrorTitle().ToString(), *ErrorCode.GetErrorMessage().ToString()));
 		}
 	}
@@ -241,39 +241,6 @@ void SECErrorCodeListWidget::UpdateErrorCodeOptions()
 
 	ListRows.Emplace(SuccessCode);
 
-	// Gather loaded and unloaded ErrorCategory blueprints
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-	TArray<FAssetData> BlueprintList;
-	FARFilter AssetFilter;
-	AssetFilter.ClassNames.Add(UECErrorCategory::StaticClass()->GetFName());
-	AssetFilter.bRecursiveClasses = true;
-	AssetRegistryModule.Get().GetAssets(AssetFilter, BlueprintList);
-	for (const FAssetData& AssetData : BlueprintList)
-	{
-		if (!AssetData.IsInstanceOf(UECErrorCategory::StaticClass()))
-		{
-			continue;
-		}
-
-		const UECErrorCategory* Category = Cast<UECErrorCategory>(AssetData.FastGetAsset(true));
-		if (!Category)
-		{
-			continue;
-		}
-		
-		for (const auto& ErrorCodePair : Category->Errors)
-		{
-			FECErrorCode ErrorCode(*Category, ErrorCodePair.Key);
-			if (SearchFilter.IsValid() && !SearchFilter->PassesFilter(ErrorCode))
-			{
-				continue;
-			}
-
-			TSharedPtr<FECErrorCode> Entry = MakeShareable(new FECErrorCode(ErrorCode));
-			ListRows.Emplace(Entry);
-		}
-	}
-
 	// Gather all C++ classes
 	for (TObjectIterator<UClass> ClassIt; ClassIt; ++ClassIt)
 	{
@@ -283,7 +250,7 @@ void SECErrorCodeListWidget::UpdateErrorCodeOptions()
 			continue;
 		}
 
-		// BP classes were already added
+		// BP classes will be added below
 		if (Cast<UBlueprintGeneratedClass>(Class))
 		{
 			continue;
@@ -297,7 +264,7 @@ void SECErrorCodeListWidget::UpdateErrorCodeOptions()
 
 		for (const auto& ErrorCodePair : CategoryCDO->Errors)
 		{
-			FECErrorCode ErrorCode(*CategoryCDO, ErrorCodePair.Key);
+			FECErrorCode ErrorCode(Class, ErrorCodePair.Key);
 			if (SearchFilter.IsValid() && !SearchFilter->PassesFilter(ErrorCode))
 			{
 				continue;
@@ -307,6 +274,95 @@ void SECErrorCodeListWidget::UpdateErrorCodeOptions()
 			ListRows.Emplace(Entry);
 		}
 	}
+
+	// Gather loaded and unloaded ErrorCategory blueprints
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+	TArray<FAssetData> BlueprintList;
+	FARFilter AssetFilter;
+	AssetFilter.ClassNames.Add(UBlueprint::StaticClass()->GetFName());
+	//AssetFilter.ClassNames.Add(UBlueprintGeneratedClass::StaticClass()->GetFName());
+	AssetFilter.bRecursiveClasses = true;
+	AssetRegistryModule.Get().GetAssets(AssetFilter, BlueprintList);
+	UClass* ErrorCategoryClass = UECErrorCategory::StaticClass();
+	// Tag added by blueprints
+	const FString ErrorCategoryNativeClassName = FString::Printf(TEXT("%s'%s'"), *ErrorCategoryClass->GetClass()->GetName(),
+		*ErrorCategoryClass->GetPathName());
+	for (const FAssetData& AssetData : BlueprintList)
+	{
+		// Filter by tag so we don't load every blueprint
+		FString NativeParentClassName;
+		const bool bFoundTag = AssetData.GetTagValue(FBlueprintTags::NativeParentClassPath, NativeParentClassName);
+		if (!bFoundTag || NativeParentClassName != ErrorCategoryNativeClassName)
+		{
+			continue;
+		}
+		
+		UBlueprint* Blueprint = Cast<UBlueprint>(AssetData.FastGetAsset(true));
+		if (!IsValid(Blueprint))
+		{
+			continue;
+		}
+		
+		UBlueprintGeneratedClass* Class = Cast<UBlueprintGeneratedClass>(Blueprint->GeneratedClass);
+		if (!IsValid(Class) || !Class->IsChildOf<UECErrorCategory>() ||
+			Class->HasAnyClassFlags(CLASS_Deprecated | CLASS_NewerVersionExists | CLASS_Hidden) ||
+			FKismetEditorUtilities::IsClassABlueprintSkeleton(Class))
+		{
+			continue;
+		}
+	
+		const UECErrorCategory* CategoryCDO = Class->GetDefaultObject<UECErrorCategory>();
+		if (!CategoryCDO)
+		{
+			continue;
+		}
+		
+		for (const auto& ErrorCodePair : CategoryCDO->Errors)
+		{
+			FECErrorCode ErrorCode(Class, ErrorCodePair.Key);
+			if (SearchFilter.IsValid() && !SearchFilter->PassesFilter(ErrorCode))
+			{
+				continue;
+			}
+	
+			TSharedPtr<FECErrorCode> Entry = MakeShareable(new FECErrorCode(ErrorCode));
+			ListRows.Emplace(Entry);
+		}
+	}
+
+	// Old impl using assets; not viable for C++ definitions
+	// Gather loaded and unloaded ErrorCategory blueprints
+	// FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+	// TArray<FAssetData> BlueprintList;
+	// FARFilter AssetFilter;
+	// AssetFilter.ClassNames.Add(UECErrorCategory::StaticClass()->GetFName());
+	// AssetFilter.bRecursiveClasses = true;
+	// AssetRegistryModule.Get().GetAssets(AssetFilter, BlueprintList);
+	// for (const FAssetData& AssetData : BlueprintList)
+	// {
+	// 	if (!AssetData.IsInstanceOf(UECErrorCategory::StaticClass()))
+	// 	{
+	// 		continue;
+	// 	}
+	//
+	// 	const UECErrorCategory* Category = Cast<UECErrorCategory>(AssetData.FastGetAsset(true));
+	// 	if (!Category)
+	// 	{
+	// 		continue;
+	// 	}
+	// 	
+	// 	for (const auto& ErrorCodePair : Category->Errors)
+	// 	{
+	// 		FECErrorCode ErrorCode(*Category, ErrorCodePair.Key);
+	// 		if (SearchFilter.IsValid() && !SearchFilter->PassesFilter(ErrorCode))
+	// 		{
+	// 			continue;
+	// 		}
+	//
+	// 		TSharedPtr<FECErrorCode> Entry = MakeShareable(new FECErrorCode(ErrorCode));
+	// 		ListRows.Emplace(Entry);
+	// 	}
+	// }
 
 	// Sort all error codes; always leave 'Success' at the top
 	if (ListRows.Num() > 1)

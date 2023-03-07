@@ -20,8 +20,8 @@ UECErrorCategory* UECErrorFunctionLibrary::BreakErrorCode(const FECErrorCode& Er
 	}
 	else
 	{
-		Code = ErrorCode.Code;
-		return const_cast<UECErrorCategory*>(ErrorCode.Category.Get());
+		Code = ErrorCode.GetCode();
+		return const_cast<UECErrorCategory*>(ErrorCode.GetCategory());
 	}
 }
 

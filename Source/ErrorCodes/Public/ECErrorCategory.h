@@ -35,7 +35,7 @@ public:
 /**
  * Represents a category of errors. Stores error messages for each error code.
  */
-UCLASS(Const, NotBlueprintable, BlueprintType)
+UCLASS(Const, Blueprintable, BlueprintType)
 class ERRORCODES_API UECErrorCategory : public UObject
 {
 	GENERATED_BODY()

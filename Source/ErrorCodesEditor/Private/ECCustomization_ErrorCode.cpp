@@ -20,8 +20,8 @@ void FECCustomization_ErrorCode::CustomizeHeader(TSharedRef<IPropertyHandle> Pro
 	)
 {
 	StructProperty = PropertyHandle;
-	CategoryProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FECErrorCode, Category));
-	CodeProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FECErrorCode, Code));
+	CategoryProperty = PropertyHandle->GetChildHandle(FECErrorCode::GetPropertyName_Category());
+	CodeProperty = PropertyHandle->GetChildHandle(FECErrorCode::GetPropertyName_Code());
 
 	// E.g., if the property receives a paste, we must sync the dropdown widget.
 	FSimpleDelegate OnErrorCodeChanged = FSimpleDelegate::CreateSP(this,
@@ -29,14 +29,14 @@ void FECCustomization_ErrorCode::CustomizeHeader(TSharedRef<IPropertyHandle> Pro
 	PropertyHandle->SetOnPropertyValueChanged(OnErrorCodeChanged);
 
 	FECErrorCode DefaultValue;
-	UObject* CategoryObj = nullptr;
+	UObject* CategoryClassObj = nullptr;
 	int64 Code = 0;
-	CategoryProperty->GetValue(CategoryObj);
+	CategoryProperty->GetValue(CategoryClassObj);
 	CodeProperty->GetValue(Code);
-	const UECErrorCategory* Category = Cast<UECErrorCategory>(CategoryObj);
-	if (Category && Code > 0)
+	UClass* CategoryClass = Cast<UClass>(CategoryClassObj);
+	if (CategoryClass && CategoryClass->IsChildOf<UECErrorCategory>() && Code > 0)
 	{
-		DefaultValue = FECErrorCode(*Category, Code);
+		DefaultValue = FECErrorCode(CategoryClass, Code);
 	}
 
 	HeaderRow

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Templates/SubclassOf.h"
 #include "ECErrorCode.generated.h"
 
 class UECErrorCategory;
@@ -19,8 +20,13 @@ struct ERRORCODES_API FECErrorCode
 public:
 	// Default construct to a 'No Error' code (AKA 'Success').
 	FECErrorCode();
+
 	// Construct an error code using a category and a code.
-	FECErrorCode(const UECErrorCategory& InCategory, int64 InCode);
+	//FECErrorCode(const UECErrorCategory& InCategory, int64 InCode);
+
+	// Construct an error code using a category class and a code.
+	FECErrorCode(const TSubclassOf<UECErrorCategory>& InCategory, int64 InCode);
+	
 	// Construct an error code using an error enum. To use this constructor, create an overload of
 	// 'MakeErrorCode(MyEnumType)' using your enum type and return the correct error code(s) and categories.
 	// Usually this involves static_casting your enum to uint64 for the code.
@@ -47,22 +53,27 @@ public:
 	// Construct a 'Success' error code.
 	static FECErrorCode Success();
 
-	FORCEINLINE bool operator==(const FECErrorCode& Other) const
-	{
-		return (IsSuccess() && Other.IsSuccess()) || (Category == Other.Category && Code == Other.Code);
-	}
+	const UECErrorCategory* GetCategory() const;
+	int64 GetCode() const { return Code; }
+
+	bool operator==(const FECErrorCode& Other) const;
 	FORCEINLINE bool operator!=(const FECErrorCode& Other) const
 	{
 		return !(*this == Other);
 	}
 	FORCEINLINE friend uint32 GetTypeHash(const FECErrorCode& Elem)
 	{
-		return HashCombineFast(GetTypeHash(Elem.Category), GetTypeHash(Elem.Code));
+		return HashCombineFast(GetTypeHash(Elem.CategoryClass), GetTypeHash(Elem.Code));
 	}
+
+	static FName GetPropertyName_Category();
+	static FName GetPropertyName_Code();
+
+protected:
 
 	// This error's category object.
 	UPROPERTY(EditAnywhere, Category = "Error")
-	TObjectPtr<const UECErrorCategory> Category;
+	TSubclassOf<UECErrorCategory> CategoryClass;
 
 	// The code for this error.
 	UPROPERTY(EditAnywhere, Category = "Error")

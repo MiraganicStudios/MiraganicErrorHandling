@@ -5,12 +5,17 @@
 #include "ECErrorCategory.h"
 
 FECErrorCode::FECErrorCode()
-	: Category(nullptr)
+	: CategoryClass(nullptr)
 	, Code(0)
 {}
 
-FECErrorCode::FECErrorCode(const UECErrorCategory& InCategory, int64 InCode)
-	: Category(&InCategory)
+// FECErrorCode::FECErrorCode(const UECErrorCategory& InCategory, int64 InCode)
+// 	: Category(&InCategory)
+// 	, Code(InCode)
+// {}
+
+FECErrorCode::FECErrorCode(const TSubclassOf<UECErrorCategory>& InCategory, int64 InCode)
+	: CategoryClass(InCategory)
 	, Code(InCode)
 {}
 
@@ -21,7 +26,7 @@ bool FECErrorCode::IsSuccess() const
 
 bool FECErrorCode::IsError() const
 {
-	return IsValid(Category) && Code != 0;
+	return IsValid(CategoryClass) && Code != 0;
 }
 
 FString FECErrorCode::GetTrimmedCategoryName() const
@@ -31,6 +36,7 @@ FString FECErrorCode::GetTrimmedCategoryName() const
 		return FString();
 	}
 
+	const UECErrorCategory* Category = CategoryClass->GetDefaultObject<UECErrorCategory>();
 	return Category->GetTrimmedName();
 }
 
@@ -41,6 +47,7 @@ FText FECErrorCode::GetErrorMessage() const
 		return FText();
 	}
 
+	const UECErrorCategory* Category = CategoryClass->GetDefaultObject<UECErrorCategory>();
 	return Category->GetErrorMessage(Code);
 }
 
@@ -51,6 +58,7 @@ FText FECErrorCode::GetErrorTitle() const
 		return FText();
 	}
 	
+	const UECErrorCategory* Category = CategoryClass->GetDefaultObject<UECErrorCategory>();
 	return Category->GetErrorTitle(Code);
 }
 
@@ -58,6 +66,7 @@ FString FECErrorCode::ToShortString() const
 {
 	if (IsError())
 	{
+		const UECErrorCategory* Category = CategoryClass->GetDefaultObject<UECErrorCategory>();
 		return FString::Printf(TEXT("%s:%s"), *Category->GetTrimmedName(), *Category->GetErrorTitle(Code).ToString());
 	}
 	else
@@ -70,6 +79,7 @@ FString FECErrorCode::ToString() const
 {
 	if (IsError())
 	{
+		const UECErrorCategory* Category = CategoryClass->GetDefaultObject<UECErrorCategory>();
 		return FString::Printf(TEXT("%s:%s: %s"), *Category->GetTrimmedName(),
 			*Category->GetErrorTitle(Code).ToString(), *Category->GetErrorMessage(Code).ToString());
 	}
@@ -82,4 +92,29 @@ FString FECErrorCode::ToString() const
 FECErrorCode FECErrorCode::Success()
 {
 	return FECErrorCode();
+}
+
+const UECErrorCategory* FECErrorCode::GetCategory() const
+{
+	if (!IsValid(CategoryClass))
+	{
+		return nullptr;
+	}
+	
+	return CategoryClass->GetDefaultObject<UECErrorCategory>();
+}
+
+bool FECErrorCode::operator==(const FECErrorCode& Other) const
+{
+	return (IsSuccess() && Other.IsSuccess()) || (CategoryClass == Other.CategoryClass && Code == Other.Code);
+}
+
+FName FECErrorCode::GetPropertyName_Category()
+{
+	return GET_MEMBER_NAME_CHECKED(FECErrorCode, CategoryClass);
+}
+
+FName FECErrorCode::GetPropertyName_Code()
+{
+	return GET_MEMBER_NAME_CHECKED(FECErrorCode, Code);
 }
