@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "IDetailCustomization.h"
 
-class FECCustomization_ErrorCategory : public IDetailCustomization
+class IDetailCustomNodeBuilder;
+
+class FECCustomization_ErrorCategory : public IDetailCustomization //, public FEditorUndoClient
 {
 public:
 	static TSharedRef<IDetailCustomization> MakeInstance();

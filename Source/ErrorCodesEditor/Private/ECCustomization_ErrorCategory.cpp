@@ -9,8 +9,10 @@
 #include "ECEditorLogging.h"
 #include "ECErrorCategory.h"
 #include "IDetailChildrenBuilder.h"
+#include "IPropertyUtilities.h"
 #include "PropertyCustomizationHelpers.h"
 #include "STextPropertyEditableTextBox.h"
+#include "HAL/PlatformApplicationMisc.h"
 
 #define LOCTEXT_NAMESPACE "ErrorCodes_ErrorCategoryCustomization"
 
@@ -122,7 +124,7 @@ namespace
 	};
 }
 
-class FECErrorMapNodeBuilder : public IDetailCustomNodeBuilder, public TSharedFromThis<FECErrorMapNodeBuilder>
+class FECErrorMapNodeBuilder : public IDetailCustomNodeBuilder, public TSharedFromThis<FECErrorMapNodeBuilder>, public FEditorUndoClient
 {
 public:
 	FECErrorMapNodeBuilder(IDetailLayoutBuilder& InDetailLayoutBuilder,
@@ -131,27 +133,44 @@ public:
 		: DetailLayoutBuilder(&InDetailLayoutBuilder)
 		, ErrorsPropertyHandle(InPropertyHandle)
 		, MapPropertyHandle(InPropertyHandle->AsMap())
+		, PropertyUtilities(InDetailLayoutBuilder.GetPropertyUtilities())
 		, NextId(1LL)
-	{}
+		, bRefreshPending(false)
+	{
+		if (GEditor)
+		{
+			GEditor->RegisterForUndo(this);
+		}
+	}
 
 	virtual void GenerateHeaderRowContent(FDetailWidgetRow& NodeRow) override;
 	virtual void GenerateChildContent(IDetailChildrenBuilder& ChildrenBuilder) override;
+	virtual bool RequiresTick() const override { return true; }
+	virtual void Tick(float DeltaTime) override;
 	virtual FName GetName() const override;
 	virtual TSharedPtr<IPropertyHandle> GetPropertyHandle() const override;
 	virtual void SetOnRebuildChildren(FSimpleDelegate InOnRegenerateChildren) override;
+
+	virtual void PostUndo(bool bSuccess) override;
+	virtual void PostRedo(bool bSuccess) override;
 
 private:
 	void AddErrorEntry();
 	void ClearErrorEntries();
 	void RemoveErrorEntryAtIndex(uint32 Index);
+
+	void CopyEntryAtIndex(uint32 Index);
+	void PasteToEntryAtIndex(uint32 Index);
 	
 	IDetailLayoutBuilder* DetailLayoutBuilder;
 	TSharedPtr<IPropertyHandle> ErrorsPropertyHandle;
 	TSharedPtr<IPropertyHandleMap> MapPropertyHandle;
+	TWeakPtr<IPropertyUtilities> PropertyUtilities;
 
 	FSimpleDelegate OnRebuildChildren;
 
 	int64 NextId;
+	bool bRefreshPending;
 };
 
 void FECErrorMapNodeBuilder::GenerateHeaderRowContent(FDetailWidgetRow& NodeRow)
@@ -190,29 +209,11 @@ void FECErrorMapNodeBuilder::GenerateHeaderRowContent(FDetailWidgetRow& NodeRow)
 
 void FECErrorMapNodeBuilder::GenerateChildContent(IDetailChildrenBuilder& ChildrenBuilder)
 {
+	// Map property handle will be invalidated if emptied, etc.
+	MapPropertyHandle = ErrorsPropertyHandle->AsMap();
+	
 	uint32 NumElems = 0;
 	MapPropertyHandle->GetNumElements(NumElems);
-
-	for (uint32 ElemIdx = 0; ElemIdx < NumElems; ++ElemIdx)
-	{
-		TSharedPtr<IPropertyHandle> ElemHandle = ErrorsPropertyHandle->GetChildHandle(ElemIdx);
-		if (!ElemHandle.IsValid())
-		{
-			UE_LOG(LogErrorCodesEditor, Error, TEXT("%s: Invalid handle"), *FString(__FUNCTION__));
-			continue;
-		}
-		
-		TSharedPtr<IPropertyHandle> KeyHandle = ElemHandle->GetKeyHandle();
-		if (!KeyHandle.IsValid())
-		{
-			UE_LOG(LogErrorCodesEditor, Error, TEXT("%s: Invalid handle"), *FString(__FUNCTION__));
-			continue;
-		}
-
-		int64 Id = 0;
-		KeyHandle->GetValue(Id);
-		NextId = FMath::Max(NextId, Id + 1);
-	}
 	
 	for (uint32 ElemIdx = 0; ElemIdx < NumElems; ++ElemIdx)
 	{
@@ -235,6 +236,8 @@ void FECErrorMapNodeBuilder::GenerateChildContent(IDetailChildrenBuilder& Childr
 
 		int64 ErrorId;
 		KeyHandle->GetValue(ErrorId);
+		// Set next id to the maximum + 1 among existing ids
+		NextId = FMath::Max(NextId, ErrorId + 1);
 		FText IdText = FText::AsNumber(ErrorId);
 		FText IdTooltip = LOCTEXT("ErrorIdTooltip", "This error's unique id. This is internal data which you don't need to change.");
 		
@@ -249,22 +252,42 @@ void FECErrorMapNodeBuilder::GenerateChildContent(IDetailChildrenBuilder& Childr
 		FText MessageText;
 		MessageHandle->GetValue(MessageText);
 		FText SearchString = FText::Format(LOCTEXT("SearchStringFmt", "{0}: {1}"), {TitleText, MessageText});
+
+		FUIAction CopyAction(FExecuteAction::CreateSP(this, &FECErrorMapNodeBuilder::CopyEntryAtIndex, ElemIdx));
+		FUIAction PasteAction(FExecuteAction::CreateSP(this, &FECErrorMapNodeBuilder::PasteToEntryAtIndex, ElemIdx));
+
+		const FEditableTextBoxStyle& TextBoxStyle = FCoreStyle::Get().GetWidgetStyle<FEditableTextBoxStyle>("NormalEditableTextBox");
 		
 		ChildrenBuilder.AddCustomRow(SearchString)
+		.CopyAction(CopyAction)
+		.PasteAction(PasteAction)
 		.NameContent()
 		[
 			SNew(SHorizontalBox)
 			+SHorizontalBox::Slot()
+			.Padding(2.f, 2.f)
 			.AutoWidth()
 			[
 				SNew(SBox)
 				.WidthOverride(50.f)
 				[
-					SNew(SEditableTextBox)
-					.Justification(ETextJustify::Center)
-					.Text(IdText)
-					.IsEnabled(false)
-					.ToolTipText(IdTooltip)
+					SNew(SBorder)
+					.BorderImage(&TextBoxStyle.BackgroundImageReadOnly)
+					.BorderBackgroundColor(TextBoxStyle.BackgroundColor)
+					.ForegroundColor(TextBoxStyle.ReadOnlyForegroundColor)
+					[
+						SNew(SBox)
+						.VAlign(VAlign_Center)
+						[
+							SNew(STextBlock)
+							.Justification(ETextJustify::Center)
+							.Text(IdText)
+							.IsEnabled(false)
+							.Font(TextBoxStyle.Font)
+							.ToolTipText(IdTooltip)
+						]
+					]
+					
 				]
 			]
 			+SHorizontalBox::Slot()
@@ -303,6 +326,15 @@ void FECErrorMapNodeBuilder::GenerateChildContent(IDetailChildrenBuilder& Childr
 	}
 }
 
+void FECErrorMapNodeBuilder::Tick(float DeltaTime)
+{
+	if (bRefreshPending && PropertyUtilities.IsValid())
+	{
+		PropertyUtilities.Pin()->ForceRefresh();
+		bRefreshPending = false;
+	}
+}
+
 FName FECErrorMapNodeBuilder::GetName() const
 {
 	return TEXT("Errors");
@@ -316,6 +348,18 @@ TSharedPtr<IPropertyHandle> FECErrorMapNodeBuilder::GetPropertyHandle() const
 void FECErrorMapNodeBuilder::SetOnRebuildChildren(FSimpleDelegate InOnRegenerateChildren)
 {
 	OnRebuildChildren = InOnRegenerateChildren;
+}
+
+void FECErrorMapNodeBuilder::PostUndo(bool bSuccess)
+{
+	// Refresh on next tick; refreshing here causes infinite recursion
+	bRefreshPending = true;
+}
+
+void FECErrorMapNodeBuilder::PostRedo(bool bSuccess)
+{
+	// Refresh on next tick; refreshing here causes infinite recursion
+	bRefreshPending = true;
 }
 
 void FECErrorMapNodeBuilder::AddErrorEntry()
@@ -353,13 +397,55 @@ void FECErrorMapNodeBuilder::AddErrorEntry()
 void FECErrorMapNodeBuilder::ClearErrorEntries()
 {
 	MapPropertyHandle->Empty();
-	OnRebuildChildren.ExecuteIfBound();
+	if (PropertyUtilities.IsValid())
+	{
+		PropertyUtilities.Pin()->ForceRefresh();
+	}
+	//OnRebuildChildren.ExecuteIfBound();
 }
 
 void FECErrorMapNodeBuilder::RemoveErrorEntryAtIndex(uint32 Index)
 {
 	MapPropertyHandle->DeleteItem(Index);
 	OnRebuildChildren.ExecuteIfBound();
+}
+
+void FECErrorMapNodeBuilder::CopyEntryAtIndex(uint32 Index)
+{
+	uint32 NumElems;
+	MapPropertyHandle->GetNumElements(NumElems);
+	if (Index >= NumElems)
+	{
+		return;
+	}
+
+	TSharedPtr<IPropertyHandle> EntryPropertyHandle = ErrorsPropertyHandle->GetChildHandle(Index);
+	FECErrorCodeData DefaultData;
+	void* EntryDataPtr = nullptr;
+	EntryPropertyHandle->GetValueData(EntryDataPtr);
+	check(EntryDataPtr != nullptr);
+	FString EntryDataStr;
+	FECErrorCodeData::StaticStruct()->ExportText(EntryDataStr, EntryDataPtr, &DefaultData, nullptr, PPF_Copy, nullptr);
+	FPlatformApplicationMisc::ClipboardCopy(*EntryDataStr);
+}
+
+void FECErrorMapNodeBuilder::PasteToEntryAtIndex(uint32 Index)
+{
+	uint32 NumElems;
+	MapPropertyHandle->GetNumElements(NumElems);
+	if (Index >= NumElems)
+	{
+		return;
+	}
+
+	TSharedPtr<IPropertyHandle> EntryPropertyHandle = ErrorsPropertyHandle->GetChildHandle(Index);
+	void* EntryDataPtr = nullptr;
+	EntryPropertyHandle->GetValueData(EntryDataPtr);
+	check(EntryDataPtr != nullptr);
+	FString ClipboardStr;
+	FPlatformApplicationMisc::ClipboardPaste(ClipboardStr);
+	
+	EntryPropertyHandle->SetValueFromFormattedString(ClipboardStr);
 }
 
 TSharedRef<IDetailCustomization> FECCustomization_ErrorCategory::MakeInstance()
@@ -375,7 +461,7 @@ void FECCustomization_ErrorCategory::CustomizeDetails(IDetailLayoutBuilder& Deta
 	
 	IDetailCategoryBuilder& Category = DetailBuilder.EditCategory("Errors");
 	const FSlateFontInfo DetailFontInfo = IDetailLayoutBuilder::GetDetailFont();
-
+	
 	// Custom builder widget for errors
 	const TSharedRef<FECErrorMapNodeBuilder> ErrorMapNodeBuilder = MakeShareable(new FECErrorMapNodeBuilder(DetailBuilder, ErrorsPropertyHandle));
 	Category.AddCustomBuilder(ErrorMapNodeBuilder);

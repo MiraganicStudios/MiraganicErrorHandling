@@ -17,9 +17,9 @@ void FECErrorCodesEditorModule::StartupModule()
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyModule.RegisterCustomPropertyTypeLayout(FECErrorCode::StaticStruct()->GetFName(),
 		FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FECCustomization_ErrorCode::MakeInstance));
-	PropertyModule.RegisterCustomClassLayout("ECErrorCategory",
+	PropertyModule.RegisterCustomClassLayout(UECErrorCategory::StaticClass()->GetFName(),
 		FOnGetDetailCustomizationInstance::CreateStatic(&FECCustomization_ErrorCategory::MakeInstance));
-	
+
 	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
 	ErrorCategoryAssetActions = MakeShareable(new FECAssetTypeActions_ErrorCategory());
 	AssetTools.RegisterAssetTypeActions(ErrorCategoryAssetActions.ToSharedRef());
@@ -37,6 +37,7 @@ void FECErrorCodesEditorModule::ShutdownModule()
 	{
 		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
 		PropertyModule.UnregisterCustomPropertyTypeLayout(FECErrorCode::StaticStruct()->GetFName());
+		PropertyModule.UnregisterCustomClassLayout(UECErrorCategory::StaticClass()->GetFName());
 	}
 
 	if (FModuleManager::Get().IsModuleLoaded("AssetTools"))

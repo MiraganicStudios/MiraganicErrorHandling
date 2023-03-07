@@ -27,7 +27,8 @@ public class ErrorCodesEditor : ModuleRules
 				"InputCore",
 				"PropertyEditor",
 				"EditorStyle",
-				"EditorWidgets"
+				"EditorWidgets",
+				"ApplicationCore"
 			}
 		);
 	}
