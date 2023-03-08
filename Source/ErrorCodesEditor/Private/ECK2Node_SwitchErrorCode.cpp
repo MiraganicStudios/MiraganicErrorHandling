@@ -205,7 +205,11 @@ void UECK2Node_SwitchErrorCode::CreateCasePins()
 	{
 		if (PinErrorCodes[Index].IsError())
 		{
-			PinNames[Index] = FName(*PinErrorCodes[Index].GetErrorTitle().ToString());
+			PinNames[Index] = FName(*PinErrorCodes[Index].GetTitle().ToString());
+		}
+		else
+		{
+			PinNames[Index] = TEXT("[INVALID]");
 		}
 
 		UEdGraphPin* CasePin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, PinNames[Index]);
@@ -213,8 +217,16 @@ void UECK2Node_SwitchErrorCode::CreateCasePins()
 		if (PinErrorCodes[Index].IsError())
 		{
 			// Include error message and category in tooltip
-			CasePin->PinToolTip = FString::Printf(TEXT("%s:%s%s%s"), *PinErrorCodes[Index].GetTrimmedCategoryName(),
-				*PinErrorCodes[Index].GetErrorTitle().ToString(), LINE_TERMINATOR, *PinErrorCodes[Index].GetErrorMessage().ToString());
+			CasePin->PinToolTip = FString::Format(TEXT("{0}:{1}{2}{3}"), {*PinErrorCodes[Index].GetTrimmedCategoryName(),
+				*PinErrorCodes[Index].GetTitle().ToString(), LINE_TERMINATOR, *PinErrorCodes[Index].GetMessage().ToString()});
+		}
+		else if (PinErrorCodes[Index].IsSuccess())
+		{
+			CasePin->PinToolTip = TEXT("Invalid error code: Success (Cannot add extra 'Success' pins).");
+		}
+		else
+		{
+			CasePin->PinToolTip = PinErrorCodes[Index].ToString();
 		}
 	}
 }

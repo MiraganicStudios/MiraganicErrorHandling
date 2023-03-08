@@ -18,41 +18,25 @@ BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 FString GetErrorCodeDisplayName(const FECErrorCode& ErrorCode)
 {
-	if (ErrorCode.IsSuccess())
-	{
-		return TEXT("Success");
-	}
-	else
-	{
-		return FString::Printf(TEXT("%s:%s"), *ErrorCode.GetCategory()->GetTrimmedName(), *ErrorCode.GetErrorTitle().ToString());
-	}
+	return ErrorCode.ToShortString();
 }
 
 FText GetErrorCodeDisplayNameText(const FECErrorCode& ErrorCode)
 {
-	if (ErrorCode.IsSuccess())
+	if (ErrorCode.IsError())
 	{
-		return LOCTEXT("ErrorCodeWidget_Success", "Success");
+		return FText::Format(LOCTEXT("ErrorCodeWidget_TooltipFormat", "{0}:{1}"),
+		{FText::FromString(ErrorCode.GetCategory()->GetTrimmedName()), ErrorCode.GetTitle()});
 	}
 	else
 	{
-		return FText::Format(LOCTEXT("ErrorCodeWidget_TooltipFormat", "{0}:{1}"),
-		{FText::FromString(ErrorCode.GetCategory()->GetTrimmedName()), ErrorCode.GetErrorTitle()});
+		return ErrorCode.GetTitle();
 	}
 }
 
 FText GetErrorCodeTooltip(const FECErrorCode& ErrorCode)
 {
-	if (ErrorCode.IsSuccess())
-	{
-		return LOCTEXT("ErrorCodeWidget_Success", "Success");
-	}
-	else
-	{
-		return FText::Format(LOCTEXT("ErrorCodeWidget_TooltipFormat", "{0}:{1}\n{2}"),
-		{FText::FromString(ErrorCode.GetCategory()->GetTrimmedName()), ErrorCode.GetErrorTitle(),
-		ErrorCode.GetErrorMessage()});
-	}
+	return ErrorCode.GetFormattedMessage();
 }
 
 class SECErrorCodeEntry : public SComboRow<TSharedPtr<FECErrorCode>>
@@ -141,15 +125,7 @@ public:
 
 	static void GetErrorCodeSearchTerms(const FECErrorCode& ErrorCode, TArray<FString>& OutSearchTerms)
 	{
-		if (ErrorCode.IsSuccess())
-		{
-			OutSearchTerms.Emplace(TEXT("Success"));
-		}
-		else
-		{
-			OutSearchTerms.Add(FString::Printf(TEXT("%s:%s\n%s"), *ErrorCode.GetCategory()->GetTrimmedName(),
-				*ErrorCode.GetErrorTitle().ToString(), *ErrorCode.GetErrorMessage().ToString()));
-		}
+		OutSearchTerms.Emplace(ErrorCode.ToString());
 	}
 
 	TSharedPtr<SSearchBox> GetSearchBox() const { return SearchBox; }
@@ -329,40 +305,6 @@ void SECErrorCodeListWidget::UpdateErrorCodeOptions()
 			ListRows.Emplace(Entry);
 		}
 	}
-
-	// Old impl using assets; not viable for C++ definitions
-	// Gather loaded and unloaded ErrorCategory blueprints
-	// FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-	// TArray<FAssetData> BlueprintList;
-	// FARFilter AssetFilter;
-	// AssetFilter.ClassNames.Add(UECErrorCategory::StaticClass()->GetFName());
-	// AssetFilter.bRecursiveClasses = true;
-	// AssetRegistryModule.Get().GetAssets(AssetFilter, BlueprintList);
-	// for (const FAssetData& AssetData : BlueprintList)
-	// {
-	// 	if (!AssetData.IsInstanceOf(UECErrorCategory::StaticClass()))
-	// 	{
-	// 		continue;
-	// 	}
-	//
-	// 	const UECErrorCategory* Category = Cast<UECErrorCategory>(AssetData.FastGetAsset(true));
-	// 	if (!Category)
-	// 	{
-	// 		continue;
-	// 	}
-	// 	
-	// 	for (const auto& ErrorCodePair : Category->Errors)
-	// 	{
-	// 		FECErrorCode ErrorCode(*Category, ErrorCodePair.Key);
-	// 		if (SearchFilter.IsValid() && !SearchFilter->PassesFilter(ErrorCode))
-	// 		{
-	// 			continue;
-	// 		}
-	//
-	// 		TSharedPtr<FECErrorCode> Entry = MakeShareable(new FECErrorCode(ErrorCode));
-	// 		ListRows.Emplace(Entry);
-	// 	}
-	// }
 
 	// Sort all error codes; always leave 'Success' at the top
 	if (ListRows.Num() > 1)

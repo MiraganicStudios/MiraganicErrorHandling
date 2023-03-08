@@ -34,10 +34,7 @@ void FECCustomization_ErrorCode::CustomizeHeader(TSharedRef<IPropertyHandle> Pro
 	CategoryProperty->GetValue(CategoryClassObj);
 	CodeProperty->GetValue(Code);
 	UClass* CategoryClass = Cast<UClass>(CategoryClassObj);
-	if (CategoryClass && CategoryClass->IsChildOf<UECErrorCategory>() && Code > 0)
-	{
-		DefaultValue = FECErrorCode(CategoryClass, Code);
-	}
+	DefaultValue = FECErrorCode(CategoryClass, Code);
 
 	HeaderRow
 		.NameContent()

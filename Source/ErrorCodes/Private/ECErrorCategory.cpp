@@ -36,3 +36,13 @@ FText UECErrorCategory::GetErrorTitle(int64 ErrorCode) const
 
 	return ErrorDataPtr->Title;
 }
+
+const FECErrorCodeData* UECErrorCategory::GetErrorData(int64 ErrorCode) const
+{
+	return Errors.Find(ErrorCode);
+}
+
+bool UECErrorCategory::HasError(int64 ErrorCode) const
+{
+	return Errors.Contains(ErrorCode);
+}

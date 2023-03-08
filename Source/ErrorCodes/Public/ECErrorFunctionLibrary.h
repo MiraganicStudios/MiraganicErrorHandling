@@ -93,80 +93,21 @@ public:
 	static bool IsError(FECErrorCode ErrorCode);
 
 	/**
+	 * Check if an error code is valid (either IsSuccess or IsError).
+	 */
+	UFUNCTION(BlueprintPure, Category = "Errors")
+	static bool IsValid(FECErrorCode ErrorCode);
+
+	/**
+	 * Convert an error code to a short string (Only category and title).
+	 */
+	UFUNCTION(BlueprintPure, Category = "Errors")
+	static FString ToShortString(FECErrorCode ErrorCode);
+
+	/**
 	 * Convert an error code to a short string (category and title only).
 	 */
 	UFUNCTION(BlueprintPure, Category = "Errors", meta = (BlueprintAutocast, Keywords = "cast convert",
 		CompactNodeTitle = "->"))
 	static FString Conv_ErrorCodeToString(FECErrorCode ErrorCode);
-	
-	// /**
-	//  *  Prints a generic gameplay error to the output log.
-	//  * @param Error Error to log.
-	//  */
-	// UFUNCTION(BlueprintCallable, Category = "Miraganic|Errors")
-	// static void LogError(EMGLogVerbosity Verbosity, const FMGGenericGameplayError& Error);
-	//
-	// /**
-	//  *  Prints a generic gameplay error to the message log.
-	//  * @param Error Error to log.
-	//  */
-	// UFUNCTION(BlueprintCallable, Category = "Miraganic|Errors")
-	// static void LogErrorMessage(EMGLogVerbosity Verbosity, const FMGGenericGameplayError& Error);
-	//
-	// /**
-	//  *  Try to get an error from an optional error.
-	//  * @param OutError Unwrapped error.
-	//  * @param OptionalError Optional error to unwrap.
-	//  * @return True if the option contained an error.
-	//  */
-	// UFUNCTION(BlueprintCallable, Category = "Miraganic|Errors")
-	// static bool TryGetError(FMGGenericGameplayError& OutError, const FMGResult& OptionalError);
-	//
-	// /**
-	//  *  Get an error's message.
-	//  * @param Error Error to get a message from.
-	//  * @return The error message as a string.
-	//  */
-	// UFUNCTION(BlueprintPure, Category = "Miraganic|Errors")
-	// static FString GetErrorMessage_String(const FMGGameplayError& Error);
-	//
-	// /**
-	//  *  Get an error's message.
-	//  * @param Error Error to get a message from.
-	//  * @return The error message as text.
-	//  */
-	// UFUNCTION(BlueprintPure, Category = "Miraganic|Errors")
-	// static FText GetErrorMessage_Text(const FMGGameplayError& Error);
-	//
-	// //--------------------------------------------------------------------------------------------------------
-	// // Using Results in BP
-	// //   BP doesn't support variants, so instead of Result<T, E>, we use a struct similar to Optional<E>.
-	// //   BP supports returning multiple values, so users may pass their success values separately from their
-	// //   optional error.
-	//
-	// /**
-	//  * Get a return value for success.
-	//  * @return A result indicating success.
-	//  */
-	// UFUNCTION(BlueprintPure, Category = "Miraganic|Errors", DisplayName = "Succeed")
-	// static FMGResult MakeSuccess();
-	//
-	// /**
-	//  * Get a return value for failure.
-	//  * @return A result containing the error.
-	//  */
-	// UFUNCTION(BlueprintPure, Category = "Miraganic|Errors", DisplayName = "Fail")
-	// static FMGResult MakeError(const FMGGenericGameplayError& Error);
-	//
-	// /**
-	//  * Check whether a result has an error.
-	//  */
-	// UFUNCTION(BlueprintPure, Category = "Miraganic|Errors")
-	// static bool HasError(const FMGResult& Result);
-	//
-	// /**
-	//  * Get the gameplay tag for a generic gameplay error.
-	//  */
-	// UFUNCTION(BlueprintPure, Category = "Miraganic|Errors")
-	// static FGameplayTag GetErrorTag(const FMGGenericGameplayError& Error);
 };

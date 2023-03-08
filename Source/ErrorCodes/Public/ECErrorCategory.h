@@ -47,6 +47,9 @@ public:
 	
 	FText GetErrorMessage(int64 ErrorCode) const;
 	FText GetErrorTitle(int64 ErrorCode) const;
+	const FECErrorCodeData* GetErrorData(int64 ErrorCode) const;
+
+	bool HasError(int64 ErrorCode) const;
 
 	/** All errors in this category. */
 	UPROPERTY(EditAnywhere, Category = "Errors")
