@@ -9,6 +9,7 @@
 #include "ECEditorLogging.h"
 #include "ECErrorCategory.h"
 #include "ECErrorFunctionLibrary.h"
+#include "ECErrorCategoryEnum.h"
 #include "Kismet2/CompilerResultsLog.h"
 
 UECK2Node_SwitchErrorCode::UECK2Node_SwitchErrorCode(const FObjectInitializer& ObjectInitializer)
@@ -88,7 +89,7 @@ void UECK2Node_SwitchErrorCode::PreloadRequiredAssets()
 {
 	for (const FECErrorCode& ErrorCode : PinErrorCodes)
 	{
-		UECErrorCategory* ErrorCategoryMut = const_cast<UECErrorCategory*>(ErrorCode.GetCategory());
+		UEnum* ErrorCategoryMut = const_cast<UEnum*>(ErrorCode.GetCategory());
 		PreloadObject(ErrorCategoryMut);
 	}
 	Super::PreloadRequiredAssets();
@@ -147,6 +148,25 @@ FEdGraphPinType UECK2Node_SwitchErrorCode::GetPinType() const
 	return PinType;
 }
 
+bool UECK2Node_SwitchErrorCode::DependsOnErrorCategory(const UECErrorCategoryEnum& Category) const
+{
+	for (const FECErrorCode& PinErrorCode : PinErrorCodes)
+	{
+		if (PinErrorCode.GetCategory() == &Category)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void UECK2Node_SwitchErrorCode::ReloadErrorCategory(UECErrorCategoryEnum* Category)
+{
+	// TODO: For each pin that depends on that category, reload its data
+	// TODO: What is this for? Hot reload?
+}
+
 FName UECK2Node_SwitchErrorCode::GetPinNameGivenIndex(int32 Index) const
 {
 	check(Index);
@@ -203,31 +223,11 @@ void UECK2Node_SwitchErrorCode::CreateCasePins()
 
 	for (int32 Index = 0; Index < PinErrorCodes.Num(); ++Index)
 	{
-		if (PinErrorCodes[Index].IsError())
-		{
-			PinNames[Index] = FName(*PinErrorCodes[Index].GetTitle().ToString());
-		}
-		else
-		{
-			PinNames[Index] = TEXT("[INVALID]");
-		}
+		PinNames[Index] = GetNameForErrorCodePin(PinErrorCodes[Index]);
 
 		UEdGraphPin* CasePin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, PinNames[Index]);
-
-		if (PinErrorCodes[Index].IsError())
-		{
-			// Include error message and category in tooltip
-			CasePin->PinToolTip = FString::Format(TEXT("{0}:{1}{2}{3}"), {*PinErrorCodes[Index].GetTrimmedCategoryName(),
-				*PinErrorCodes[Index].GetTitle().ToString(), LINE_TERMINATOR, *PinErrorCodes[Index].GetMessage().ToString()});
-		}
-		else if (PinErrorCodes[Index].IsSuccess())
-		{
-			CasePin->PinToolTip = TEXT("Invalid error code: Success (Cannot add extra 'Success' pins).");
-		}
-		else
-		{
-			CasePin->PinToolTip = PinErrorCodes[Index].ToString();
-		}
+		
+		CasePin->PinToolTip = GetTooltipForErrorCodePin(PinErrorCodes[Index]);
 	}
 }
 
@@ -245,5 +245,35 @@ void UECK2Node_SwitchErrorCode::RemovePin(UEdGraphPin* TargetPin)
 			PinErrorCodes.RemoveAt(Index);
 		}
 		PinNames.RemoveAt(Index);
+	}
+}
+
+FName UECK2Node_SwitchErrorCode::GetNameForErrorCodePin(const FECErrorCode& ErrorCode) const
+{
+	if (ErrorCode.IsError())
+	{
+		return FName(*ErrorCode.GetTitle().ToString());
+	}
+	else
+	{
+		// Success is invalid for switch nodes (the success node already exists)
+		return TEXT("[INVALID]");
+	}
+}
+
+FString UECK2Node_SwitchErrorCode::GetTooltipForErrorCodePin(const FECErrorCode& ErrorCode) const
+{
+	if (ErrorCode.IsError())
+	{
+		return FString::Format(TEXT("{0}:{1}{2}{3}"), {*ErrorCode.GetCategoryName().ToString(),
+				*ErrorCode.GetTitle().ToString(), LINE_TERMINATOR, *ErrorCode.GetMessage().ToString()});
+	}
+	else if (ErrorCode.IsSuccess())
+	{
+		return TEXT("Invalid error code: Success (Cannot add extra 'Success' pins).");
+	}
+	else
+	{
+		return ErrorCode.ToString();
 	}
 }

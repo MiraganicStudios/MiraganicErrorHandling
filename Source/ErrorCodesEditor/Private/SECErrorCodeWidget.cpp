@@ -5,6 +5,7 @@
 
 #include "ClassViewerModule.h"
 #include "ECErrorCategory.h"
+#include "ECErrorCategoryEnum.h"
 #include "SlateOptMacros.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Kismet2/KismetEditorUtilities.h"
@@ -12,7 +13,7 @@
 #include "Widgets/Input/SSearchBox.h"
 #include "Widgets/Layout/SSeparator.h"
 
-#define LOCTEXT_NAMESPACE "ErrorCodes"
+#define LOCTEXT_NAMESPACE "ErrorCodesEditor_ErrorCodeWidget"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -25,18 +26,31 @@ FText GetErrorCodeDisplayNameText(const FECErrorCode& ErrorCode)
 {
 	if (ErrorCode.IsError())
 	{
-		return FText::Format(LOCTEXT("ErrorCodeWidget_TooltipFormat", "{0}:{1}"),
-		{FText::FromString(ErrorCode.GetCategory()->GetTrimmedName()), ErrorCode.GetTitle()});
+		return FText::Format(LOCTEXT("DisplayNameFmt", "{0}: {1}"),
+		{ErrorCode.GetCategoryName(), ErrorCode.GetTitle()});
+	}
+	else if (ErrorCode.IsSuccess())
+	{
+		return ErrorCode.GetTitle();
 	}
 	else
 	{
-		return ErrorCode.GetTitle();
+		return LOCTEXT("DisplayName_InvalidErrorCode", "[INVALID]");
 	}
 }
 
 FText GetErrorCodeTooltip(const FECErrorCode& ErrorCode)
 {
-	return ErrorCode.GetFormattedMessage();
+	if (ErrorCode.IsError())
+	{
+		return FText::Format(LOCTEXT("TooltipFmt", "{0}: {1}{2}{3}"),
+			{ErrorCode.GetCategoryName(), ErrorCode.GetTitle(), FText::FromString(LINE_TERMINATOR),
+			ErrorCode.GetMessage()});
+	}
+	else
+	{
+		return ErrorCode.GetFormattedMessage();
+	}
 }
 
 class SECErrorCodeEntry : public SComboRow<TSharedPtr<FECErrorCode>>
@@ -218,29 +232,64 @@ void SECErrorCodeListWidget::UpdateErrorCodeOptions()
 	ListRows.Emplace(SuccessCode);
 
 	// Gather all C++ classes
-	for (TObjectIterator<UClass> ClassIt; ClassIt; ++ClassIt)
+	// for (TObjectIterator<UClass> ClassIt; ClassIt; ++ClassIt)
+	// {
+	// 	UClass* Class = *ClassIt;
+	// 	if (!IsValid(Class) || !Class->IsChildOf(UECErrorCategory::StaticClass()))
+	// 	{
+	// 		continue;
+	// 	}
+	//
+	// 	// BP classes will be added below
+	// 	if (Cast<UBlueprintGeneratedClass>(Class))
+	// 	{
+	// 		continue;
+	// 	}
+	//
+	// 	const UECErrorCategory* CategoryCDO = Class->GetDefaultObject<UECErrorCategory>();
+	// 	if (!CategoryCDO)
+	// 	{
+	// 		continue;
+	// 	}
+	//
+	// 	for (const auto& ErrorCodePair : CategoryCDO->Errors)
+	// 	{
+	// 		FECErrorCode ErrorCode(Class, ErrorCodePair.Key);
+	// 		if (SearchFilter.IsValid() && !SearchFilter->PassesFilter(ErrorCode))
+	// 		{
+	// 			continue;
+	// 		}
+	//
+	// 		TSharedPtr<FECErrorCode> Entry = MakeShareable(new FECErrorCode(ErrorCode));
+	// 		ListRows.Emplace(Entry);
+	// 	}
+	// }
+
+	for (TObjectIterator<UEnum> EnumIt; EnumIt; ++EnumIt)
 	{
-		UClass* Class = *ClassIt;
-		if (!IsValid(Class) || !Class->IsChildOf(UECErrorCategory::StaticClass()))
+		UEnum* Enum = *EnumIt;
+		// BP error categories are found by the asset search in the loop below
+		if (!IsValid(Enum) || Enum->IsA<UECErrorCategoryEnum>() || !Enum->HasMetaData(TEXT("ErrorCategory")))
 		{
 			continue;
 		}
 
-		// BP classes will be added below
-		if (Cast<UBlueprintGeneratedClass>(Class))
+		const int32 NumEnums = Enum->NumEnums();
+		// Skip the last entry, as it's always reserved for 'MAX'
+		for (int32 Idx = 0; Idx < NumEnums - 1; ++Idx)
 		{
-			continue;
-		}
+			int64 Value = Enum->GetValueByIndex(Idx);
+			if (Value == 0)
+			{
+				continue;
+			}
 
-		const UECErrorCategory* CategoryCDO = Class->GetDefaultObject<UECErrorCategory>();
-		if (!CategoryCDO)
-		{
-			continue;
-		}
+			if (Enum->HasMetaData(TEXT("Hidden"), Idx))
+			{
+				continue;
+			}
 
-		for (const auto& ErrorCodePair : CategoryCDO->Errors)
-		{
-			FECErrorCode ErrorCode(Class, ErrorCodePair.Key);
+			FECErrorCode ErrorCode(*Enum, Value);
 			if (SearchFilter.IsValid() && !SearchFilter->PassesFilter(ErrorCode))
 			{
 				continue;
@@ -251,60 +300,105 @@ void SECErrorCodeListWidget::UpdateErrorCodeOptions()
 		}
 	}
 
-	// Gather loaded and unloaded ErrorCategory blueprints
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-	TArray<FAssetData> BlueprintList;
+	TArray<FAssetData> EnumList;
 	FARFilter AssetFilter;
-	AssetFilter.ClassNames.Add(UBlueprint::StaticClass()->GetFName());
-	//AssetFilter.ClassNames.Add(UBlueprintGeneratedClass::StaticClass()->GetFName());
+	AssetFilter.ClassNames.Add(UEnum::StaticClass()->GetFName());
 	AssetFilter.bRecursiveClasses = true;
-	AssetRegistryModule.Get().GetAssets(AssetFilter, BlueprintList);
-	UClass* ErrorCategoryClass = UECErrorCategory::StaticClass();
-	// Tag added by blueprints
-	const FString ErrorCategoryNativeClassName = FString::Printf(TEXT("%s'%s'"), *ErrorCategoryClass->GetClass()->GetName(),
-		*ErrorCategoryClass->GetPathName());
-	for (const FAssetData& AssetData : BlueprintList)
+	AssetRegistryModule.Get().GetAssets(AssetFilter, EnumList);
+	for (const FAssetData& AssetData : EnumList)
 	{
-		// Filter by tag so we don't load every blueprint
-		FString NativeParentClassName;
-		const bool bFoundTag = AssetData.GetTagValue(FBlueprintTags::NativeParentClassPath, NativeParentClassName);
-		if (!bFoundTag || NativeParentClassName != ErrorCategoryNativeClassName)
+		if (!AssetData.IsInstanceOf(UECErrorCategoryEnum::StaticClass()))
 		{
 			continue;
 		}
 		
-		UBlueprint* Blueprint = Cast<UBlueprint>(AssetData.FastGetAsset(true));
-		if (!IsValid(Blueprint))
+		UEnum* Enum = Cast<UEnum>(AssetData.FastGetAsset(true));
+		if (!IsValid(Enum))
 		{
 			continue;
 		}
-		
-		UBlueprintGeneratedClass* Class = Cast<UBlueprintGeneratedClass>(Blueprint->GeneratedClass);
-		if (!IsValid(Class) || !Class->IsChildOf<UECErrorCategory>() ||
-			Class->HasAnyClassFlags(CLASS_Deprecated | CLASS_NewerVersionExists | CLASS_Hidden) ||
-			FKismetEditorUtilities::IsClassABlueprintSkeleton(Class))
+
+		const int32 NumEnums = Enum->NumEnums();
+		for (int32 Idx = 0; Idx < NumEnums - 1; ++Idx)
 		{
-			continue;
-		}
-	
-		const UECErrorCategory* CategoryCDO = Class->GetDefaultObject<UECErrorCategory>();
-		if (!CategoryCDO)
-		{
-			continue;
-		}
-		
-		for (const auto& ErrorCodePair : CategoryCDO->Errors)
-		{
-			FECErrorCode ErrorCode(Class, ErrorCodePair.Key);
+			int64 Value = Enum->GetValueByIndex(Idx);
+			if (Value == 0)
+			{
+				continue;
+			}
+
+			if (Enum->HasMetaData(TEXT("Hidden"), Idx))
+			{
+				continue;
+			}
+
+			FECErrorCode ErrorCode(*Enum, Value);
 			if (SearchFilter.IsValid() && !SearchFilter->PassesFilter(ErrorCode))
 			{
 				continue;
 			}
-	
+
 			TSharedPtr<FECErrorCode> Entry = MakeShareable(new FECErrorCode(ErrorCode));
 			ListRows.Emplace(Entry);
 		}
 	}
+
+	// Old impl using error category blueprints
+	// Gather loaded and unloaded ErrorCategory blueprints
+	// FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+	// TArray<FAssetData> BlueprintList;
+	// FARFilter AssetFilter;
+	// AssetFilter.ClassNames.Add(UBlueprint::StaticClass()->GetFName());
+	// //AssetFilter.ClassNames.Add(UBlueprintGeneratedClass::StaticClass()->GetFName());
+	// AssetFilter.bRecursiveClasses = true;
+	// AssetRegistryModule.Get().GetAssets(AssetFilter, BlueprintList);
+	// UClass* ErrorCategoryClass = UECErrorCategory::StaticClass();
+	// // Tag added by blueprints
+	// const FString ErrorCategoryNativeClassName = FString::Printf(TEXT("%s'%s'"), *ErrorCategoryClass->GetClass()->GetName(),
+	// 	*ErrorCategoryClass->GetPathName());
+	// for (const FAssetData& AssetData : BlueprintList)
+	// {
+	// 	// Filter by tag so we don't load every blueprint
+	// 	FString NativeParentClassName;
+	// 	const bool bFoundTag = AssetData.GetTagValue(FBlueprintTags::NativeParentClassPath, NativeParentClassName);
+	// 	if (!bFoundTag || NativeParentClassName != ErrorCategoryNativeClassName)
+	// 	{
+	// 		continue;
+	// 	}
+	// 	
+	// 	UBlueprint* Blueprint = Cast<UBlueprint>(AssetData.FastGetAsset(true));
+	// 	if (!IsValid(Blueprint))
+	// 	{
+	// 		continue;
+	// 	}
+	// 	
+	// 	UBlueprintGeneratedClass* Class = Cast<UBlueprintGeneratedClass>(Blueprint->GeneratedClass);
+	// 	if (!IsValid(Class) || !Class->IsChildOf<UECErrorCategory>() ||
+	// 		Class->HasAnyClassFlags(CLASS_Deprecated | CLASS_NewerVersionExists | CLASS_Hidden) ||
+	// 		FKismetEditorUtilities::IsClassABlueprintSkeleton(Class))
+	// 	{
+	// 		continue;
+	// 	}
+	//
+	// 	const UECErrorCategory* CategoryCDO = Class->GetDefaultObject<UECErrorCategory>();
+	// 	if (!CategoryCDO)
+	// 	{
+	// 		continue;
+	// 	}
+	// 	
+	// 	for (const auto& ErrorCodePair : CategoryCDO->Errors)
+	// 	{
+	// 		FECErrorCode ErrorCode(Class, ErrorCodePair.Key);
+	// 		if (SearchFilter.IsValid() && !SearchFilter->PassesFilter(ErrorCode))
+	// 		{
+	// 			continue;
+	// 		}
+	//
+	// 		TSharedPtr<FECErrorCode> Entry = MakeShareable(new FECErrorCode(ErrorCode));
+	// 		ListRows.Emplace(Entry);
+	// 	}
+	// }
 
 	// Sort all error codes; always leave 'Success' at the top
 	if (ListRows.Num() > 1)
@@ -357,7 +451,7 @@ void SECErrorCodeWidget::Construct(const FArguments& InArgs)
 		.ButtonContent()
 		[
 			SNew(STextBlock)
-			.Text(this, &SECErrorCodeWidget::GetSelectedValueDisplayName)
+			.Text(this, &SECErrorCodeWidget::GetSelectedValueTitle)
 		];
 
 	ChildSlot
@@ -394,9 +488,14 @@ FText SECErrorCodeWidget::FormatToolTipText() const
 	return GetErrorCodeTooltip(SelectedErrorCode);
 }
 
-FText SECErrorCodeWidget::GetSelectedValueDisplayName() const
+FText SECErrorCodeWidget::GetSelectedValueCategoryAndTitle() const
 {
 	return GetErrorCodeDisplayNameText(SelectedErrorCode);
+}
+
+FText SECErrorCodeWidget::GetSelectedValueTitle() const
+{
+	return SelectedErrorCode.GetTitle();
 }
 
 void SECErrorCodeWidget::BroadcastErrorCodeChanged(FECErrorCode NewErrorCode)

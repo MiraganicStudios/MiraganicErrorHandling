@@ -22,19 +22,21 @@ public:
 	FECErrorCode();
 
 	// Construct an error code using a category class and a code.
-	FECErrorCode(const TSubclassOf<UECErrorCategory>& InCategory, int64 InCode);
+	//FECErrorCode(const TSubclassOf<UECErrorCategory>& InCategory, int64 InCode);
+
+	FECErrorCode(const UEnum* InEnum, int64 InCode);
+
+	// Construct an error code from an enum
+	FECErrorCode(const UEnum& InEnum, int64 InCode);
 
 	/**
 	 * Construct an error code using an error enum.
 	 *
-	 * To use this constructor, create an overload of 'MakeErrorCode(MyEnumType)' using your enum type and
-	 * return the correct error code(s) and categories. Usually this involves static_casting your enum to
-	 * uint64 for the code.
-	 * The constructor will automatically find your overload and call it.
+	 * Note that this will work for all UENUMs, even if they don't have the metadata 'ErrorCategory'.
 	 */
 	template<typename T, typename = typename TEnableIf<TIsEnumClass<T>::Value || TIsEnum<T>::Value>::Type>
 	FECErrorCode(T InCode)
-		: FECErrorCode(MakeErrorCode(InCode))
+		: FECErrorCode(*StaticEnum<T>(), static_cast<int64>(InCode))
 	{}
 
 	// Check if this is a success (no error code).
@@ -43,8 +45,12 @@ public:
 	bool IsError() const;
 	// Check if this error code is in a valid state (either success or a valid error code).
 	bool IsValid() const;
+	// Get the error index for this code, or None if this does not contain an error.
+	TOptional<int32> GetErrorIndex() const;
+	// Get the error index reserved for the 'MAX' value, or None if this does not contain an error.
+	TOptional<int32> GetMaxErrorIndex() const;
 	// Get this error code's category name with suffixes/prefixes trimmed.
-	FString GetTrimmedCategoryName() const;
+	FText GetCategoryName() const;
 	// Format this error code's category, title, and message as text.
 	FText GetFormattedMessage() const;
 	// Get this error code's message, or 'Success' or 'Invalid'.
@@ -58,7 +64,7 @@ public:
 	// Construct a 'Success' error code.
 	static FECErrorCode Success();
 
-	const UECErrorCategory* GetCategory() const;
+	const UEnum* GetCategory() const;
 	int64 GetCode() const { return Code; }
 
 	bool operator==(const FECErrorCode& Other) const;
@@ -68,7 +74,7 @@ public:
 	}
 	FORCEINLINE friend uint32 GetTypeHash(const FECErrorCode& Elem)
 	{
-		return HashCombineFast(GetTypeHash(Elem.CategoryClass), GetTypeHash(Elem.Code));
+		return HashCombineFast(GetTypeHash(Elem.Enum), GetTypeHash(Elem.Code));
 	}
 
 	static FName GetPropertyName_Category();
@@ -76,9 +82,18 @@ public:
 
 protected:
 
+	// Get an enum's display name if building with editor, else use its authored name.
+	static FText GetEnumDisplayName(const UEnum& Enum);
+	// Get an enum's tooltip, or an empty text if not building with editor.
+	static FText GetEnumTooltip(const UEnum& Enum, int32 Index);
+
 	// This error's category object.
+	//UPROPERTY(EditAnywhere, Category = "Error")
+	//TSubclassOf<UECErrorCategory> CategoryClass;
+
+	// This error's enum object.
 	UPROPERTY(EditAnywhere, Category = "Error")
-	TSubclassOf<UECErrorCategory> CategoryClass;
+	TObjectPtr<const UEnum> Enum;
 
 	// The code for this error.
 	UPROPERTY(EditAnywhere, Category = "Error")

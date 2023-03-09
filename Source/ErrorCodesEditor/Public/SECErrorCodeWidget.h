@@ -28,7 +28,8 @@ public:
 protected:
 	TSharedRef<SWidget> GenerateDropdownWidget();
 	FText FormatToolTipText() const;
-	FText GetSelectedValueDisplayName() const;
+	FText GetSelectedValueCategoryAndTitle() const;
+	FText GetSelectedValueTitle() const;
 	void BroadcastErrorCodeChanged(FECErrorCode NewErrorCode);
 
 	FECErrorCodeChangedDelegate PostErrorCodeChanged;

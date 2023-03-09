@@ -38,7 +38,7 @@ public:
 	 * Break an error code, returning its Category and Code.
 	 */
 	UFUNCTION(BlueprintPure, Category = "Errors", meta = (BlueprintThreadSafe, NativeBreakFunc))
-	static UECErrorCategory* BreakErrorCode(const FECErrorCode& ErrorCode, int64& Code);
+	static UEnum* BreakErrorCode(const FECErrorCode& ErrorCode, int64& Code);
 	
 	/**
 	 * Prints an error code's message to the output log.

@@ -29,12 +29,12 @@ void FECCustomization_ErrorCode::CustomizeHeader(TSharedRef<IPropertyHandle> Pro
 	PropertyHandle->SetOnPropertyValueChanged(OnErrorCodeChanged);
 
 	FECErrorCode DefaultValue;
-	UObject* CategoryClassObj = nullptr;
+	UObject* CategoryObj = nullptr;
 	int64 Code = 0;
-	CategoryProperty->GetValue(CategoryClassObj);
+	CategoryProperty->GetValue(CategoryObj);
 	CodeProperty->GetValue(Code);
-	UClass* CategoryClass = Cast<UClass>(CategoryClassObj);
-	DefaultValue = FECErrorCode(CategoryClass, Code);
+	UEnum* CategoryEnum = Cast<UEnum>(CategoryObj);
+	DefaultValue = FECErrorCode(CategoryEnum, Code);
 
 	HeaderRow
 		.NameContent()

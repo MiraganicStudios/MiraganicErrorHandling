@@ -9,10 +9,10 @@ FECErrorCode UECErrorFunctionLibrary::MakeErrorCode(FECErrorCode ErrorCode)
 	return ErrorCode;
 }
 
-UECErrorCategory* UECErrorFunctionLibrary::BreakErrorCode(const FECErrorCode& ErrorCode, int64& Code)
+UEnum* UECErrorFunctionLibrary::BreakErrorCode(const FECErrorCode& ErrorCode, int64& Code)
 {
 	Code = ErrorCode.GetCode();
-	return const_cast<UECErrorCategory*>(ErrorCode.GetCategory());
+	return const_cast<UEnum*>(ErrorCode.GetCategory());
 }
 
 void UECErrorFunctionLibrary::LogErrorToOutputLog(EECLogVerbosity Verbosity, FECErrorCode Error)

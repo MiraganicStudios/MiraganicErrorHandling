@@ -300,7 +300,6 @@ void FECErrorMapNodeBuilder::GenerateChildContent(IDetailChildrenBuilder& Childr
 							.ToolTipText(IdTooltip)
 						]
 					]
-					
 				]
 			]
 			+SHorizontalBox::Slot()

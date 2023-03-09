@@ -7,23 +7,37 @@
 #define LOCTEXT_NAMESPACE "ErrorCodes"
 
 FECErrorCode::FECErrorCode()
-	: CategoryClass(nullptr)
+	: Enum(nullptr)
 	, Code(0)
 {}
 
-FECErrorCode::FECErrorCode(const TSubclassOf<UECErrorCategory>& InCategory, int64 InCode)
-	: CategoryClass(InCategory)
+FECErrorCode::FECErrorCode(const UEnum* InEnum, int64 InCode)
+	: Enum(InEnum)
 	, Code(InCode)
-{}
+{
+}
+
+// FECErrorCode::FECErrorCode(const TSubclassOf<UECErrorCategory>& InCategory, int64 InCode)
+// 	: CategoryClass(InCategory)
+// 	, Enum(nullptr)
+// 	, Code(InCode)
+// {}
+
+FECErrorCode::FECErrorCode(const UEnum& InEnum, int64 InCode)
+	: Enum(&InEnum)
+	, Code(InCode)
+{
+	ensure(InCode != 0);
+}
 
 bool FECErrorCode::IsSuccess() const
 {
-	return Code == 0 && !::IsValid(CategoryClass);
+	return Code == 0 && !::IsValid(Enum);
 }
 
 bool FECErrorCode::IsError() const
 {
-	return Code > 0 && ::IsValid(CategoryClass) && CategoryClass.GetDefaultObject()->HasError(Code);
+	return Code > 0 && ::IsValid(Enum) && !Enum->GetNameByValue(Code).IsNone();
 }
 
 bool FECErrorCode::IsValid() const
@@ -32,15 +46,40 @@ bool FECErrorCode::IsValid() const
 	return IsSuccess() || IsError();
 }
 
-FString FECErrorCode::GetTrimmedCategoryName() const
+TOptional<int32> FECErrorCode::GetErrorIndex() const
+{
+	if (Code == 0 || !::IsValid(Enum))
+	{
+		return {};
+	}
+
+	const int32 ErrorIdx = Enum->GetIndexByValue(Code);
+	if (ErrorIdx == -1)
+	{
+		return {};
+	}
+
+	return ErrorIdx;
+}
+
+TOptional<int32> FECErrorCode::GetMaxErrorIndex() const
+{
+	if (Code == 0 || !::IsValid(Enum))
+	{
+		return {};
+	}
+
+	return Enum->NumEnums();
+}
+
+FText FECErrorCode::GetCategoryName() const
 {
 	if (!IsError())
 	{
-		return FString();
+		return FText();
 	}
 
-	const UECErrorCategory* Category = GetCategory();
-	return Category->GetTrimmedName(); 
+	return GetEnumDisplayName(*Enum);
 }
 
 FText FECErrorCode::GetFormattedMessage() const
@@ -49,17 +88,19 @@ FText FECErrorCode::GetFormattedMessage() const
 	{
 		return LOCTEXT("ErrorCode_Msg_Success", "Success");
 	}
-	else if (IsError())
-	{
-		const UECErrorCategory* Category = GetCategory();
-		const FECErrorCodeData* ErrorCodeData = Category->GetErrorData(Code);
-		return FText::Format(LOCTEXT("ErrorCode_Msg_ErrorFmt", "{0}:{1}: {2}"),
-			{FText::FromString(Category->GetTrimmedName()), ErrorCodeData->Title, ErrorCodeData->Message});
-	}
 	else
 	{
-		return FText::Format(LOCTEXT("ErrorCode_Msg_InvalidFmt", "Invalid error code: [{0}, {1}]"),
-			{FText::FromString(GetNameSafe(CategoryClass)), Code});
+		const TOptional<int32> OptErrorIdx = GetErrorIndex();
+		if (!OptErrorIdx || OptErrorIdx == GetMaxErrorIndex())
+		{
+			return FText::Format(LOCTEXT("ErrorCode_Msg_InvalidFmt", "Invalid error code: [{0}, {1}]"),
+			{FText::FromString(GetNameSafe(Enum)), Code});
+		}
+		else
+		{
+			return FText::Format(LOCTEXT("ErrorCode_Msg_ErrorFmt", "{0}:{1}: {2}"),
+				{GetEnumDisplayName(*Enum), Enum->GetDisplayNameTextByIndex(*OptErrorIdx), GetEnumTooltip(*Enum, *OptErrorIdx)});
+		}
 	}
 }
 
@@ -69,14 +110,17 @@ FText FECErrorCode::GetMessage() const
 	{
 		return LOCTEXT("ErrorCode_Msg_Success", "Success");
 	}
-	else if (IsError())
-	{
-		const UECErrorCategory* Category = GetCategory();
-		return Category->GetErrorMessage(Code);
-	}
 	else
 	{
-		return LOCTEXT("ErrorCode_Msg_Invalid", "Invalid error code");
+		const TOptional<int32> OptErrorIdx = GetErrorIndex();
+		if (!OptErrorIdx || OptErrorIdx == GetMaxErrorIndex())
+		{
+			return LOCTEXT("ErrorCode_Msg_Invalid", "Invalid error code");
+		}
+		else
+		{
+			return GetEnumTooltip(*Enum, *OptErrorIdx);
+		}
 	}
 }
 
@@ -86,14 +130,17 @@ FText FECErrorCode::GetTitle() const
 	{
 		return LOCTEXT("ErrorCode_Title_Success", "Success");
 	}
-	else if (IsError())
-	{
-		const UECErrorCategory* Category = GetCategory();
-		return Category->GetErrorTitle(Code);
-	}
 	else
 	{
-		return LOCTEXT("ErrorCode_Title_Invalid", "Invalid");
+		const TOptional<int32> OptErrorIdx = GetErrorIndex();
+		if (!OptErrorIdx || OptErrorIdx == GetMaxErrorIndex())
+		{
+			return LOCTEXT("ErrorCode_Title_Invalid", "[INVALID]");
+		}
+		else
+		{
+			return Enum->GetDisplayNameTextByIndex(*OptErrorIdx);
+		}
 	}
 }
 
@@ -103,14 +150,18 @@ FString FECErrorCode::ToShortString() const
 	{
 		return TEXT("Success");
 	}
-	else if (IsError())
-	{
-		const UECErrorCategory* Category = GetCategory();
-		return FString::Format(TEXT("{0}:{1}"), {*Category->GetTrimmedName(), *Category->GetErrorTitle(Code).ToString()});
-	}
 	else
 	{
-		return TEXT("Invalid");
+		const TOptional<int32> OptErrorIdx = GetErrorIndex();
+		if (!OptErrorIdx || OptErrorIdx == GetMaxErrorIndex())
+		{
+			return TEXT("Invalid");
+		}
+		else
+		{
+			return FString::Format(TEXT("{0}:{1}"), {*GetEnumDisplayName(*Enum).ToString(),
+				*Enum->GetDisplayNameTextByIndex(*OptErrorIdx).ToString()});
+		}
 	}
 }
 
@@ -120,47 +171,67 @@ FString FECErrorCode::ToString() const
 	{
 		return TEXT("Success");
 	}
-	else if (IsError())
-	{
-		const UECErrorCategory* Category = GetCategory();
-		const FECErrorCodeData* ErrorData = Category->GetErrorData(Code);
-		return FString::Format(TEXT("{0}:{1}: {2}"), {*Category->GetTrimmedName(),
-			*ErrorData->Title.ToString(), *ErrorData->Message.ToString()});
-	}
 	else
 	{
-		return FString::Format(TEXT("Invalid error code: [{0}, {1}]"), {*GetNameSafe(CategoryClass), Code});
+		const TOptional<int32> OptErrorIdx = GetErrorIndex();
+		if (!OptErrorIdx || OptErrorIdx == GetMaxErrorIndex())
+		{
+			// Invalid error code
+			return FString::Format(TEXT("Invalid error code: [{0}, {1}]"), {*GetNameSafe(Enum), Code});
+		}
+		else
+		{
+			// Valid error
+			const FText EnumDisplayName = GetEnumDisplayName(*Enum);
+			const FText CodeDisplayName = Enum->GetDisplayNameTextByIndex(*OptErrorIdx);
+			const FText CodeTooltip = GetEnumTooltip(*Enum, *OptErrorIdx);
+			return FString::Format(TEXT("{0}:{1}: {2}"), {*EnumDisplayName.ToString(),
+				*CodeDisplayName.ToString(), *CodeTooltip.ToString()});
+		}
 	}
 }
 
 FECErrorCode FECErrorCode::Success()
 {
-	return FECErrorCode(nullptr, 0);
+	return FECErrorCode();
 }
 
-const UECErrorCategory* FECErrorCode::GetCategory() const
+const UEnum* FECErrorCode::GetCategory() const
 {
-	if (!::IsValid(CategoryClass))
-	{
-		return nullptr;
-	}
-	
-	return CategoryClass->GetDefaultObject<UECErrorCategory>();
+	return Enum;
 }
 
 bool FECErrorCode::operator==(const FECErrorCode& Other) const
 {
-	return CategoryClass == Other.CategoryClass && Code == Other.Code;
+	return Enum == Other.Enum && Code == Other.Code;
 }
 
 FName FECErrorCode::GetPropertyName_Category()
 {
-	return GET_MEMBER_NAME_CHECKED(FECErrorCode, CategoryClass);
+	return GET_MEMBER_NAME_CHECKED(FECErrorCode, Enum);
 }
 
 FName FECErrorCode::GetPropertyName_Code()
 {
 	return GET_MEMBER_NAME_CHECKED(FECErrorCode, Code);
+}
+
+FText FECErrorCode::GetEnumDisplayName(const UEnum& Enum)
+{
+#if WITH_EDITOR
+	return Enum.GetDisplayNameText();
+#else
+	return FText::FromString(Enum.GetAuthoredName());	
+#endif
+}
+
+FText FECErrorCode::GetEnumTooltip(const UEnum& Enum, int32 Index)
+{
+#if WITH_EDITOR
+	return Enum.GetToolTipTextByIndex(Index);
+#else
+	return FText();
+#endif
 }
 
 #undef LOCTEXT_NAMESPACE
