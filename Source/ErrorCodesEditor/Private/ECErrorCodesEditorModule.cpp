@@ -4,11 +4,9 @@
 
 #include "AssetToolsModule.h"
 #include "ECAssetTypeActions_ErrorEnum.h"
-#include "ECCustomization_ErrorCategory.h"
 #include "ECCustomization_ErrorCode.h"
 #include "ECCustomization_ErrorCodeSwitchNode.h"
 #include "ECEditorLogging.h"
-#include "ECErrorCategory.h"
 #include "ECErrorCategoryUtils.h"
 #include "ECGraphPinFactory_ErrorCode.h"
 #include "ECGraphNodeFactory_SwitchErrorCode.h"
@@ -26,8 +24,6 @@ void FECErrorCodesEditorModule::StartupModule()
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyModule.RegisterCustomPropertyTypeLayout(FECErrorCode::StaticStruct()->GetFName(),
 		FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FECCustomization_ErrorCode::MakeInstance));
-	PropertyModule.RegisterCustomClassLayout(UECErrorCategory::StaticClass()->GetFName(),
-		FOnGetDetailCustomizationInstance::CreateStatic(&FECCustomization_ErrorCategory::MakeInstance));
 	PropertyModule.RegisterCustomClassLayout(UECK2Node_SwitchErrorCode::StaticClass()->GetFName(),
 		FOnGetDetailCustomizationInstance::CreateStatic(&FECCustomization_ErrorCodeSwitchNode::MakeInstance));
 
@@ -35,7 +31,7 @@ void FECErrorCodesEditorModule::StartupModule()
 	ErrorCategoryAssetActions = MakeShareable(new FECAssetTypeActions_ErrorEnum());
 	AssetTools.RegisterAssetTypeActions(ErrorCategoryAssetActions.ToSharedRef());
 
-	UECErrorCategoryEnum::PostChanged().AddRaw(this, &FECErrorCodesEditorModule::BroadcastErrorCategoryChanged);
+	UECErrorCategoryEnum::PostChangedInEditor().AddRaw(this, &FECErrorCodesEditorModule::BroadcastErrorCategoryChanged);
 }
 
 void FECErrorCodesEditorModule::ShutdownModule()
@@ -56,7 +52,6 @@ void FECErrorCodesEditorModule::ShutdownModule()
 	{
 		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
 		PropertyModule.UnregisterCustomPropertyTypeLayout(FECErrorCode::StaticStruct()->GetFName());
-		PropertyModule.UnregisterCustomClassLayout(UECErrorCategory::StaticClass()->GetFName());
 		PropertyModule.UnregisterCustomClassLayout(UECK2Node_SwitchErrorCode::StaticClass()->GetFName());
 	}
 
@@ -69,7 +64,7 @@ void FECErrorCodesEditorModule::ShutdownModule()
 		}
 	}
 
-	UECErrorCategoryEnum::PostChanged().RemoveAll(this);
+	UECErrorCategoryEnum::PostChangedInEditor().RemoveAll(this);
 }
 
 void FECErrorCodesEditorModule::BroadcastErrorCategoryChanged(const UECErrorCategoryEnum& ErrorCategory,

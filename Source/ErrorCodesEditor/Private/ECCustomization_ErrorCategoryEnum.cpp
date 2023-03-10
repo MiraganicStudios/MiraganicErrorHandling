@@ -6,7 +6,6 @@
 #include "DetailCategoryBuilder.h"
 #include "ECErrorCategoryEnum.h"
 #include "DetailLayoutBuilder.h"
-#include "ECErrorCategory.h"
 #include "ECErrorCategoryUtils.h"
 #include "IDetailChildrenBuilder.h"
 #include "PropertyCustomizationHelpers.h"
@@ -310,6 +309,7 @@ void FECErrorCodesBuilder::GenerateHeaderRowContent(FDetailWidgetRow& NodeRow)
 
 void FECErrorCodesBuilder::GenerateChildContent(IDetailChildrenBuilder& ChildrenBuilder)
 {
+	NextId = 0;
 	const int32 NumValues = FMath::Max(0, TargetErrorCategory->NumEnums() - 1);
 	for (int32 EnumIdx = 0; EnumIdx < NumValues; ++EnumIdx)
 	{
@@ -426,7 +426,7 @@ void FECErrorCodesBuilder::AddEntry()
 
 void FECErrorCodesBuilder::RefreshNextId()
 {
-	NextId = 1;
+	NextId = 0;
 	const int32 NumEnums = TargetErrorCategory->NumEnums() - 1;
 	for (int32 Idx = 0; Idx < NumEnums; ++Idx)
 	{

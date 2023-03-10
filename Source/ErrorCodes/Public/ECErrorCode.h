@@ -3,32 +3,37 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Templates/SubclassOf.h"
 #include "ECErrorCode.generated.h"
 
-class UECErrorCategory;
+/**
+ * Add this metadata to C++ defined enums to enable them as Error Codes.
+ * E.g.:
+ * @code
+ * UENUM(meta = (ErrorCategory))
+ * enum class EMyEnum : int64 // Type should be int64
+ * {
+ *     ErrorA, // Values can be anything but -1 (which is reserved for 'Success')
+ *     ...
+ * };
+ * @endcode
+ */
+//#define ErrorCategory
 
 /**
  * Generic error code.
  */
 USTRUCT(BlueprintType, meta = (DisableSplitPin, 
-	HasNativeMake = "ErrorCodes.ECErrorFunctionLibrary.MakeErrorCode"
-	//HasNativeBreak = "ErrorCodes.ECErrorFunctionLibrary.BreakErrorCode")
-	))
+	HasNativeMake = "ErrorCodes.ECErrorFunctionLibrary.MakeErrorCode"))
 struct ERRORCODES_API FECErrorCode
 {
 	GENERATED_BODY()
+	
 public:
 	// Default construct to a 'No Error' code (AKA 'Success').
 	FECErrorCode();
 
-	// Construct an error code using a category class and a code.
-	//FECErrorCode(const TSubclassOf<UECErrorCategory>& InCategory, int64 InCode);
-
-	FECErrorCode(const UEnum* InEnum, int64 InCode);
-
-	// Construct an error code from an enum
-	FECErrorCode(const UEnum& InEnum, int64 InCode);
+	// Construct an error code from an enum. Prefer using the enum conversion constructor if possible.
+	FECErrorCode(const UEnum& InCategory, int64 InCode);
 
 	/**
 	 * Construct an error code using an error enum.
@@ -68,20 +73,29 @@ public:
 	const UEnum* GetCategory() const;
 	int64 GetCode() const { return Code; }
 
-	bool operator==(const FECErrorCode& Other) const;
+	FORCEINLINE bool operator==(const FECErrorCode& Other) const
+	{
+		return Category == Other.Category && Code == Other.Code;
+	}
 	FORCEINLINE bool operator!=(const FECErrorCode& Other) const
 	{
 		return !(*this == Other);
 	}
 	FORCEINLINE friend uint32 GetTypeHash(const FECErrorCode& Elem)
 	{
-		return HashCombineFast(GetTypeHash(Elem.Enum), GetTypeHash(Elem.Code));
+		return HashCombineFast(GetTypeHash(Elem.Category), GetTypeHash(Elem.Code));
 	}
 
 	static FName GetPropertyName_Category();
 	static FName GetPropertyName_Code();
 
+	// Construct an error code using a category and code. This can return an invalid error code.
+	static FECErrorCode ConstructRaw(const UEnum* InCategory, int64 InCode);
+
 protected:
+	
+	// Construct an error code from an enum
+	FECErrorCode(const UEnum* InCategory, int64 InCode);
 
 	// Get an enum's display name if building with editor, else use its authored name.
 	static FText GetEnumDisplayName(const UEnum& Enum);
@@ -89,12 +103,8 @@ protected:
 	static FText GetEnumTooltip(const UEnum& Enum, int32 Index);
 
 	// This error's category object.
-	//UPROPERTY(EditAnywhere, Category = "Error")
-	//TSubclassOf<UECErrorCategory> CategoryClass;
-
-	// This error's enum object.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Error")
-	TObjectPtr<const UEnum> Enum;
+	TObjectPtr<const UEnum> Category;
 
 	// The code for this error.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Error")

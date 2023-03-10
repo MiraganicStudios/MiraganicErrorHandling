@@ -12,7 +12,7 @@ using FECErrorCodePair = TPair<FName, int64>;
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FECErrorCategoryChanged, const UECErrorCategoryEnum&, const TArray<FECErrorCodePair>&, bool);
 
 /**
- * 
+ * A collection of error codes defined in the editor.
  */
 UCLASS()
 class ERRORCODES_API UECErrorCategoryEnum : public UUserDefinedEnum
@@ -37,6 +37,6 @@ public:
 #endif
 
 #if WITH_EDITORONLY_DATA
-	static FECErrorCategoryChanged& PostChanged();
+	static FECErrorCategoryChanged& PostChangedInEditor();
 #endif
 };

@@ -9,9 +9,9 @@
 DECLARE_DELEGATE_OneParam(FECErrorCategoryPickedDelegate, const UEnum*);
 
 /**
- * 
+ * Widget which selects a single Error Category from a dropdown list.
  */
-class ERRORCODESEDITOR_API SECWidget_ErrorCategoryList : public SCompoundWidget
+class SECWidget_ErrorCategoryList : public SCompoundWidget
 {
 public:
 	SLATE_BEGIN_ARGS(SECWidget_ErrorCategoryList)

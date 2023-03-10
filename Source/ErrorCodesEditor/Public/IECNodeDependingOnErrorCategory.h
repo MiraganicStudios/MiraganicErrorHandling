@@ -15,7 +15,7 @@ class ERRORCODESEDITOR_API UECNodeDependingOnErrorCategory : public UInterface
 };
 
 /**
- * Implementing K2Nodes depend on ErrorCategory(s).
+ * Implementing K2Nodes depend on ErrorCategory(s). Modeled after INodeDependingOnEnum.
  */
 class ERRORCODESEDITOR_API IECNodeDependingOnErrorCategory
 {

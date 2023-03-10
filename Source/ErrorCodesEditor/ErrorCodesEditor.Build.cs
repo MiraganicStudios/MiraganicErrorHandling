@@ -9,7 +9,7 @@ public class ErrorCodesEditor : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core", "GraphEditor",
+				"Core"
 			}
 		);
 

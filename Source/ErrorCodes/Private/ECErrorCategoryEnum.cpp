@@ -10,7 +10,7 @@ void UECErrorCategoryEnum::Serialize(FArchive& Ar)
 {
 	UEnum::Serialize(Ar);
 
-	// UserDefinedEnum override modififes the values
+	// UserDefinedEnum override modifies the values
 }
 
 #if WITH_EDITOR
@@ -56,7 +56,7 @@ void UECErrorCategoryEnum::PostEditUndo()
 	UEnum::PostEditUndo();
 
 	UpdateAfterPathChanged();
-	PostChanged().Broadcast(*this, {}, false);
+	PostChangedInEditor().Broadcast(*this, {}, false);
 }
 
 void UECErrorCategoryEnum::UpdateAfterPathChanged()
@@ -204,7 +204,7 @@ bool UECErrorCategoryEnum::IsProperErrorCodeName(const FString& NewName)
 #endif
 
 #if WITH_EDITORONLY_DATA
-FECErrorCategoryChanged& UECErrorCategoryEnum::PostChanged()
+FECErrorCategoryChanged& UECErrorCategoryEnum::PostChangedInEditor()
 {
 	static FECErrorCategoryChanged PostChangedDelegate;
 	return PostChangedDelegate;

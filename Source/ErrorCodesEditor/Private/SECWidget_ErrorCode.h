@@ -9,12 +9,12 @@
 DECLARE_DELEGATE_OneParam(FECErrorCodeChangedDelegate, FECErrorCode);
 
 /**
- * Widget which handles an error code.
+ * Widget which selects a single Error Code from a dropdown list.
  */
-class ERRORCODESEDITOR_API SECErrorCodeWidget : public SCompoundWidget
+class SECWidget_ErrorCode : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS(SECErrorCodeWidget) {}
+	SLATE_BEGIN_ARGS(SECWidget_ErrorCode) {}
 	SLATE_ARGUMENT(FString, FilterString)
 	SLATE_ARGUMENT(FECErrorCode, DefaultValue)
 	SLATE_EVENT(FECErrorCodeChangedDelegate, PostErrorCodeChanged)

@@ -33,12 +33,6 @@ public:
 	 */
 	UFUNCTION(BlueprintPure, Category = "Errors", meta = (BlueprintThreadSafe, NativeMakeFunc))
 	static FECErrorCode MakeErrorCode(FECErrorCode ErrorCode);
-
-	/**
-	 * Break an error code, returning its Category and Code.
-	 */
-	//UFUNCTION(BlueprintPure, Category = "Errors", meta = (BlueprintThreadSafe, NativeBreakFunc))
-	//static UEnum* BreakErrorCode(const FECErrorCode& ErrorCode, int64& Code);
 	
 	/**
 	 * Prints an error code's message to the output log.

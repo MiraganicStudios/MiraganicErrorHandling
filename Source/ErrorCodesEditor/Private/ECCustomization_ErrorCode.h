@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 
-class SECErrorCodeWidget;
+class SECWidget_ErrorCode;
 struct FECErrorCode;
 
 class FECCustomization_ErrorCode : public IPropertyTypeCustomization
@@ -29,5 +29,5 @@ private:
 	TSharedPtr<IPropertyHandle> CategoryProperty;
 	TSharedPtr<IPropertyHandle> CodeProperty;
 
-	TSharedPtr<SECErrorCodeWidget> ErrorCodeWidget;
+	TSharedPtr<SECWidget_ErrorCode> ErrorCodeWidget;
 };

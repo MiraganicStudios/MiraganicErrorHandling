@@ -33,7 +33,12 @@ UObject* UECFactory_ErrorEnum::FactoryCreateNew(UClass* InClass,
 	{
 		TArray<TPair<FName, int64>> EmptyNames;
 		Enum->SetEnums(EmptyNames, UEnum::ECppForm::Namespaced);
-		Enum->SetMetaData(TEXT("BlueprintType"), TEXT("true"));
+		
+		// Error categories are not exposed as enums at the moment
+		// This makes it clearer that they're only intended to be used as error codes
+		// We don't have a conversion node for Enum -> ErrorCode for BP yet
+		//Enum->SetMetaData(TEXT("BlueprintType"), TEXT("true"));
+		
 		// Enable the enum for error codes
 		Enum->SetMetaData(TEXT("ErrorCategory"), TEXT("true"));
 	}

@@ -1,18 +1,12 @@
 ﻿// Copyright 2022 Miraganic Studios. All rights reserved.
 
 
-#include "SECErrorCodeWidget.h"
+#include "SECWidget_ErrorCode.h"
 
-#include "ClassViewerModule.h"
 #include "DetailLayoutBuilder.h"
-#include "ECErrorCategory.h"
 #include "ECErrorCategoryEnum.h"
 #include "ECErrorCategoryUtils.h"
 #include "SlateOptMacros.h"
-#include "AssetRegistry/AssetRegistryModule.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
-#include "Kismet2/KismetEditorUtilities.h"
 #include "Misc/TextFilter.h"
 #include "Widgets/Input/SSearchBox.h"
 #include "Widgets/Layout/SSeparator.h"
@@ -21,12 +15,7 @@
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
-FString GetErrorCodeDisplayName(const FECErrorCode& ErrorCode)
-{
-	return ErrorCode.ToShortString();
-}
-
-FText GetErrorCodeDisplayNameText(const FECErrorCode& ErrorCode)
+FText GetErrorCodeCategoryAndTitle(const FECErrorCode& ErrorCode)
 {
 	if (ErrorCode.IsError())
 	{
@@ -78,6 +67,10 @@ struct FECErrorCodeTreeNode
 
 	void AddChild(const TSharedPtr<FECErrorCodeTreeNode>& InChild);
 	
+	void SortChildren();
+
+	void SetFilteredChildren(TArrayView<const TSharedPtr<FECErrorCodeTreeNode>> InFilteredChildren);
+	
 	// Get this node's error code, if mode == ErrorCode
 	TOptional<FECErrorCode> GetErrorCode() const;
 
@@ -91,8 +84,6 @@ struct FECErrorCodeTreeNode
 
 	FText GetDisplayName() const;
 	FText GetToolTip() const;
-
-	void SetFilteredChildren(TArrayView<const TSharedPtr<FECErrorCodeTreeNode>> InFilteredChildren);
 
 	const TArray<TSharedPtr<FECErrorCodeTreeNode>>& GetChildren() const { return AllChildren; }
 	const TArray<TSharedPtr<FECErrorCodeTreeNode>>& GetFilteredChildren() const { return FilteredChildren; }
@@ -118,6 +109,14 @@ void FECErrorCodeTreeNode::AddChild(const TSharedPtr<FECErrorCodeTreeNode>& InCh
 {
 	check(Mode == EECErrorCodeTreeNodeType::Category);
 	AllChildren.Emplace(InChild);
+}
+
+void FECErrorCodeTreeNode::SortChildren()
+{
+	AllChildren.Sort([this](const TSharedPtr<FECErrorCodeTreeNode>& A, const TSharedPtr<FECErrorCodeTreeNode>& B)
+	{
+		return A->GetSortString().Compare(B->GetSortString()) < 0;
+	});
 }
 
 TOptional<FECErrorCode> FECErrorCodeTreeNode::GetErrorCode() const
@@ -290,7 +289,7 @@ public:
 
 private:
 	void UpdateErrorCodeOptions();
-	void FilterErrorCodeOptions();
+	void FilterRootNodes();
 
 	void UpdateFilterText(const FText& InFilterText);
 
@@ -314,8 +313,11 @@ private:
 
 	TSharedPtr<STreeView<TSharedPtr<FECErrorCodeTreeNode>>> ErrorCodeTreeView;
 
+	// All possible error code nodes
 	TArray<TSharedPtr<FECErrorCodeTreeNode>> ErrorCodeNodes;
+	// All possible root nodes ('Success' and Categories)
 	TArray<TSharedPtr<FECErrorCodeTreeNode>> RootNodes;
+	// All root nodes that are currently visible (some are hidden due to search filter)
 	TArray<TSharedPtr<FECErrorCodeTreeNode>> FilteredRootNodes;
 
 	TSharedPtr<FECErrorCodeTextFilter> SearchFilter;
@@ -339,7 +341,7 @@ void SECErrorCodeTreeWidget::Construct(const FArguments& InArgs)
 		FECErrorCodeTextFilter::FItemToStringArray::CreateStatic(&SECErrorCodeTreeWidget::GetErrorCodeSearchTerms)));
 
 	UpdateErrorCodeOptions();
-	FilterErrorCodeOptions();
+	FilterRootNodes();
 
 	ChildSlot
 		[
@@ -381,7 +383,7 @@ void SECErrorCodeTreeWidget::Construct(const FArguments& InArgs)
 	{
 		ErrorCodeTreeView->SetSelection(*SelectedEntryPtr, ESelectInfo::Direct);
 	}
-
+	
 	ExpandFilteredRootNodes();
 }
 
@@ -432,39 +434,38 @@ void SECErrorCodeTreeWidget::UpdateErrorCodeOptions()
 			CategoryNode->AddChild(Entry);
 			ErrorCodeNodes.Emplace(Entry);
 		}
+
+		CategoryNode->SortChildren();
 	}
 
-	// Sort all error codes; always leave 'Success' at the top
-	if (ErrorCodeNodes.Num() > 1)
+	// Sort all category nodes; always leave 'Success' at the top
+	if (RootNodes.Num() > 1)
 	{
-		TArrayView<TSharedPtr<FECErrorCodeTreeNode>> ErrorCodes(ErrorCodeNodes.GetData() + 1, ErrorCodeNodes.Num() - 1);
-		ErrorCodes.Sort([](const TSharedPtr<FECErrorCodeTreeNode>& A, const TSharedPtr<FECErrorCodeTreeNode>& B)
+		TArrayView<TSharedPtr<FECErrorCodeTreeNode>> SortableRootNodes(RootNodes.GetData() + 1, RootNodes.Num() - 1);
+		SortableRootNodes.Sort([](const TSharedPtr<FECErrorCodeTreeNode>& A, const TSharedPtr<FECErrorCodeTreeNode>& B)
 		{
-			const FString StrA = A->GetSortString();
-			const FString StrB = B->GetSortString();
-			return StrA.Compare(StrB) < 0;
+			return A->GetSortString().Compare(B->GetSortString()) < 0;
 		});
 	}
 }
 
-void SECErrorCodeTreeWidget::FilterErrorCodeOptions()
+void SECErrorCodeTreeWidget::FilterRootNodes()
 {
 	FilteredRootNodes.Reset();
-	for (const TSharedPtr<FECErrorCodeTreeNode>& RootNode : RootNodes)
+	check(RootNodes.Num() >= 1);
+	//First node is always the 'Success' node
+	const TSharedPtr<FECErrorCodeTreeNode>& SuccessNode = RootNodes[0];
+	if (!SearchFilter.IsValid() || SearchFilter->PassesFilter(*SuccessNode))
 	{
-		// Just the 'Success' node
-		if (RootNode->GetMode() == EECErrorCodeTreeNodeType::ErrorCode)
-		{
-			if (SearchFilter.IsValid() && !SearchFilter->PassesFilter(*RootNode))
-			{
-				continue;
-			}
+		FilteredRootNodes.Emplace(SuccessNode);
+	}
 
-			FilteredRootNodes.Emplace(RootNode);
-		}
-		else // All categories
-		{
-			RootNode->SetFilteredChildren(RootNode->GetChildren().FilterByPredicate([this](const TSharedPtr<FECErrorCodeTreeNode>& Node)
+	// The rest of the nodes are categories
+	for (int32 Idx = 1; Idx < RootNodes.Num(); ++Idx)
+	{
+		const TSharedPtr<FECErrorCodeTreeNode>& CategoryRootNode = RootNodes[Idx];
+		CategoryRootNode->SetFilteredChildren(CategoryRootNode->GetChildren().FilterByPredicate(
+			[this](const TSharedPtr<FECErrorCodeTreeNode>& Node)
 			{
 				if (SearchFilter.IsValid() && !SearchFilter->PassesFilter(*Node))
 				{
@@ -474,10 +475,9 @@ void SECErrorCodeTreeWidget::FilterErrorCodeOptions()
 				return true;
 			}));
 
-			if (RootNode->GetFilteredChildren().Num() > 0)
-			{
-				FilteredRootNodes.Emplace(RootNode);
-			}
+		if (CategoryRootNode->GetFilteredChildren().Num() > 0)
+		{
+			FilteredRootNodes.Emplace(CategoryRootNode);
 		}
 	}
 }
@@ -487,7 +487,7 @@ void SECErrorCodeTreeWidget::UpdateFilterText(const FText& InFilterText)
 	SearchFilter->SetRawFilterText(InFilterText);
 	SearchBox->SetError(SearchFilter->GetFilterErrorText());
 
-	FilterErrorCodeOptions();
+	FilterRootNodes();
 	ErrorCodeTreeView->RequestTreeRefresh();
 	ExpandFilteredRootNodes();
 }
@@ -549,286 +549,7 @@ bool SECErrorCodeTreeWidget::IsErrorCodeNode(TSharedPtr<FECErrorCodeTreeNode> No
 	return Node->GetMode() == EECErrorCodeTreeNodeType::ErrorCode;
 }
 
-
-//------------------------------------------------------------------------------------------------------------
-// LIST ENTRY
-
-class SECErrorCodeEntry : public SComboRow<TSharedPtr<FECErrorCode>>
-{
-public:
-	SLATE_BEGIN_ARGS(SECErrorCodeEntry)
-		: _HighlightText()
-		, _SelectedColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f))
-	{}
-	/** The text this item should highlight, if any. */
-	SLATE_ARGUMENT(FText, HighlightText)
-	/** The color to use when this item is selected. */
-	SLATE_ARGUMENT(FSlateColor, SelectedColor)
-	/** The node this item is associated with. */
-	SLATE_ARGUMENT(TSharedPtr<FECErrorCode>, ErrorCode)
-	SLATE_END_ARGS()
-
-	void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView)
-	{
-		ErrorCode = InArgs._ErrorCode;
-		SelectedColor = InArgs._SelectedColor;
-
-		ChildSlot
-			[
-				SNew(SHorizontalBox)
-				+SHorizontalBox::Slot()
-				.FillWidth(1.f)
-				.Padding(2.f, 3.f, 6.f, 3.f)
-				.VAlign(VAlign_Center)
-				[
-					SNew(STextBlock)
-					.Text(GetErrorCodeDisplayNameText(*ErrorCode))
-					.ToolTipText(FormatErrorCodeTooltip(*ErrorCode))
-					.HighlightText(InArgs._HighlightText)
-					.ColorAndOpacity(this, &SECErrorCodeEntry::GetTextColor)
-					.IsEnabled(true)
-				]
-			];
-
-		STableRow<TSharedPtr<FECErrorCode>>::ConstructInternal(
-			STableRow::FArguments().ShowSelection(true),
-			InOwnerTableView);
-	}
-
-	FSlateColor GetTextColor() const
-	{
-		const TSharedPtr< ITypedTableView< TSharedPtr<FECErrorCode> > > OwnerWidget = OwnerTablePtr.Pin();
-		const bool bIsSelected = OwnerWidget->Private_IsItemSelected(ErrorCode);
-
-		if (bIsSelected)
-		{
-			return SelectedColor;
-		}
-		return FSlateColor::UseForeground();
-	}
-
-private:
-	FSlateColor SelectedColor;
-	TSharedPtr<FECErrorCode> ErrorCode;
-};
-
-
-//------------------------------------------------------------------------------------------------------------
-// LIST WIDGET
-
-class SECErrorCodeListWidget : public SCompoundWidget
-{
-public:
-	SLATE_BEGIN_ARGS(SECErrorCodeListWidget)
-		: _bAutoFocus(true)
-	{
-	}
-
-	SLATE_ARGUMENT(FString, FilterString)
-	SLATE_ARGUMENT(FECErrorCode, DefaultSelection)
-	SLATE_EVENT(FECErrorCodeChangedDelegate, PostErrorCodeSelected)
-	SLATE_ARGUMENT(bool, bAutoFocus)
-	SLATE_END_ARGS()
-
-	void Construct(const FArguments& InArgs);
-
-	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
-
-	static void GetErrorCodeSearchTerms(const FECErrorCode& ErrorCode, TArray<FString>& OutSearchTerms)
-	{
-		OutSearchTerms.Emplace(ErrorCode.ToString());
-	}
-
-	TSharedPtr<SSearchBox> GetSearchBox() const { return SearchBox; }
-
-private:
-	void UpdateErrorCodeOptions();
-	void FilterErrorCodeOptions();
-
-	void UpdateFilterText(const FText& InFilterText);
-
-	TSharedRef<ITableRow> GenerateListRowWidget(TSharedPtr<FECErrorCode> Data,
-		const TSharedRef<STableViewBase>& OwnerTable
-		);
-
-	void BroadcastErrorCodeSelected(TSharedPtr<FECErrorCode> Item, ESelectInfo::Type SelectInfo);
-	
-	using FECErrorCodeTextFilter = TTextFilter<const FECErrorCode&>;
-	
-	TSharedPtr<SSearchBox> SearchBox;
-
-	TSharedPtr<SListView<TSharedPtr<FECErrorCode>>> ErrorCodeListView;
-
-	TArray<TSharedPtr<FECErrorCode>> AllOptions;
-	TArray<TSharedPtr<FECErrorCode>> FilteredOptions;
-
-	TSharedPtr<FECErrorCodeTextFilter> SearchFilter;
-
-	FECErrorCode SelectedErrorCode;
-	
-	FString FilterString;
-	
-	FECErrorCodeChangedDelegate PostErrorCodeSelected;
-
-	bool bAwaitingFocus = false;
-};
-
-void SECErrorCodeListWidget::Construct(const FArguments& InArgs)
-{
-	FilterString = InArgs._FilterString;
-	SelectedErrorCode = InArgs._DefaultSelection;
-	PostErrorCodeSelected = InArgs._PostErrorCodeSelected;
-	bAwaitingFocus = InArgs._bAutoFocus;
-	SearchFilter = MakeShareable(new FECErrorCodeTextFilter(
-		FECErrorCodeTextFilter::FItemToStringArray::CreateStatic(&SECErrorCodeListWidget::GetErrorCodeSearchTerms)));
-
-	UpdateErrorCodeOptions();
-	FilterErrorCodeOptions();
-
-	ChildSlot
-		[
-			SNew(SVerticalBox)
-			+SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SAssignNew(SearchBox, SSearchBox)
-				.HintText(LOCTEXT("ErrorCodeList_SearchBoxHint", "Search Error Codes"))
-				.OnTextChanged(this, &SECErrorCodeListWidget::UpdateFilterText)
-				.DelayChangeNotificationsWhileTyping(true)
-			]
-			+SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SNew(SSeparator)
-				.Visibility(EVisibility::Collapsed)
-			]
-			+SVerticalBox::Slot()
-			.FillHeight(1.f)
-			[
-				SAssignNew(ErrorCodeListView, SListView<TSharedPtr<FECErrorCode>>)
-				.Visibility(EVisibility::Visible)
-				.SelectionMode(ESelectionMode::Single)
-				.ListItemsSource(&FilteredOptions)
-				.OnGenerateRow(this, &SECErrorCodeListWidget::GenerateListRowWidget)
-				.OnSelectionChanged(this, &SECErrorCodeListWidget::BroadcastErrorCodeSelected)
-			]
-		];
-
-	TSharedPtr<FECErrorCode>* SelectedEntryPtr = AllOptions.FindByPredicate([this](const TSharedPtr<FECErrorCode>& Entry)
-	{
-		return *Entry == SelectedErrorCode;
-	});
-	if (SelectedEntryPtr)
-	{
-		ErrorCodeListView->SetSelection(*SelectedEntryPtr, ESelectInfo::Direct);
-	}
-}
-
-void SECErrorCodeListWidget::Tick(const FGeometry& AllottedGeometry,
-	const double InCurrentTime,
-	const float InDeltaTime
-	)
-{
-	if (bAwaitingFocus)
-	{
-		bAwaitingFocus = false;
-		FSlateApplication::Get().SetKeyboardFocus(SearchBox);
-	}
-}
-
-void SECErrorCodeListWidget::UpdateErrorCodeOptions()
-{
-	AllOptions.Reset();
-	TSharedPtr<FECErrorCode> SuccessCode = MakeShareable(new FECErrorCode(FECErrorCode::Success()));
-
-	AllOptions.Emplace(SuccessCode);
-
-	TArray<const UEnum*> ErrorCategories;
-	ErrorCodes::FindAllErrorCategories(ErrorCategories);
-
-	for (const UEnum* Category : ErrorCategories)
-	{
-		check(IsValid(Category));
-
-		// Skip the last entry, as it's always reserved for 'MAX'
-		const int32 NumValues = Category->NumEnums() - 1;
-		for (int32 Idx = 0; Idx < NumValues; ++Idx)
-		{
-			int64 Value = Category->GetValueByIndex(Idx);
-			if (Value == FECErrorCode::Success().GetCode())
-			{
-				continue;
-			}
-
-			if (Category->HasMetaData(TEXT("Hidden"), Idx))
-			{
-				continue;
-			}
-
-			TSharedPtr<FECErrorCode> Entry = MakeShareable(new FECErrorCode(*Category, Value));
-			AllOptions.Emplace(Entry);
-		}
-	}
-
-	// Sort all error codes; always leave 'Success' at the top
-	if (AllOptions.Num() > 1)
-	{
-		TArrayView<TSharedPtr<FECErrorCode>> ErrorCodes(AllOptions.GetData() + 1, AllOptions.Num() - 1);
-		ErrorCodes.Sort([](const TSharedPtr<FECErrorCode>& A, const TSharedPtr<FECErrorCode>& B)
-		{
-			const FString StrA = A->ToShortString();
-			const FString StrB = B->ToShortString();
-			return StrA.Compare(StrB) < 0;
-		});
-	}
-}
-
-void SECErrorCodeListWidget::FilterErrorCodeOptions()
-{
-	FilteredOptions = AllOptions.FilterByPredicate([this](const TSharedPtr<FECErrorCode>& Entry)
-	{
-		if (SearchFilter.IsValid() && !SearchFilter->PassesFilter(*Entry))
-		{
-			return false;
-		}
-
-		return true;
-	});
-}
-
-void SECErrorCodeListWidget::UpdateFilterText(const FText& InFilterText)
-{
-	SearchFilter->SetRawFilterText(InFilterText);
-	SearchBox->SetError(SearchFilter->GetFilterErrorText());
-
-	FilterErrorCodeOptions();
-}
-
-TSharedRef<ITableRow> SECErrorCodeListWidget::GenerateListRowWidget(TSharedPtr<FECErrorCode> Data,
-	const TSharedRef<STableViewBase>& OwnerTable
-	)
-{
-	return SNew(SECErrorCodeEntry, OwnerTable)
-		.HighlightText(SearchBox->GetText())
-		.SelectedColor(FLinearColor(1.f, 1.f, 1.f, 1.f))
-		.ErrorCode(Data);
-}
-
-void SECErrorCodeListWidget::BroadcastErrorCodeSelected(TSharedPtr<FECErrorCode> Item,
-	ESelectInfo::Type SelectInfo
-	)
-{
-	// Set this widget
-	if (SelectInfo == ESelectInfo::Direct)
-	{
-		return;
-	}
-	
-	SelectedErrorCode = *Item;
-	PostErrorCodeSelected.ExecuteIfBound(*Item);
-}
-
-void SECErrorCodeWidget::Construct(const FArguments& InArgs)
+void SECWidget_ErrorCode::Construct(const FArguments& InArgs)
 {
 	FilterString = InArgs._FilterString;
 	SelectedErrorCode = InArgs._DefaultValue;
@@ -837,24 +558,24 @@ void SECErrorCodeWidget::Construct(const FArguments& InArgs)
 	ChildSlot
 		[
 			SAssignNew(ComboButton, SComboButton)
-			.OnGetMenuContent(this, &SECErrorCodeWidget::GenerateDropdownWidget)
+			.OnGetMenuContent(this, &SECWidget_ErrorCode::GenerateDropdownWidget)
 			.ContentPadding(0.f)
-			.ToolTipText(this, &SECErrorCodeWidget::FormatToolTipText)
+			.ToolTipText(this, &SECWidget_ErrorCode::FormatToolTipText)
 			.ButtonContent()
 			[
 				SNew(STextBlock)
-				.Text(this, &SECErrorCodeWidget::GetSelectedValueTitle)
+				.Text(this, &SECWidget_ErrorCode::GetSelectedValueTitle)
 				.Font(IDetailLayoutBuilder::GetDetailFont())
 			]
 		];
 }
 
-void SECErrorCodeWidget::SetSelectedErrorCode(const FECErrorCode& ErrorCode)
+void SECWidget_ErrorCode::SetSelectedErrorCode(const FECErrorCode& ErrorCode)
 {
 	SelectedErrorCode = ErrorCode;
 }
 
-TSharedRef<SWidget> SECErrorCodeWidget::GenerateDropdownWidget()
+TSharedRef<SWidget> SECWidget_ErrorCode::GenerateDropdownWidget()
 {
 	// Tree Widget
 	return SNew(SBox)
@@ -866,47 +587,30 @@ TSharedRef<SWidget> SECErrorCodeWidget::GenerateDropdownWidget()
 			.MaxHeight(500)
 			[
 				SNew(SECErrorCodeTreeWidget)
-				.PostErrorCodeSelected(this, &SECErrorCodeWidget::BroadcastErrorCodeChanged)
+				.PostErrorCodeSelected(this, &SECWidget_ErrorCode::BroadcastErrorCodeChanged)
 				.FilterString(FilterString)
 				.DefaultSelection(SelectedErrorCode)
 				.bAutoFocus(true)
 			]
 		];
-
-	// List Widget
-	//return SNew(SBox)
-	// .WidthOverride(280.f)
-	// [
-	// 	SNew(SVerticalBox)
-	// 	+SVerticalBox::Slot()
-	// 	.AutoHeight()
-	// 	.MaxHeight(500)
-	// 	[
-	// 		SNew(SECErrorCodeListWidget)
-	// 		.PostErrorCodeSelected(this, &SECErrorCodeWidget::BroadcastErrorCodeChanged)
-	// 		.FilterString(FilterString)
-	// 		.DefaultSelection(SelectedErrorCode)
-	// 		.bAutoFocus(true)
-	// 	]
-	// ];
 }
 
-FText SECErrorCodeWidget::FormatToolTipText() const
+FText SECWidget_ErrorCode::FormatToolTipText() const
 {
 	return FormatErrorCodeTooltip(SelectedErrorCode);
 }
 
-FText SECErrorCodeWidget::GetSelectedValueCategoryAndTitle() const
+FText SECWidget_ErrorCode::GetSelectedValueCategoryAndTitle() const
 {
-	return GetErrorCodeDisplayNameText(SelectedErrorCode);
+	return GetErrorCodeCategoryAndTitle(SelectedErrorCode);
 }
 
-FText SECErrorCodeWidget::GetSelectedValueTitle() const
+FText SECWidget_ErrorCode::GetSelectedValueTitle() const
 {
 	return SelectedErrorCode.GetTitle();
 }
 
-void SECErrorCodeWidget::BroadcastErrorCodeChanged(FECErrorCode NewErrorCode)
+void SECWidget_ErrorCode::BroadcastErrorCodeChanged(FECErrorCode NewErrorCode)
 {
 	PostErrorCodeChanged.ExecuteIfBound(NewErrorCode);
 	SelectedErrorCode = NewErrorCode;

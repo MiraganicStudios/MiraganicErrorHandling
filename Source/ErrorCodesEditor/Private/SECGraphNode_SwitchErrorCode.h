@@ -7,10 +7,11 @@
 #include "SGraphNode.h"
 
 class UECK2Node_SwitchErrorCode;
+
 /**
  * Widget for the 'Switch Error Code' K2Node.
  */
-class ERRORCODESEDITOR_API SECGraphNode_SwitchErrorCode : public SGraphNode
+class SECGraphNode_SwitchErrorCode : public SGraphNode
 {
 public:
 	SLATE_BEGIN_ARGS(SECGraphNode_SwitchErrorCode) {}

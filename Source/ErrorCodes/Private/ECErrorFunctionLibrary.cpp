@@ -9,12 +9,6 @@ FECErrorCode UECErrorFunctionLibrary::MakeErrorCode(FECErrorCode ErrorCode)
 	return ErrorCode;
 }
 
-// UEnum* UECErrorFunctionLibrary::BreakErrorCode(const FECErrorCode& ErrorCode, int64& Code)
-// {
-// 	Code = ErrorCode.GetCode();
-// 	return const_cast<UEnum*>(ErrorCode.GetCategory());
-// }
-
 void UECErrorFunctionLibrary::LogErrorToOutputLog(EECLogVerbosity Verbosity, FECErrorCode Error)
 {
 	switch (Verbosity)

@@ -7,7 +7,6 @@
 #include "BlueprintActionDatabaseRegistrar.h"
 #include "BlueprintNodeSpawner.h"
 #include "ECEditorLogging.h"
-#include "ECErrorCategory.h"
 #include "ECErrorFunctionLibrary.h"
 #include "ECErrorCategoryEnum.h"
 #include "Kismet2/CompilerResultsLog.h"

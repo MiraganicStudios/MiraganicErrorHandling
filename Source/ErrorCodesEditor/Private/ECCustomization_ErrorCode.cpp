@@ -5,9 +5,8 @@
 
 #include "DetailWidgetRow.h"
 #include "ECEditorLogging.h"
-#include "ECErrorCategory.h"
 #include "ECErrorCode.h"
-#include "SECErrorCodeWidget.h"
+#include "SECWidget_ErrorCode.h"
 
 TSharedRef<IPropertyTypeCustomization> FECCustomization_ErrorCode::MakeInstance()
 {
@@ -30,11 +29,12 @@ void FECCustomization_ErrorCode::CustomizeHeader(TSharedRef<IPropertyHandle> Pro
 
 	FECErrorCode DefaultValue;
 	UObject* CategoryObj = nullptr;
-	int64 Code = 0;
+	int64 Code = -1;
 	CategoryProperty->GetValue(CategoryObj);
 	CodeProperty->GetValue(Code);
 	UEnum* CategoryEnum = Cast<UEnum>(CategoryObj);
-	DefaultValue = FECErrorCode(CategoryEnum, Code);
+	// Leave values as invalid if they were defined that way; this is clearer than converting to 'Success'
+	DefaultValue = FECErrorCode::ConstructRaw(CategoryEnum, Code);
 
 	HeaderRow
 		.NameContent()
@@ -42,7 +42,7 @@ void FECCustomization_ErrorCode::CustomizeHeader(TSharedRef<IPropertyHandle> Pro
 			PropertyHandle->CreatePropertyNameWidget()
 		]
 		.ValueContent()
-		.MinDesiredWidth(125.f)
+		.MinDesiredWidth(175.f)
 		.MaxDesiredWidth(400.f)
 		[
 			SNew(SHorizontalBox)
@@ -50,7 +50,7 @@ void FECCustomization_ErrorCode::CustomizeHeader(TSharedRef<IPropertyHandle> Pro
 			.HAlign(HAlign_Fill)
 			.Padding(0.f, 2.f, 2.f, 2.f)
 			[
-				SAssignNew(ErrorCodeWidget, SECErrorCodeWidget)
+				SAssignNew(ErrorCodeWidget, SECWidget_ErrorCode)
 				.PostErrorCodeChanged(this, &FECCustomization_ErrorCode::UpdateErrorCodeProperties)
 				.DefaultValue(DefaultValue)
 			]

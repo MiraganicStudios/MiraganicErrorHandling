@@ -7,13 +7,14 @@
 #include "Widgets/SCompoundWidget.h"
 
 struct FECErrorCode;
+
 /**
- * 
+ * Graph pin for error codes.
  */
-class ERRORCODESEDITOR_API SECErrorCodeGraphPin : public SGraphPin
+class SECGraphPin_ErrorCode : public SGraphPin
 {
 public:
-	SLATE_BEGIN_ARGS(SECErrorCodeGraphPin) {}
+	SLATE_BEGIN_ARGS(SECGraphPin_ErrorCode) {}
 	SLATE_END_ARGS()
 
 	/** Constructs this widget with InArgs */

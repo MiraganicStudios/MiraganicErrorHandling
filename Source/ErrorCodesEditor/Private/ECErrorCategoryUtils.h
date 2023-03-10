@@ -8,7 +8,10 @@ class UECErrorCategoryEnum;
 
 namespace ErrorCodes
 {
-ERRORCODESEDITOR_API void BroadcastChanges(const UECErrorCategoryEnum& ErrorCategory,
+/**
+ * Update editor objects (blueprints, etc.) that are dependent on an error category.
+ */
+void BroadcastChanges(const UECErrorCategoryEnum& ErrorCategory,
 	const TArray<TPair<FName, int64>>& OldNames,
 	bool bResolveData = true
 );
@@ -16,5 +19,5 @@ ERRORCODESEDITOR_API void BroadcastChanges(const UECErrorCategoryEnum& ErrorCate
 /**
  * Get all Error Categories. Order is non-deterministic.
  */
-ERRORCODESEDITOR_API void FindAllErrorCategories(TArray<const UEnum*>& OutErrorCategories);
+void FindAllErrorCategories(TArray<const UEnum*>& OutErrorCategories);
 }

@@ -36,7 +36,7 @@ class FECErrorCodesBuilder : public IDetailCustomNodeBuilder, public TSharedFrom
 public:
 	FECErrorCodesBuilder(UECErrorCategoryEnum& InErrorCategory)
 		: TargetErrorCategory(&InErrorCategory)
-		, NextId(1)
+		, NextId(0)
 	{}
 
 	void RequestRefresh();
