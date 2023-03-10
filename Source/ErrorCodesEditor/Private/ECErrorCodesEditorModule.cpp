@@ -6,23 +6,30 @@
 #include "ECAssetTypeActions_ErrorEnum.h"
 #include "ECCustomization_ErrorCategory.h"
 #include "ECCustomization_ErrorCode.h"
+#include "ECCustomization_ErrorCodeSwitchNode.h"
 #include "ECEditorLogging.h"
 #include "ECErrorCategory.h"
 #include "ECErrorCategoryUtils.h"
 #include "ECGraphPinFactory_ErrorCode.h"
+#include "ECGraphNodeFactory_SwitchErrorCode.h"
 #include "EdGraphUtilities.h"
 #include "ECErrorCode.h"
+#include "ECK2Node_SwitchErrorCode.h"
 
 void FECErrorCodesEditorModule::StartupModule()
 {
 	ErrorCodePinFactory = MakeShareable(new FECGraphPinFactory_ErrorCode());
 	FEdGraphUtilities::RegisterVisualPinFactory(ErrorCodePinFactory);
+	SwitchErrorCodeNodeFactory = MakeShareable(new FECGraphNodeFactory_SwitchErrorCode());
+	FEdGraphUtilities::RegisterVisualNodeFactory(SwitchErrorCodeNodeFactory);
 
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyModule.RegisterCustomPropertyTypeLayout(FECErrorCode::StaticStruct()->GetFName(),
 		FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FECCustomization_ErrorCode::MakeInstance));
 	PropertyModule.RegisterCustomClassLayout(UECErrorCategory::StaticClass()->GetFName(),
 		FOnGetDetailCustomizationInstance::CreateStatic(&FECCustomization_ErrorCategory::MakeInstance));
+	PropertyModule.RegisterCustomClassLayout(UECK2Node_SwitchErrorCode::StaticClass()->GetFName(),
+		FOnGetDetailCustomizationInstance::CreateStatic(&FECCustomization_ErrorCodeSwitchNode::MakeInstance));
 
 	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
 	ErrorCategoryAssetActions = MakeShareable(new FECAssetTypeActions_ErrorEnum());
@@ -39,11 +46,18 @@ void FECErrorCodesEditorModule::ShutdownModule()
 		ErrorCodePinFactory.Reset();		
 	}
 
+	if (SwitchErrorCodeNodeFactory.IsValid())
+	{
+		FEdGraphUtilities::UnregisterVisualNodeFactory(SwitchErrorCodeNodeFactory);
+		SwitchErrorCodeNodeFactory.Reset();
+	}
+
 	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
 	{
 		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
 		PropertyModule.UnregisterCustomPropertyTypeLayout(FECErrorCode::StaticStruct()->GetFName());
 		PropertyModule.UnregisterCustomClassLayout(UECErrorCategory::StaticClass()->GetFName());
+		PropertyModule.UnregisterCustomClassLayout(UECK2Node_SwitchErrorCode::StaticClass()->GetFName());
 	}
 
 	if (FModuleManager::Get().IsModuleLoaded("AssetTools"))

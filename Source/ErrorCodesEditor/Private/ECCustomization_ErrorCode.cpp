@@ -42,13 +42,13 @@ void FECCustomization_ErrorCode::CustomizeHeader(TSharedRef<IPropertyHandle> Pro
 			PropertyHandle->CreatePropertyNameWidget()
 		]
 		.ValueContent()
-		.MinDesiredWidth(500)
-		.MaxDesiredWidth(4096)
+		.MinDesiredWidth(125.f)
+		.MaxDesiredWidth(400.f)
 		[
 			SNew(SHorizontalBox)
 			+SHorizontalBox::Slot()
 			.HAlign(HAlign_Fill)
-			.Padding(0.f, 0.f, 2.f, 0.f)
+			.Padding(0.f, 2.f, 2.f, 2.f)
 			[
 				SAssignNew(ErrorCodeWidget, SECErrorCodeWidget)
 				.PostErrorCodeChanged(this, &FECCustomization_ErrorCode::UpdateErrorCodeProperties)
@@ -93,7 +93,7 @@ void FECCustomization_ErrorCode::SyncErrorCodeWidgetToProperty()
 			FECErrorCode* ErrorCodePtr = static_cast<FECErrorCode*>(RawStructData[0]);
 			if (ErrorCodePtr && ErrorCodeWidget)
 			{
-				ErrorCodeWidget->SetCurrentValue(*ErrorCodePtr);
+				ErrorCodeWidget->SetSelectedErrorCode(*ErrorCodePtr);
 			}
 		}
 	}

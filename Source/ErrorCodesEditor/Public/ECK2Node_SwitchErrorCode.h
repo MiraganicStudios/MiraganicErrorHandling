@@ -42,6 +42,7 @@ public:
 	ERRORCODESEDITOR_API virtual void AddPinToSwitchNode() override;
 	virtual FName GetUniquePinName() override;
 	virtual FEdGraphPinType GetPinType() const override;
+	virtual bool CanRemoveExecutionPin(UEdGraphPin* TargetPin) const override;
 	// End of UK2Node_Switch Interface
 
 	// IECNodeDependingOnErrorCategory Interface
@@ -52,6 +53,12 @@ public:
 
 	virtual FName GetPinNameGivenIndex(int32 Index) const override;
 
+	/**
+	 * Add pins for all error codes in a category that aren't already included.
+	 * @return The number of new error codes that were added.
+	 */
+	int32 AddUniqueCodesFromCategory(const UEnum& Category);
+
 protected:
 	virtual void CreateFunctionPin() override;
 	virtual void CreateSelectionPin() override;
@@ -60,6 +67,8 @@ protected:
 
 	FName GetNameForErrorCodePin(const FECErrorCode& ErrorCode) const;
 	FString GetTooltipForErrorCodePin(const FECErrorCode& ErrorCode) const;
+
+	static FName GetSuccessPinName();
 
 public:
 	UPROPERTY(EditAnywhere, Category = PinOptions)

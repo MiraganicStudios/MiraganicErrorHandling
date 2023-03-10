@@ -23,7 +23,7 @@ public:
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs);
 
-	void SetCurrentValue(const FECErrorCode& ErrorCode);
+	void SetSelectedErrorCode(const FECErrorCode& ErrorCode);
 
 protected:
 	TSharedRef<SWidget> GenerateDropdownWidget();
@@ -40,5 +40,4 @@ protected:
 	FECErrorCode SelectedErrorCode;
 
 	TSharedPtr<class SComboButton> ComboButton;
-	
 };

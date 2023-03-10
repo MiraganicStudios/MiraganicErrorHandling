@@ -12,8 +12,9 @@ class UECErrorCategory;
  * Generic error code.
  */
 USTRUCT(BlueprintType, meta = (DisableSplitPin, 
-	HasNativeMake = "ErrorCodes.ECErrorFunctionLibrary.MakeErrorCode",
-	HasNativeBreak = "ErrorCodes.ECErrorFunctionLibrary.BreakErrorCode"))
+	HasNativeMake = "ErrorCodes.ECErrorFunctionLibrary.MakeErrorCode"
+	//HasNativeBreak = "ErrorCodes.ECErrorFunctionLibrary.BreakErrorCode")
+	))
 struct ERRORCODES_API FECErrorCode
 {
 	GENERATED_BODY()
@@ -92,10 +93,10 @@ protected:
 	//TSubclassOf<UECErrorCategory> CategoryClass;
 
 	// This error's enum object.
-	UPROPERTY(EditAnywhere, Category = "Error")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Error")
 	TObjectPtr<const UEnum> Enum;
 
 	// The code for this error.
-	UPROPERTY(EditAnywhere, Category = "Error")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Error")
 	int64 Code;
 };

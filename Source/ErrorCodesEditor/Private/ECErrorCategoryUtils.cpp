@@ -6,6 +6,7 @@
 #include "IECNodeDependingOnErrorCategory.h"
 #include "K2Node_Variable.h"
 #include "NodeDependingOnEnumInterface.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "Engine/UserDefinedStruct.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/EnumEditorUtils.h"
@@ -249,4 +250,43 @@ void ErrorCodes::BroadcastChanges(const UECErrorCategoryEnum& ErrorCategory,
 	}
 
 	FEnumEditorUtils::FEnumEditorManager::Get().PostChange(&ErrorCategory, FEnumEditorUtils::Changed);
+}
+
+void ErrorCodes::FindAllErrorCategories(TArray<const UEnum*>& OutErrorCategories)
+{
+	// Find C++ defined error categories
+	for (TObjectIterator<UEnum> EnumIt; EnumIt; ++EnumIt)
+	{
+		UEnum* Category = *EnumIt;
+		// BP error categories are found by the asset search in the loop below
+		if (!IsValid(Category) || Category->IsA<UECErrorCategoryEnum>() || !Category->HasMetaData(TEXT("ErrorCategory")))
+		{
+			continue;
+		}
+
+		OutErrorCategories.Emplace(Category);
+	}
+
+	// Find asset error categories
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+	TArray<FAssetData> EnumList;
+	FARFilter AssetFilter;
+	AssetFilter.ClassNames.Add(UECErrorCategoryEnum::StaticClass()->GetFName());
+	AssetFilter.bRecursiveClasses = true;
+	AssetRegistryModule.Get().GetAssets(AssetFilter, EnumList);
+	for (const FAssetData& AssetData : EnumList)
+	{
+		if (!AssetData.IsInstanceOf(UECErrorCategoryEnum::StaticClass()))
+		{
+			continue;
+		}
+		
+		UEnum* Category = Cast<UEnum>(AssetData.FastGetAsset(true));
+		if (!IsValid(Category))
+		{
+			continue;
+		}
+
+		OutErrorCategories.Emplace(Category);
+	}
 }

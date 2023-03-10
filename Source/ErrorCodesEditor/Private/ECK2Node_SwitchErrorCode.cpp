@@ -148,6 +148,17 @@ FEdGraphPinType UECK2Node_SwitchErrorCode::GetPinType() const
 	return PinType;
 }
 
+bool UECK2Node_SwitchErrorCode::CanRemoveExecutionPin(UEdGraphPin* TargetPin) const
+{
+	if (TargetPin && TargetPin->PinName == GetSuccessPinName())
+	{
+		// Can't remove the 'Success' pin.
+		return false;
+	}
+	
+	return Super::CanRemoveExecutionPin(TargetPin);
+}
+
 bool UECK2Node_SwitchErrorCode::DependsOnErrorCategory(const UECErrorCategoryEnum& Category) const
 {
 	for (const FECErrorCode& PinErrorCode : PinErrorCodes)
@@ -171,6 +182,37 @@ FName UECK2Node_SwitchErrorCode::GetPinNameGivenIndex(int32 Index) const
 {
 	check(Index);
 	return PinNames[Index];
+}
+
+int32 UECK2Node_SwitchErrorCode::AddUniqueCodesFromCategory(const UEnum& Category)
+{
+	int32 NumAdded = 0;
+	const int32 NumEnums = Category.NumEnums() - 1;
+	for (int32 Idx = 0; Idx < NumEnums; ++Idx)
+	{
+		const int64 Value = Category.GetValueByIndex(Idx);
+		// 0 is reserved for 'Success' error codes
+		if (Value == FECErrorCode::Success().GetCode())
+		{
+			continue;
+		}
+		const FECErrorCode ErrorCode(Category, Value);
+		const int32 NewPinIdx = PinErrorCodes.Num();
+		const int32 AddedIdx = PinErrorCodes.AddUnique(ErrorCode);
+		// Already exists
+		if (AddedIdx != NewPinIdx)
+		{
+			continue;
+		}
+
+		const FName PinName = GetNameForErrorCodePin(ErrorCode);
+		PinNames.Emplace(PinName);
+		UEdGraphPin* Pin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, PinName);
+		Pin->PinToolTip = GetTooltipForErrorCodePin(ErrorCode);
+		++NumAdded;
+	}
+
+	return NumAdded;
 }
 
 void UECK2Node_SwitchErrorCode::CreateFunctionPin()
@@ -218,7 +260,8 @@ void UECK2Node_SwitchErrorCode::CreateCasePins()
 	}
 
 	// Always have a success pin
-	UEdGraphPin* SuccessPin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, TEXT("Success"));
+	UEdGraphPin* SuccessPin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, GetSuccessPinName());
+	SuccessPin->PinFriendlyName = NSLOCTEXT("ErrorCodesEditor_K2NodeSwitchErrorCode", "FriendlyName_SuccessPin", "Success");
 	SuccessPin->PinToolTip = TEXT("No error.");
 
 	for (int32 Index = 0; Index < PinErrorCodes.Num(); ++Index)
@@ -276,4 +319,9 @@ FString UECK2Node_SwitchErrorCode::GetTooltipForErrorCodePin(const FECErrorCode&
 	{
 		return ErrorCode.ToString();
 	}
+}
+
+FName UECK2Node_SwitchErrorCode::GetSuccessPinName()
+{
+	return TEXT("EC_RESERVED_Success");
 }

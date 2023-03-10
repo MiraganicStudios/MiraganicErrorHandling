@@ -18,6 +18,7 @@ private:
 	);
 	
 	TSharedPtr<class FECGraphPinFactory_ErrorCode> ErrorCodePinFactory;
+	TSharedPtr<class FECGraphNodeFactory_SwitchErrorCode> SwitchErrorCodeNodeFactory;
 
 	TSharedPtr<class IAssetTypeActions> ErrorCategoryAssetActions;
 };
