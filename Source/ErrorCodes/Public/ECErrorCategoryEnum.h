@@ -34,6 +34,8 @@ public:
 
 	FString GenerateNewErrorCodeName();
 	bool IsProperErrorCodeName(const FString& NewName);
+
+	bool IsDisplayNameValidAndUnique(int32 EnumeratorIndex, const FText& NewDisplayName) const;
 #endif
 
 #if WITH_EDITORONLY_DATA

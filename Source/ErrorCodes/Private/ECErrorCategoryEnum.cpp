@@ -201,6 +201,25 @@ bool UECErrorCategoryEnum::IsProperErrorCodeName(const FString& NewName)
 	return bNameNotUsed && bValidName;
 }
 
+bool UECErrorCategoryEnum::IsDisplayNameValidAndUnique(int32 EnumeratorIndex, const FText& NewDisplayName) const
+{
+	if (NewDisplayName.IsEmptyOrWhitespace() || NewDisplayName.ToString() == TEXT("(INVALID)"))
+	{
+		return false;
+	}
+
+	// Names must be unique
+	for (int32 Idx = 0; Idx < NumEnums(); ++Idx)
+	{
+		if (Idx != EnumeratorIndex && NewDisplayName.ToString() == GetDisplayNameTextByIndex(Idx).ToString())
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 #endif
 
 #if WITH_EDITORONLY_DATA

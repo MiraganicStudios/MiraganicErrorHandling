@@ -30,7 +30,15 @@ bool FECErrorCode::IsSuccess() const
 
 bool FECErrorCode::IsError() const
 {
-	return Code >= 0 && ::IsValid(Category) && !Category->GetNameByValue(Code).IsNone();
+	if (Code == -1 || !::IsValid(Category))
+	{
+		return false;
+	}
+
+	const int32 Idx = Category->GetIndexByValue(Code);
+	// Subtract 1 to ignore the 'MAX' enum entry.
+	const int32 MaxIdx = Category->NumEnums() - 1;
+	return Idx >= 0 && Idx < MaxIdx;
 }
 
 bool FECErrorCode::IsValid() const
@@ -62,7 +70,7 @@ TOptional<int32> FECErrorCode::GetMaxErrorIndex() const
 		return {};
 	}
 
-	return Category->NumEnums();
+	return Category->NumEnums() - 1;
 }
 
 FText FECErrorCode::GetCategoryName() const

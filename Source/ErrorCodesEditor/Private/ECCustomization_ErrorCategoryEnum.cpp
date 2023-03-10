@@ -20,7 +20,7 @@
 class FECErrorTitleEditableText : public IEditableTextProperty
 {
 public:
-	FECErrorTitleEditableText(UUserDefinedEnum* InTargetEnum, const int32 InEnumeratorIndex)
+	FECErrorTitleEditableText(UECErrorCategoryEnum* InTargetEnum, const int32 InEnumeratorIndex)
 		: TargetEnum(InTargetEnum)
 		, EnumeratorIndex(InEnumeratorIndex)
 		, bCausedChange(false)
@@ -66,8 +66,13 @@ public:
 	virtual void SetText(const int32 InIndex, const FText& InText) override
 	{
 		check(InIndex == 0);
-		TGuardValue<bool> CausingChange(bCausedChange, true);
-		FEnumEditorUtils::SetEnumeratorDisplayName(TargetEnum, EnumeratorIndex, InText);
+		if (!IsValid(TargetEnum))
+		{
+			return;
+		}
+		
+		TGuardValue<bool> bCausingChange(bCausedChange, true);
+		ErrorCodes::SetErrorCodeDisplayName(*TargetEnum, EnumeratorIndex, InText);
 	}
 
 	virtual bool IsValidText(const FText& InText, FText& OutErrorMsg) const override
@@ -80,7 +85,7 @@ public:
 			OutErrorMsg = LOCTEXT("NameMissingError", "You must provide a name.");
 			bValidName = false;
 		}
-		else if (!FEnumEditorUtils::IsEnumeratorDisplayNameValid(TargetEnum, EnumeratorIndex, InText))
+		else if (!TargetEnum->IsDisplayNameValidAndUnique(EnumeratorIndex, InText))
 		{
 			OutErrorMsg = FText::Format(LOCTEXT("NameInUseError", "'{0}' is already in use."), InText);
 			bValidName = false;
@@ -108,7 +113,7 @@ public:
 
 private:
 	/** The user defined enum being edited */
-	UUserDefinedEnum* TargetEnum;
+	UECErrorCategoryEnum* TargetEnum;
 
 	/** Index of enumerator entry */
 	int32 EnumeratorIndex;
@@ -121,7 +126,7 @@ private:
 class FECErrorMessageEditableText : public IEditableTextProperty
 {
 public:
-	FECErrorMessageEditableText(UUserDefinedEnum* InTargetEnum, const int32 InEnumeratorIndex)
+	FECErrorMessageEditableText(UECErrorCategoryEnum* InTargetEnum, const int32 InEnumeratorIndex)
 		: TargetEnum(InTargetEnum)
 		, EnumeratorIndex(InEnumeratorIndex)
 		, bCausedChange(false)
@@ -171,10 +176,7 @@ public:
 	{
 		check(InIndex == 0);
 		TGuardValue<bool> CausingChange(bCausedChange, true);
-		//@TODO: Metadata is not transactional right now, so we cannot transact a tooltip edit
-		// const FScopedTransaction Transaction(NSLOCTEXT("EnumEditor", "SetEnumeratorTooltip", "Set Description"));
-		TargetEnum->Modify();
-		TargetEnum->SetMetaData(TEXT("ToolTip"), *InText.ToString(), EnumeratorIndex);
+		ErrorCodes::SetErrorCodeMessage(*TargetEnum, EnumeratorIndex, InText);
 	}
 
 	virtual bool IsValidText(const FText& InText, FText& OutErrorMsg) const override
@@ -201,7 +203,7 @@ public:
 
 private:
 	/** The user defined enum being edited */
-	UUserDefinedEnum* TargetEnum;
+	UECErrorCategoryEnum* TargetEnum;
 
 	/** Index of enumerator entry */
 	int32 EnumeratorIndex;
@@ -396,32 +398,7 @@ void FECErrorCodesBuilder::GenerateChildContent(IDetailChildrenBuilder& Children
 
 void FECErrorCodesBuilder::AddEntry()
 {
-	if (!TargetErrorCategory.IsValid())
-	{
-		return;
-	}
-	
-	const FScopedTransaction Transaction(LOCTEXT("Transaction_AddEntry", "Add Error Code"));
-
-	BroadcastPreChange();
-	
-	TArray<TPair<FName, int64>> OldNames;
-	CopyEnumsWithoutMax(OldNames, *TargetErrorCategory);
-	TArray<TPair<FName, int64>> Names = OldNames;
-
-	FString EnumNameStr = TargetErrorCategory->GenerateNewErrorCodeName();
-	const FString FullNameStr = TargetErrorCategory->GenerateFullEnumName(*EnumNameStr);
-	Names.Emplace(*FullNameStr, NextId++);
-
-	// Note that we do NOT clean up enum values as it will invalidate error code references
-
-	const UEnum::ECppForm EnumType = TargetErrorCategory->GetCppForm();
-	TargetErrorCategory->SetEnums(Names, EnumType);
-	TargetErrorCategory->EnsureAllDisplayNamesExist();
-
-	ErrorCodes::BroadcastChanges(*TargetErrorCategory, OldNames);
-
-	TargetErrorCategory->MarkPackageDirty();
+	ErrorCodes::AddErrorCodeToCategory(*TargetErrorCategory, NextId++);
 }
 
 void FECErrorCodesBuilder::RefreshNextId()
@@ -436,29 +413,7 @@ void FECErrorCodesBuilder::RefreshNextId()
 
 void FECErrorCodesBuilder::RemoveEntryAtIndex(int32 Index)
 {
-	if (!TargetErrorCategory.IsValid() || TargetErrorCategory->GetNameByIndex(Index).IsNone())
-	{
-		return;
-	}
-
-	const FScopedTransaction Transaction(LOCTEXT("RemoveErrorCode", "Remove Error Code"));
-
-	BroadcastPreChange();
-
-	TArray<TPair<FName, int64>> OldNames;
-	CopyEnumsWithoutMax(OldNames, *TargetErrorCategory);
-	TArray<TPair<FName, int64>> Names = OldNames;
-
-	Names.RemoveAt(Index);
-	
-	// Note that we do NOT clean up enum values as it will invalidate error code references
-
-	const UEnum::ECppForm EnumType = TargetErrorCategory->GetCppForm();
-	TargetErrorCategory->SetEnums(Names, EnumType);
-	TargetErrorCategory->EnsureAllDisplayNamesExist();
-	ErrorCodes::BroadcastChanges(*TargetErrorCategory, OldNames);
-
-	TargetErrorCategory->MarkPackageDirty();
+	ErrorCodes::RemoveErrorCodeFromCategory(*TargetErrorCategory, Index);
 }
 
 void FECErrorCodesBuilder::CopyEnumsWithoutMax(TArray<TPair<FName, int64>>& OutEnumPairs, const UEnum& Enum)
@@ -468,12 +423,6 @@ void FECErrorCodesBuilder::CopyEnumsWithoutMax(TArray<TPair<FName, int64>>& OutE
 	{
 		OutEnumPairs.Emplace(Enum.GetNameByIndex(Idx), Enum.GetValueByIndex(Idx));
 	}
-}
-
-void FECErrorCodesBuilder::BroadcastPreChange()
-{
-	FEnumEditorManager::Get().PreChange(TargetErrorCategory.Get(), FEnumEditorUtils::Changed);
-	TargetErrorCategory->Modify();
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -56,8 +56,6 @@ private:
 	void RemoveEntryAtIndex(int32 Index);
 
 	static void CopyEnumsWithoutMax(TArray<TPair<FName, int64>>& OutEnumPairs, const UEnum& Enum);
-
-	void BroadcastPreChange();
 	
 	FSimpleDelegate RequestRebuild;
 	TWeakObjectPtr<UECErrorCategoryEnum> TargetErrorCategory;

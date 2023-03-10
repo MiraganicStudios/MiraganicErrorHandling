@@ -72,7 +72,7 @@ void FECErrorCodesEditorModule::BroadcastErrorCategoryChanged(const UECErrorCate
 	bool bResolveData
 	)
 {
-	ErrorCodes::BroadcastChanges(ErrorCategory, OldNames, bResolveData);
+	ErrorCodes::BroadcastPostChange(ErrorCategory, OldNames, bResolveData);
 }
 
 IMPLEMENT_MODULE(FECErrorCodesEditorModule, ErrorCodesEditor)

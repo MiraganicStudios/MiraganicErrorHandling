@@ -8,10 +8,13 @@
 #include "NodeDependingOnEnumInterface.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Engine/UserDefinedStruct.h"
+#include "Internationalization/TextPackageNamespaceUtil.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/EnumEditorUtils.h"
 #include "Kismet2/StructureEditorUtils.h"
 #include "UObject/PropertyIterator.h"
+
+#define LOCTEXT_NAMESPACE "ErrorCodesEditor_ErrorCategoryUtils"
 
 class FArchiveEnumeratorResolver : public FArchiveUObject
 {
@@ -30,7 +33,14 @@ public:
 	}
 };
 
-void ErrorCodes::BroadcastChanges(const UECErrorCategoryEnum& ErrorCategory,
+void ErrorCodes::BroadcastPreChange(UECErrorCategoryEnum& ErrorCategory)
+{
+	FEnumEditorUtils::FEnumEditorManager::Get().PreChange(&ErrorCategory, FEnumEditorUtils::Changed);
+	ErrorCategory.Modify();
+}
+
+// Copied from FEnumEditorUtils::BroadcastChanges
+void ErrorCodes::BroadcastPostChange(const UECErrorCategoryEnum& ErrorCategory,
 	const TArray<TPair<FName, int64>>& OldNames,
 	bool bResolveData
 )
@@ -252,6 +262,116 @@ void ErrorCodes::BroadcastChanges(const UECErrorCategoryEnum& ErrorCategory,
 	FEnumEditorUtils::FEnumEditorManager::Get().PostChange(&ErrorCategory, FEnumEditorUtils::Changed);
 }
 
+void ErrorCodes::SetErrorCodeDisplayName(UECErrorCategoryEnum& Category,
+	int32 Idx,
+	const FText& NewDisplayName
+	)
+{
+	if (Idx < 0 || Idx >= Category.NumEnums() ||
+		!Category.IsDisplayNameValidAndUnique(Idx, NewDisplayName))
+	{
+		return;
+	}
+	
+	const FScopedTransaction Transaction(NSLOCTEXT("EnumEditor", "SetEnumeratorDisplayName", "Set Display Name"));
+
+	ErrorCodes::BroadcastPreChange(Category);
+	
+	const FName EnumEntryName = *Category.GetNameStringByIndex(Idx);
+
+	FText DisplayNameToSet = NewDisplayName;
+
+#if USE_STABLE_LOCALIZATION_KEYS
+	// Make sure the package namespace for this display name is up-to-date
+	{
+		const FString PackageNamespace = TextNamespaceUtil::EnsurePackageNamespace(&Category);
+		if (!PackageNamespace.IsEmpty())
+		{
+			const FString DisplayNameNamespace = FTextInspector::GetNamespace(DisplayNameToSet).Get(FString());
+			const FString FullNamespace = TextNamespaceUtil::BuildFullNamespace(DisplayNameNamespace, PackageNamespace);
+			if (!DisplayNameNamespace.Equals(FullNamespace, ESearchCase::CaseSensitive))
+			{
+				// We may assign a new key when if we don't have the correct package namespace in order to avoid identity conflicts when instancing
+				DisplayNameToSet = FText::ChangeKey(FullNamespace, FGuid::NewGuid().ToString(), DisplayNameToSet);
+			}
+		}
+	}
+#endif // USE_STABLE_LOCALIZATION_KEYS
+
+	Category.DisplayNameMap.Add(EnumEntryName, DisplayNameToSet);
+
+	ErrorCodes::BroadcastPostChange(Category, TArray<TPair<FName, int64>>(), false);
+}
+
+void ErrorCodes::SetErrorCodeMessage(UECErrorCategoryEnum& Category, int32 Idx, const FText& NewMessage)
+{
+	//@TODO: Metadata is not transactional right now, so we cannot transact a tooltip edit
+	// const FScopedTransaction Transaction(NSLOCTEXT("EnumEditor", "SetEnumeratorTooltip", "Set Description"));
+	Category.Modify();
+	Category.SetMetaData(TEXT("ToolTip"), *NewMessage.ToString(), Idx);
+}
+
+void ErrorCodes::AddErrorCodeToCategory(UECErrorCategoryEnum& Category, int64 NewCode)
+{
+	const FScopedTransaction Transaction(LOCTEXT("Transaction_AddEntry", "Add Error Code"));
+
+	ErrorCodes::BroadcastPreChange(Category);
+	
+	TArray<TPair<FName, int64>> OldNames;
+	CopyErrorCodesWithoutMax(OldNames, Category);
+	TArray<TPair<FName, int64>> Names = OldNames;
+
+	FString EnumNameStr = Category.GenerateNewErrorCodeName();
+	const FString FullNameStr = Category.GenerateFullEnumName(*EnumNameStr);
+	Names.Emplace(*FullNameStr, NewCode);
+
+	// Note that we do NOT clean up enum values as it will invalidate error code references
+
+	const UEnum::ECppForm EnumType = Category.GetCppForm();
+	Category.SetEnums(Names, EnumType);
+	Category.EnsureAllDisplayNamesExist();
+
+	ErrorCodes::BroadcastPostChange(Category, OldNames);
+
+	Category.MarkPackageDirty();
+}
+
+void ErrorCodes::RemoveErrorCodeFromCategory(UECErrorCategoryEnum& Category, int32 Idx)
+{
+	if (Idx < 0 || Idx >= Category.NumEnums() - 1)
+	{
+		return;
+	}
+	
+	const FScopedTransaction Transaction(LOCTEXT("RemoveErrorCode", "Remove Error Code"));
+
+	ErrorCodes::BroadcastPreChange(Category);
+
+	TArray<TPair<FName, int64>> OldNames;
+	CopyErrorCodesWithoutMax(OldNames, Category);
+	TArray<TPair<FName, int64>> Names = OldNames;
+
+	Names.RemoveAt(Idx);
+	
+	// Note that we do NOT clean up enum values as it will invalidate error code references
+
+	const UEnum::ECppForm EnumType = Category.GetCppForm();
+	Category.SetEnums(Names, EnumType);
+	Category.EnsureAllDisplayNamesExist();
+	
+	ErrorCodes::BroadcastPostChange(Category, OldNames);
+	Category.MarkPackageDirty();
+}
+
+void ErrorCodes::CopyErrorCodesWithoutMax(TArray<TPair<FName, int64>>& OutEnumPairs, const UECErrorCategoryEnum& Category)
+{
+	const int32 NumEnums = Category.NumEnums() - 1;
+	for (int32 Idx = 0; Idx < NumEnums; ++Idx)
+	{
+		OutEnumPairs.Emplace(Category.GetNameByIndex(Idx), Category.GetValueByIndex(Idx));
+	}
+}
+
 void ErrorCodes::FindAllErrorCategories(TArray<const UEnum*>& OutErrorCategories)
 {
 	// Find C++ defined error categories
@@ -290,3 +410,5 @@ void ErrorCodes::FindAllErrorCategories(TArray<const UEnum*>& OutErrorCategories
 		OutErrorCategories.Emplace(Category);
 	}
 }
+
+#undef LOCTEXT_NAMESPACE
