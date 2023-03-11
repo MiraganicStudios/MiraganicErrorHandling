@@ -3,8 +3,8 @@
 
 #include "ECAssetEditor_ErrorCategory.h"
 
-#include "ECCustomization_ErrorCategoryEnum.h"
-#include "ECErrorCategoryEnum.h"
+#include "ECCustomization_ErrorCategory.h"
+#include "ECErrorCategory.h"
 #include "Styling/ToolBarStyle.h"
 #include "SPositiveActionButton.h"
 #include "Kismet2/EnumEditorUtils.h"
@@ -17,7 +17,7 @@ FECAssetEditor_ErrorCategory::~FECAssetEditor_ErrorCategory()
 
 void FECAssetEditor_ErrorCategory::InitEditor(const EToolkitMode::Type Mode,
 	const TSharedPtr<IToolkitHost>& InitToolkitHost,
-	UECErrorCategoryEnum* ErrorCategory
+	UECErrorCategory* ErrorCategory
 	)
 {
 	EditingErrorCategory = ErrorCategory;
@@ -129,11 +129,11 @@ TSharedRef<SDockTab> FECAssetEditor_ErrorCategory::SpawnErrorCodesTab(const FSpa
 {
 	check( Args.GetTabId() == GetErrorCodesTabId() );
 
-	UECErrorCategoryEnum* EditedErrorCategory = NULL;
+	UECErrorCategory* EditedErrorCategory = NULL;
 	const TArray<UObject*>& EditingObjs = GetEditingObjects();
 	if (EditingObjs.Num())
 	{
-		EditedErrorCategory = Cast<UECErrorCategoryEnum>(EditingObjs[ 0 ]);
+		EditedErrorCategory = Cast<UECErrorCategory>(EditingObjs[ 0 ]);
 	}
 
 	// Create a property view
@@ -148,8 +148,8 @@ TSharedRef<SDockTab> FECAssetEditor_ErrorCategory::SpawnErrorCodesTab(const FSpa
 
 	PropertyView = EditModule.CreateDetailView( DetailsViewArgs );
 
-	FOnGetDetailCustomizationInstance LayoutEnumDetails = FOnGetDetailCustomizationInstance::CreateStatic(&FECCustomization_ErrorCategoryEnum::MakeInstance);
-	PropertyView->RegisterInstancedCustomPropertyLayout(UECErrorCategoryEnum::StaticClass(), LayoutEnumDetails);
+	FOnGetDetailCustomizationInstance LayoutEnumDetails = FOnGetDetailCustomizationInstance::CreateStatic(&FECCustomization_ErrorCategory::MakeInstance);
+	PropertyView->RegisterInstancedCustomPropertyLayout(UECErrorCategory::StaticClass(), LayoutEnumDetails);
 
 	PropertyView->SetObject(EditedErrorCategory);
 

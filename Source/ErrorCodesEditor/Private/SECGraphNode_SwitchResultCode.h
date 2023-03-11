@@ -6,18 +6,18 @@
 #include "Widgets/SCompoundWidget.h"
 #include "SGraphNode.h"
 
-class UECK2Node_SwitchErrorCode;
+class UECK2Node_SwitchResultCode;
 
 /**
  * Widget for the 'Switch Error Code' K2Node.
  */
-class SECGraphNode_SwitchErrorCode : public SGraphNode
+class SECGraphNode_SwitchResultCode : public SGraphNode
 {
 public:
-	SLATE_BEGIN_ARGS(SECGraphNode_SwitchErrorCode) {}
+	SLATE_BEGIN_ARGS(SECGraphNode_SwitchResultCode) {}
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, UECK2Node_SwitchErrorCode* InNode);
+	void Construct(const FArguments& InArgs, UECK2Node_SwitchResultCode* InNode);
 
 	virtual void CreatePinWidgets() override;
 

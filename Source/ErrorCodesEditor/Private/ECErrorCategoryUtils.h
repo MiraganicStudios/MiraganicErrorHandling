@@ -3,37 +3,37 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ECErrorCategoryEnum.h"
+#include "ECErrorCategory.h"
 
-class UECErrorCategoryEnum;
+class UECErrorCategory;
 
 namespace ErrorCodes
 {
 /**
  * Broadcast that an error category is about to be changed.
  */
-void BroadcastPreChange(UECErrorCategoryEnum& ErrorCategory);
+void BroadcastPreChange(UECErrorCategory& ErrorCategory);
 
 /**
  * Update editor objects (blueprints, etc.) that are dependent on an error category.
  */
-void BroadcastPostChange(const UECErrorCategoryEnum& ErrorCategory,
+void BroadcastPostChange(const UECErrorCategory& ErrorCategory,
 	const TArray<TPair<FName, int64>>& OldNames,
 	bool bResolveData = true
 );
 
-void SetErrorCodeDisplayName(UECErrorCategoryEnum& Category, int32 Idx, const FText& NewDisplayName);
+void SetResultCodeDisplayName(UECErrorCategory& Category, int32 Idx, const FText& NewDisplayName);
 
-void SetErrorCodeMessage(UECErrorCategoryEnum& Category, int32 Idx, const FText& NewMessage);
+void SetResultCodeMessage(UECErrorCategory& Category, int32 Idx, const FText& NewMessage);
 
-void AddErrorCodeToCategory(UECErrorCategoryEnum& Category, int64 NewCode);
+void AddResultCodeToCategory(UECErrorCategory& Category, int64 NewCode);
 
-void RemoveErrorCodeFromCategory(UECErrorCategoryEnum& Category, int32 Idx);
+void RemoveResultCodeFromCategory(UECErrorCategory& Category, int32 Idx);
 
 /**
  * Copy all enum pairs, excluding the 'MAX' value.
  */
-void CopyErrorCodesWithoutMax(TArray<TPair<FName, int64>>& OutEnumPairs, const UECErrorCategoryEnum& Category);
+void CopyResultCodesWithoutMax(TArray<TPair<FName, int64>>& OutEnumPairs, const UECErrorCategory& Category);
 
 /**
  * Get all Error Categories. Order is non-deterministic.

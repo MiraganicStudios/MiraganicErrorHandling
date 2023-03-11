@@ -1,12 +1,12 @@
 ﻿// Copyright 2022 Miraganic Studios. All rights reserved.
 
 
-#include "ECErrorCategoryEnum.h"
+#include "ECErrorCategory.h"
 
 #include "ECLogging.h"
 #include "Internationalization/TextPackageNamespaceUtil.h"
 
-void UECErrorCategoryEnum::Serialize(FArchive& Ar)
+void UECErrorCategory::Serialize(FArchive& Ar)
 {
 	UEnum::Serialize(Ar);
 
@@ -15,7 +15,7 @@ void UECErrorCategoryEnum::Serialize(FArchive& Ar)
 
 #if WITH_EDITOR
 
-bool UECErrorCategoryEnum::Rename(const TCHAR* NewName, UObject* NewOuter, ERenameFlags Flags)
+bool UECErrorCategory::Rename(const TCHAR* NewName, UObject* NewOuter, ERenameFlags Flags)
 {
 	bool bSucceeded = UEnum::Rename(NewName, NewOuter, Flags);
 	if (bSucceeded)
@@ -26,7 +26,7 @@ bool UECErrorCategoryEnum::Rename(const TCHAR* NewName, UObject* NewOuter, ERena
 	return bSucceeded;
 }
 
-void UECErrorCategoryEnum::PostDuplicate(bool bDuplicateForPIE)
+void UECErrorCategory::PostDuplicate(bool bDuplicateForPIE)
 {
 	UEnum::PostDuplicate(bDuplicateForPIE);
 
@@ -36,7 +36,7 @@ void UECErrorCategoryEnum::PostDuplicate(bool bDuplicateForPIE)
 	}
 }
 
-void UECErrorCategoryEnum::PostLoad()
+void UECErrorCategory::PostLoad()
 {
 	UEnum::PostLoad();
 
@@ -51,7 +51,7 @@ void UECErrorCategoryEnum::PostLoad()
 	SetFlags(RF_Transactional);
 }
 
-void UECErrorCategoryEnum::PostEditUndo()
+void UECErrorCategory::PostEditUndo()
 {
 	UEnum::PostEditUndo();
 
@@ -59,7 +59,7 @@ void UECErrorCategoryEnum::PostEditUndo()
 	PostChangedInEditor().Broadcast(*this, {}, false);
 }
 
-void UECErrorCategoryEnum::UpdateAfterPathChanged()
+void UECErrorCategory::UpdateAfterPathChanged()
 {
 	TArray<TPair<FName, int64>> NewEnumeratorsNames;
 	const int32 EnumeratorsToCopy = NumEnums() - 1; // skip _MAX
@@ -75,7 +75,7 @@ void UECErrorCategoryEnum::UpdateAfterPathChanged()
 	SetEnums(NewEnumeratorsNames, UEnum::ECppForm::Namespaced);
 }
 
-void UECErrorCategoryEnum::UpgradeDisplayNamesFromMetaData()
+void UECErrorCategory::UpgradeDisplayNamesFromMetaData()
 {
 	const int32 EnumeratorsToEnsure = FMath::Max(NumEnums() - 1, 0);
 	DisplayNameMap.Empty(EnumeratorsToEnsure);
@@ -116,7 +116,7 @@ void UECErrorCategoryEnum::UpgradeDisplayNamesFromMetaData()
 #endif // USE_STABLE_LOCALIZATION_KEYS
 }
 
-void UECErrorCategoryEnum::EnsureAllDisplayNamesExist()
+void UECErrorCategory::EnsureAllDisplayNamesExist()
 {
 	const int32 EnumeratorsToEnsure = FMath::Max(NumEnums() - 1, 0);
 
@@ -169,7 +169,7 @@ void UECErrorCategoryEnum::EnsureAllDisplayNamesExist()
 	}
 }
 
-FString UECErrorCategoryEnum::GenerateNewErrorCodeName()
+FString UECErrorCategory::GenerateNewErrorCodeName()
 {
 	FString ErrorCodeString;
 	do
@@ -181,7 +181,7 @@ FString UECErrorCategoryEnum::GenerateNewErrorCodeName()
 	return ErrorCodeString;
 }
 
-bool UECErrorCategoryEnum::IsProperErrorCodeName(const FString& NewName)
+bool UECErrorCategory::IsProperErrorCodeName(const FString& NewName)
 {
 	if (IsFullEnumName(*NewName))
 	{
@@ -201,7 +201,7 @@ bool UECErrorCategoryEnum::IsProperErrorCodeName(const FString& NewName)
 	return bNameNotUsed && bValidName;
 }
 
-bool UECErrorCategoryEnum::IsDisplayNameValidAndUnique(int32 EnumeratorIndex, const FText& NewDisplayName) const
+bool UECErrorCategory::IsDisplayNameValidAndUnique(int32 EnumeratorIndex, const FText& NewDisplayName) const
 {
 	if (NewDisplayName.IsEmptyOrWhitespace() || NewDisplayName.ToString() == TEXT("(INVALID)"))
 	{
@@ -223,7 +223,7 @@ bool UECErrorCategoryEnum::IsDisplayNameValidAndUnique(int32 EnumeratorIndex, co
 #endif
 
 #if WITH_EDITORONLY_DATA
-FECErrorCategoryChanged& UECErrorCategoryEnum::PostChangedInEditor()
+FECErrorCategoryChanged& UECErrorCategory::PostChangedInEditor()
 {
 	static FECErrorCategoryChanged PostChangedDelegate;
 	return PostChangedDelegate;

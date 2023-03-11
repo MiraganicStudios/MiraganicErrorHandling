@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Engine/UserDefinedEnum.h"
-#include "ECErrorCategoryEnum.generated.h"
+#include "ECErrorCategory.generated.h"
 
-class UECErrorCategoryEnum;
+class UECErrorCategory;
 
-using FECErrorCodePair = TPair<FName, int64>;
-DECLARE_MULTICAST_DELEGATE_ThreeParams(FECErrorCategoryChanged, const UECErrorCategoryEnum&, const TArray<FECErrorCodePair>&, bool);
+using FECEnumNameValuePair = TPair<FName, int64>;
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FECErrorCategoryChanged, const UECErrorCategory&, const TArray<FECEnumNameValuePair>&, bool);
 
 /**
  * A collection of error codes defined in the editor.
  */
 UCLASS()
-class ERRORCODES_API UECErrorCategoryEnum : public UUserDefinedEnum
+class ERRORCODES_API UECErrorCategory : public UUserDefinedEnum
 {
 	GENERATED_BODY()
 

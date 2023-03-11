@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 
-class UECErrorCategoryEnum;
+class UECErrorCategory;
 /**
  * 
  */
@@ -15,7 +15,7 @@ public:
 	
 	void InitEditor(const EToolkitMode::Type Mode,
 		const TSharedPtr<IToolkitHost>& InitToolkitHost,
-		UECErrorCategoryEnum* ErrorCategory
+		UECErrorCategory* ErrorCategory
 	);
 
 	//~ Begin IToolkit Interface
@@ -39,7 +39,7 @@ protected:
 
 	void FillToolbar(FToolBarBuilder& ToolbarBuilder);
 	
-	TWeakObjectPtr<UECErrorCategoryEnum> EditingErrorCategory;
+	TWeakObjectPtr<UECErrorCategory> EditingErrorCategory;
 
 	TSharedPtr<IDetailsView> PropertyView;
 };

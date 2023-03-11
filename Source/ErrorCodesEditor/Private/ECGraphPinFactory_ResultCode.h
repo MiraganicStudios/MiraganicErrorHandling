@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "EdGraphUtilities.h"
 
-class FECGraphPinFactory_ErrorCode : public FGraphPanelPinFactory
+class FECGraphPinFactory_ResultCode : public FGraphPanelPinFactory
 {
 public:
 	virtual TSharedPtr<SGraphPin> CreatePin(UEdGraphPin* Pin) const override;

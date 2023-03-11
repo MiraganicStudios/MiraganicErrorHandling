@@ -1,29 +1,29 @@
 ﻿// Copyright 2022 Miraganic Studios. All rights reserved.
 
 
-#include "ECK2Node_SwitchErrorCode.h"
+#include "ECK2Node_SwitchResultCode.h"
 
 #include "ECErrorFunctionLibrary.h"
 #include "BlueprintActionDatabaseRegistrar.h"
 #include "BlueprintNodeSpawner.h"
 #include "ECEditorLogging.h"
 #include "ECErrorFunctionLibrary.h"
-#include "ECErrorCategoryEnum.h"
+#include "ECErrorCategory.h"
 #include "Kismet2/CompilerResultsLog.h"
 
-UECK2Node_SwitchErrorCode::UECK2Node_SwitchErrorCode(const FObjectInitializer& ObjectInitializer)
+UECK2Node_SwitchResultCode::UECK2Node_SwitchResultCode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	FunctionName = GET_FUNCTION_NAME_CHECKED(UECErrorFunctionLibrary, NotEqual_ErrorCodeErrorCode);
+	FunctionName = GET_FUNCTION_NAME_CHECKED(UECErrorFunctionLibrary, NotEqual_ResultCodeResultCode);
 	FunctionClass = UECErrorFunctionLibrary::StaticClass();
 	OrphanedPinSaveMode = ESaveOrphanPinMode::SaveNone;
 }
 
-void UECK2Node_SwitchErrorCode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+void UECK2Node_SwitchResultCode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	bool bIsDirty = false;
 	const FName PropertyName = (PropertyChangedEvent.MemberProperty ? PropertyChangedEvent.MemberProperty->GetFName() : NAME_None);
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UECK2Node_SwitchErrorCode, PinErrorCodes))
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UECK2Node_SwitchResultCode, PinResultCodes))
 	{
 		bIsDirty = true;
 	}
@@ -36,7 +36,7 @@ void UECK2Node_SwitchErrorCode::PostEditChangeProperty(FPropertyChangedEvent& Pr
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 
-void UECK2Node_SwitchErrorCode::PostLoad()
+void UECK2Node_SwitchResultCode::PostLoad()
 {
 	Super::PostLoad();
 	if (UEdGraphPin* FunctionPin = FindPin(FunctionName))
@@ -45,17 +45,17 @@ void UECK2Node_SwitchErrorCode::PostLoad()
 	}
 }
 
-FText UECK2Node_SwitchErrorCode::GetTooltipText() const
+FText UECK2Node_SwitchResultCode::GetTooltipText() const
 {
 	return NSLOCTEXT("ErrorCodes", "K2Node_SwitchErrorCode_ToolTip", "Selects an output that matches the input value");
 }
 
-FText UECK2Node_SwitchErrorCode::GetNodeTitle(ENodeTitleType::Type TitleType) const
+FText UECK2Node_SwitchResultCode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
 	return NSLOCTEXT("ErrorCodes", "K2Node_SwitchErrorCode_Title", "Switch on Error Code");
 }
 
-FString UECK2Node_SwitchErrorCode::GetExportTextForPin(const UEdGraphPin* Pin) const
+FString UECK2Node_SwitchResultCode::GetExportTextForPin(const UEdGraphPin* Pin) const
 {
 	const int32 PinIdx = PinNames.IndexOfByKey(Pin->PinName);
 	if (PinIdx == INDEX_NONE)
@@ -63,20 +63,20 @@ FString UECK2Node_SwitchErrorCode::GetExportTextForPin(const UEdGraphPin* Pin) c
 		return FString();
 	}
 	
-	const FECErrorCode PinLiteralValue = PinErrorCodes[PinIdx];
-	const FECErrorCode DefaultValue;
+	const FECResultCode PinLiteralValue = PinResultCodes[PinIdx];
+	const FECResultCode DefaultValue;
 	FString ExportText;
-	FECErrorCode::StaticStruct()->ExportText(ExportText, &PinLiteralValue, &DefaultValue, nullptr, PPF_None, nullptr);
+	FECResultCode::StaticStruct()->ExportText(ExportText, &PinLiteralValue, &DefaultValue, nullptr, PPF_None, nullptr);
 	return ExportText;
 }
 
-void UECK2Node_SwitchErrorCode::ValidateNodeDuringCompilation(FCompilerResultsLog& MessageLog) const
+void UECK2Node_SwitchResultCode::ValidateNodeDuringCompilation(FCompilerResultsLog& MessageLog) const
 {
 	Super::ValidateNodeDuringCompilation(MessageLog);
 
-	for (const FECErrorCode& PinErrorCode : PinErrorCodes)
+	for (const FECResultCode& PinResultCode : PinResultCodes)
 	{
-		if (!PinErrorCode.IsError())
+		if (!PinResultCode.HasValidError())
 		{
 			MessageLog.Error(*NSLOCTEXT("ErrorCodes", "SwitchErrorCode_SuccessCase", "@@ contains invalid case(s).").ToString(), this);
 			return;
@@ -84,17 +84,17 @@ void UECK2Node_SwitchErrorCode::ValidateNodeDuringCompilation(FCompilerResultsLo
 	}
 }
 
-void UECK2Node_SwitchErrorCode::PreloadRequiredAssets()
+void UECK2Node_SwitchResultCode::PreloadRequiredAssets()
 {
-	for (const FECErrorCode& ErrorCode : PinErrorCodes)
+	for (const FECResultCode& ResultCode : PinResultCodes)
 	{
-		UEnum* ErrorCategoryMut = const_cast<UEnum*>(ErrorCode.GetCategory());
+		UEnum* ErrorCategoryMut = const_cast<UEnum*>(ResultCode.GetCategory());
 		PreloadObject(ErrorCategoryMut);
 	}
 	Super::PreloadRequiredAssets();
 }
 
-void UECK2Node_SwitchErrorCode::GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegistrar) const
+void UECK2Node_SwitchResultCode::GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegistrar) const
 {
 	// actions get registered under specific object-keys; the idea is that 
 	// actions might have to be updated (or deleted) if their object-key is  
@@ -114,19 +114,19 @@ void UECK2Node_SwitchErrorCode::GetMenuActions(FBlueprintActionDatabaseRegistrar
 	}
 }
 
-void UECK2Node_SwitchErrorCode::AddPinToSwitchNode()
+void UECK2Node_SwitchResultCode::AddPinToSwitchNode()
 {
 	FName PinName = GetUniquePinName();
 	PinNames.Add(PinName);
 
 	CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, PinName);
-	if (PinErrorCodes.Num() < PinNames.Num())
+	if (PinResultCodes.Num() < PinNames.Num())
 	{ 
-		PinErrorCodes.Add(FECErrorCode());
+		PinResultCodes.Add(FECResultCode());
 	}
 }
 
-FName UECK2Node_SwitchErrorCode::GetUniquePinName()
+FName UECK2Node_SwitchResultCode::GetUniquePinName()
 {
 	int32 Index = 0;
 	FName NewPinName;
@@ -139,15 +139,15 @@ FName UECK2Node_SwitchErrorCode::GetUniquePinName()
 	return NewPinName;
 }
 
-FEdGraphPinType UECK2Node_SwitchErrorCode::GetPinType() const
+FEdGraphPinType UECK2Node_SwitchResultCode::GetPinType() const
 {
 	FEdGraphPinType PinType;
 	PinType.PinCategory = UEdGraphSchema_K2::PC_Struct;
-	PinType.PinSubCategoryObject = FECErrorCode::StaticStruct();
+	PinType.PinSubCategoryObject = FECResultCode::StaticStruct();
 	return PinType;
 }
 
-bool UECK2Node_SwitchErrorCode::CanRemoveExecutionPin(UEdGraphPin* TargetPin) const
+bool UECK2Node_SwitchResultCode::CanRemoveExecutionPin(UEdGraphPin* TargetPin) const
 {
 	if (TargetPin && TargetPin->PinName == GetSuccessPinName())
 	{
@@ -158,11 +158,11 @@ bool UECK2Node_SwitchErrorCode::CanRemoveExecutionPin(UEdGraphPin* TargetPin) co
 	return Super::CanRemoveExecutionPin(TargetPin);
 }
 
-bool UECK2Node_SwitchErrorCode::DependsOnErrorCategory(const UECErrorCategoryEnum& Category) const
+bool UECK2Node_SwitchResultCode::DependsOnErrorCategory(const UECErrorCategory& Category) const
 {
-	for (const FECErrorCode& PinErrorCode : PinErrorCodes)
+	for (const FECResultCode& PinResultCode : PinResultCodes)
 	{
-		if (PinErrorCode.GetCategory() == &Category)
+		if (PinResultCode.GetCategory() == &Category)
 		{
 			return true;
 		}
@@ -171,50 +171,50 @@ bool UECK2Node_SwitchErrorCode::DependsOnErrorCategory(const UECErrorCategoryEnu
 	return false;
 }
 
-void UECK2Node_SwitchErrorCode::ReloadErrorCategory(UECErrorCategoryEnum* Category)
+void UECK2Node_SwitchResultCode::ReloadErrorCategory(UECErrorCategory* Category)
 {
 	// TODO: For each pin that depends on that category, reload its data
 	// TODO: What is this for? Hot reload?
 }
 
-FName UECK2Node_SwitchErrorCode::GetPinNameGivenIndex(int32 Index) const
+FName UECK2Node_SwitchResultCode::GetPinNameGivenIndex(int32 Index) const
 {
 	check(Index);
 	return PinNames[Index];
 }
 
-int32 UECK2Node_SwitchErrorCode::AddUniqueCodesFromCategory(const UEnum& Category)
+int32 UECK2Node_SwitchResultCode::AddUniqueCodesFromCategory(const UEnum& Category)
 {
 	int32 NumAdded = 0;
 	const int32 NumEnums = Category.NumEnums() - 1;
 	for (int32 Idx = 0; Idx < NumEnums; ++Idx)
 	{
 		const int64 Value = Category.GetValueByIndex(Idx);
-		// 0 is reserved for 'Success' error codes
-		if (Value == FECErrorCode::Success().GetCode())
+		// 0 is reserved for 'Success' result codes
+		if (Value == FECResultCode::Success().GetCode())
 		{
 			continue;
 		}
-		const FECErrorCode ErrorCode(Category, Value);
-		const int32 NewPinIdx = PinErrorCodes.Num();
-		const int32 AddedIdx = PinErrorCodes.AddUnique(ErrorCode);
+		const FECResultCode ResultCode(Category, Value);
+		const int32 NewPinIdx = PinResultCodes.Num();
+		const int32 AddedIdx = PinResultCodes.AddUnique(ResultCode);
 		// Already exists
 		if (AddedIdx != NewPinIdx)
 		{
 			continue;
 		}
 
-		const FName PinName = GetNameForErrorCodePin(ErrorCode);
+		const FName PinName = GetNameForErrorCodePin(ResultCode);
 		PinNames.Emplace(PinName);
 		UEdGraphPin* Pin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, PinName);
-		Pin->PinToolTip = GetTooltipForErrorCodePin(ErrorCode);
+		Pin->PinToolTip = GetTooltipForErrorCodePin(ResultCode);
 		++NumAdded;
 	}
 
 	return NumAdded;
 }
 
-void UECK2Node_SwitchErrorCode::CreateFunctionPin()
+void UECK2Node_SwitchResultCode::CreateFunctionPin()
 {
 	// Set properties on the function pin
 	UEdGraphPin* FunctionPin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Object, FunctionClass, FunctionName);
@@ -238,24 +238,24 @@ void UECK2Node_SwitchErrorCode::CreateFunctionPin()
 	}
 }
 
-void UECK2Node_SwitchErrorCode::CreateSelectionPin()
+void UECK2Node_SwitchResultCode::CreateSelectionPin()
 {
 	const UEdGraphSchema_K2* K2Schema = GetDefault<UEdGraphSchema_K2>();
-	UEdGraphPin* Pin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Struct, FECErrorCode::StaticStruct(), TEXT("Selection"));
+	UEdGraphPin* Pin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Struct, FECResultCode::StaticStruct(), TEXT("Selection"));
 	K2Schema->SetPinAutogeneratedDefaultValueBasedOnType(Pin);
 }
 
-void UECK2Node_SwitchErrorCode::CreateCasePins()
+void UECK2Node_SwitchResultCode::CreateCasePins()
 {
-	while (PinErrorCodes.Num() > PinNames.Num())
+	while (PinResultCodes.Num() > PinNames.Num())
 	{
 		const FName PinName = GetUniquePinName();
 		PinNames.Add(PinName);
 	}
 
-	if (PinNames.Num() > PinErrorCodes.Num())
+	if (PinNames.Num() > PinResultCodes.Num())
 	{
-		PinNames.SetNum(PinErrorCodes.Num());
+		PinNames.SetNum(PinResultCodes.Num());
 	}
 
 	// Always have a success pin
@@ -263,17 +263,17 @@ void UECK2Node_SwitchErrorCode::CreateCasePins()
 	SuccessPin->PinFriendlyName = NSLOCTEXT("ErrorCodesEditor_K2NodeSwitchErrorCode", "FriendlyName_SuccessPin", "Success");
 	SuccessPin->PinToolTip = TEXT("No error.");
 
-	for (int32 Index = 0; Index < PinErrorCodes.Num(); ++Index)
+	for (int32 Index = 0; Index < PinResultCodes.Num(); ++Index)
 	{
-		PinNames[Index] = GetNameForErrorCodePin(PinErrorCodes[Index]);
+		PinNames[Index] = GetNameForErrorCodePin(PinResultCodes[Index]);
 
 		UEdGraphPin* CasePin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, PinNames[Index]);
 		
-		CasePin->PinToolTip = GetTooltipForErrorCodePin(PinErrorCodes[Index]);
+		CasePin->PinToolTip = GetTooltipForErrorCodePin(PinResultCodes[Index]);
 	}
 }
 
-void UECK2Node_SwitchErrorCode::RemovePin(UEdGraphPin* TargetPin)
+void UECK2Node_SwitchResultCode::RemovePin(UEdGraphPin* TargetPin)
 {
 	checkSlow(TargetPin);
 
@@ -282,19 +282,19 @@ void UECK2Node_SwitchErrorCode::RemovePin(UEdGraphPin* TargetPin)
 	int32 Index = PinNames.IndexOfByKey(PinName);
 	if (Index >= 0)
 	{
-		if (Index < PinErrorCodes.Num())
+		if (Index < PinResultCodes.Num())
 		{
-			PinErrorCodes.RemoveAt(Index);
+			PinResultCodes.RemoveAt(Index);
 		}
 		PinNames.RemoveAt(Index);
 	}
 }
 
-FName UECK2Node_SwitchErrorCode::GetNameForErrorCodePin(const FECErrorCode& ErrorCode) const
+FName UECK2Node_SwitchResultCode::GetNameForErrorCodePin(const FECResultCode& ResultCode) const
 {
-	if (ErrorCode.IsError())
+	if (ResultCode.HasValidError())
 	{
-		return FName(*ErrorCode.GetTitle().ToString());
+		return FName(*ResultCode.GetTitle().ToString());
 	}
 	else
 	{
@@ -303,24 +303,24 @@ FName UECK2Node_SwitchErrorCode::GetNameForErrorCodePin(const FECErrorCode& Erro
 	}
 }
 
-FString UECK2Node_SwitchErrorCode::GetTooltipForErrorCodePin(const FECErrorCode& ErrorCode) const
+FString UECK2Node_SwitchResultCode::GetTooltipForErrorCodePin(const FECResultCode& ResultCode) const
 {
-	if (ErrorCode.IsError())
+	if (ResultCode.HasValidError())
 	{
-		return FString::Format(TEXT("{0}:{1}{2}{3}"), {*ErrorCode.GetCategoryName().ToString(),
-				*ErrorCode.GetTitle().ToString(), LINE_TERMINATOR, *ErrorCode.GetMessage().ToString()});
+		return FString::Format(TEXT("{0}:{1}{2}{3}"), {*ResultCode.GetCategoryName().ToString(),
+				*ResultCode.GetTitle().ToString(), LINE_TERMINATOR, *ResultCode.GetMessage().ToString()});
 	}
-	else if (ErrorCode.IsSuccess())
+	else if (ResultCode.IsSuccess())
 	{
-		return TEXT("Invalid error code: Success (Cannot add extra 'Success' pins).");
+		return TEXT("Invalid result code: Success (Cannot add extra 'Success' pins).");
 	}
 	else
 	{
-		return ErrorCode.ToString();
+		return ResultCode.ToString();
 	}
 }
 
-FName UECK2Node_SwitchErrorCode::GetSuccessPinName()
+FName UECK2Node_SwitchResultCode::GetSuccessPinName()
 {
 	return TEXT("EC_RESERVED_Success");
 }

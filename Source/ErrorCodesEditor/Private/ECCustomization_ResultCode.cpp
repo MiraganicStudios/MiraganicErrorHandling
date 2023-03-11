@@ -1,40 +1,40 @@
 ﻿// Copyright 2022 Miraganic Studios. All rights reserved.
 
 
-#include "ECCustomization_ErrorCode.h"
+#include "ECCustomization_ResultCode.h"
 
 #include "DetailWidgetRow.h"
 #include "ECEditorLogging.h"
-#include "ECErrorCode.h"
-#include "SECWidget_ErrorCode.h"
+#include "ECResultCode.h"
+#include "SECWidget_ResultCode.h"
 
-TSharedRef<IPropertyTypeCustomization> FECCustomization_ErrorCode::MakeInstance()
+TSharedRef<IPropertyTypeCustomization> FECCustomization_ResultCode::MakeInstance()
 {
-	return MakeShareable(new FECCustomization_ErrorCode());
+	return MakeShareable(new FECCustomization_ResultCode());
 }
 
-void FECCustomization_ErrorCode::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle,
+void FECCustomization_ResultCode::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle,
 	FDetailWidgetRow& HeaderRow,
 	IPropertyTypeCustomizationUtils& CustomizationUtils
 	)
 {
 	StructProperty = PropertyHandle;
-	CategoryProperty = PropertyHandle->GetChildHandle(FECErrorCode::GetPropertyName_Category());
-	CodeProperty = PropertyHandle->GetChildHandle(FECErrorCode::GetPropertyName_Code());
+	CategoryProperty = PropertyHandle->GetChildHandle(FECResultCode::GetPropertyName_Category());
+	CodeProperty = PropertyHandle->GetChildHandle(FECResultCode::GetPropertyName_Code());
 
 	// E.g., if the property receives a paste, we must sync the dropdown widget.
 	FSimpleDelegate OnErrorCodeChanged = FSimpleDelegate::CreateSP(this,
-		&FECCustomization_ErrorCode::SyncErrorCodeWidgetToProperty);
+		&FECCustomization_ResultCode::SyncErrorCodeWidgetToProperty);
 	PropertyHandle->SetOnPropertyValueChanged(OnErrorCodeChanged);
 
-	FECErrorCode DefaultValue;
+	FECResultCode DefaultValue;
 	UObject* CategoryObj = nullptr;
 	int64 Code = -1;
 	CategoryProperty->GetValue(CategoryObj);
 	CodeProperty->GetValue(Code);
 	UEnum* CategoryEnum = Cast<UEnum>(CategoryObj);
 	// Leave values as invalid if they were defined that way; this is clearer than converting to 'Success'
-	DefaultValue = FECErrorCode::ConstructRaw(CategoryEnum, Code);
+	DefaultValue = FECResultCode::ConstructRaw(CategoryEnum, Code);
 
 	HeaderRow
 		.NameContent()
@@ -50,14 +50,14 @@ void FECCustomization_ErrorCode::CustomizeHeader(TSharedRef<IPropertyHandle> Pro
 			.HAlign(HAlign_Fill)
 			.Padding(0.f, 2.f, 2.f, 2.f)
 			[
-				SAssignNew(ErrorCodeWidget, SECWidget_ErrorCode)
-				.PostErrorCodeChanged(this, &FECCustomization_ErrorCode::UpdateErrorCodeProperties)
+				SAssignNew(ErrorCodeWidget, SECWidget_ResultCode)
+				.PostResultCodeChanged(this, &FECCustomization_ResultCode::UpdateErrorCodeProperties)
 				.DefaultValue(DefaultValue)
 			]
 		];
 }
 
-void FECCustomization_ErrorCode::CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle,
+void FECCustomization_ResultCode::CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle,
 	IDetailChildrenBuilder& ChildBuilder,
 	IPropertyTypeCustomizationUtils& CustomizationUtils
 	)
@@ -65,7 +65,7 @@ void FECCustomization_ErrorCode::CustomizeChildren(TSharedRef<IPropertyHandle> P
 	
 }
 
-void FECCustomization_ErrorCode::UpdateErrorCodeProperties(FECErrorCode NewErrorCode)
+void FECCustomization_ResultCode::UpdateErrorCodeProperties(FECResultCode NewErrorCode)
 {
 	if (!StructProperty.IsValid() || !StructProperty->GetProperty())
 	{
@@ -75,14 +75,14 @@ void FECCustomization_ErrorCode::UpdateErrorCodeProperties(FECErrorCode NewError
 
 	TArray<void*> RawData;
 	StructProperty->AccessRawData(RawData);
-	FECErrorCode* PreviousErrorCode = static_cast<FECErrorCode*>(RawData[0]);
+	FECResultCode* PreviousErrorCode = static_cast<FECResultCode*>(RawData[0]);
 
 	FString TextValue;
-	FECErrorCode::StaticStruct()->ExportText(TextValue, &NewErrorCode, PreviousErrorCode, nullptr, PPF_None, nullptr);
+	FECResultCode::StaticStruct()->ExportText(TextValue, &NewErrorCode, PreviousErrorCode, nullptr, PPF_None, nullptr);
 	ensure(StructProperty->SetValueFromFormattedString(TextValue) == FPropertyAccess::Success);
 }
 
-void FECCustomization_ErrorCode::SyncErrorCodeWidgetToProperty()
+void FECCustomization_ResultCode::SyncErrorCodeWidgetToProperty()
 {
 	if (StructProperty.IsValid() && StructProperty->GetProperty())
 	{
@@ -90,10 +90,10 @@ void FECCustomization_ErrorCode::SyncErrorCodeWidgetToProperty()
 		StructProperty->AccessRawData(RawStructData);
 		if (RawStructData.Num() > 0)
 		{
-			FECErrorCode* ErrorCodePtr = static_cast<FECErrorCode*>(RawStructData[0]);
+			FECResultCode* ErrorCodePtr = static_cast<FECResultCode*>(RawStructData[0]);
 			if (ErrorCodePtr && ErrorCodeWidget)
 			{
-				ErrorCodeWidget->SetSelectedErrorCode(*ErrorCodePtr);
+				ErrorCodeWidget->SetSelectedResultCode(*ErrorCodePtr);
 			}
 		}
 	}

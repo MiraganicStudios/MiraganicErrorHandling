@@ -1,25 +1,25 @@
 ﻿// Copyright 2022 Miraganic Studios. All rights reserved.
 
 
-#include "SECGraphPin_ErrorCode.h"
+#include "SECGraphPin_ResultCode.h"
 
-#include "ECErrorCode.h"
-#include "SECWidget_ErrorCode.h"
+#include "ECResultCode.h"
+#include "SECWidget_ResultCode.h"
 #include "SlateOptMacros.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
-void SECGraphPin_ErrorCode::Construct(const FArguments& InArgs, UEdGraphPin* InGraphPinObj)
+void SECGraphPin_ResultCode::Construct(const FArguments& InArgs, UEdGraphPin* InGraphPinObj)
 {
 	SGraphPin::Construct(SGraphPin::FArguments(), InGraphPinObj);
 }
 
-TSharedRef<SWidget> SECGraphPin_ErrorCode::GetDefaultValueWidget()
+TSharedRef<SWidget> SECGraphPin_ResultCode::GetDefaultValueWidget()
 {
 	FString DefaultString = GraphPinObj->GetDefaultAsString();
-	FECErrorCode DefaultErrorCode;
+	FECResultCode DefaultErrorCode;
 
-	UScriptStruct* PinStructType = FECErrorCode::StaticStruct();
+	UScriptStruct* PinStructType = FECResultCode::StaticStruct();
 	if (!DefaultString.IsEmpty())
 	{
 		PinStructType->ImportText(*DefaultString, &DefaultErrorCode, nullptr,
@@ -30,19 +30,19 @@ TSharedRef<SWidget> SECGraphPin_ErrorCode::GetDefaultValueWidget()
 		+SVerticalBox::Slot()
 		.AutoHeight()
 		[
-			SNew(SECWidget_ErrorCode)
-			.PostErrorCodeChanged(this, &SECGraphPin_ErrorCode::UpdatePinValue)
+			SNew(SECWidget_ResultCode)
+			.PostResultCodeChanged(this, &SECGraphPin_ResultCode::UpdatePinValue)
 			.DefaultValue(DefaultErrorCode)
 			.Visibility(this, &SGraphPin::GetDefaultValueVisibility)
 			.IsEnabled(this, &SGraphPin::GetDefaultValueIsEditable)
 		];
 }
 
-void SECGraphPin_ErrorCode::UpdatePinValue(FECErrorCode NewValue)
+void SECGraphPin_ResultCode::UpdatePinValue(FECResultCode NewValue)
 {
 	FString StringValue;
-	FECErrorCode DefaultValue;
-	FECErrorCode::StaticStruct()->ExportText(StringValue, &NewValue, &DefaultValue, nullptr,
+	FECResultCode DefaultValue;
+	FECResultCode::StaticStruct()->ExportText(StringValue, &NewValue, &DefaultValue, nullptr,
 		EPropertyPortFlags::PPF_SerializedAsImportText, nullptr);
 
 	if (StringValue != GraphPinObj->GetDefaultAsString())

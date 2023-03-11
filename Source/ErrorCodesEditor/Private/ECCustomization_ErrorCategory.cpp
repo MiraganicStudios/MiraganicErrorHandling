@@ -1,10 +1,10 @@
 ﻿// Copyright 2022 Miraganic Studios. All rights reserved.
 
 
-#include "ECCustomization_ErrorCategoryEnum.h"
+#include "ECCustomization_ErrorCategory.h"
 
 #include "DetailCategoryBuilder.h"
-#include "ECErrorCategoryEnum.h"
+#include "ECErrorCategory.h"
 #include "DetailLayoutBuilder.h"
 #include "ECErrorCategoryUtils.h"
 #include "IDetailChildrenBuilder.h"
@@ -20,7 +20,7 @@
 class FECErrorTitleEditableText : public IEditableTextProperty
 {
 public:
-	FECErrorTitleEditableText(UECErrorCategoryEnum* InTargetEnum, const int32 InEnumeratorIndex)
+	FECErrorTitleEditableText(UECErrorCategory* InTargetEnum, const int32 InEnumeratorIndex)
 		: TargetEnum(InTargetEnum)
 		, EnumeratorIndex(InEnumeratorIndex)
 		, bCausedChange(false)
@@ -72,7 +72,7 @@ public:
 		}
 		
 		TGuardValue<bool> bCausingChange(bCausedChange, true);
-		ErrorCodes::SetErrorCodeDisplayName(*TargetEnum, EnumeratorIndex, InText);
+		ErrorCodes::SetResultCodeDisplayName(*TargetEnum, EnumeratorIndex, InText);
 	}
 
 	virtual bool IsValidText(const FText& InText, FText& OutErrorMsg) const override
@@ -113,7 +113,7 @@ public:
 
 private:
 	/** The user defined enum being edited */
-	UECErrorCategoryEnum* TargetEnum;
+	UECErrorCategory* TargetEnum;
 
 	/** Index of enumerator entry */
 	int32 EnumeratorIndex;
@@ -126,7 +126,7 @@ private:
 class FECErrorMessageEditableText : public IEditableTextProperty
 {
 public:
-	FECErrorMessageEditableText(UECErrorCategoryEnum* InTargetEnum, const int32 InEnumeratorIndex)
+	FECErrorMessageEditableText(UECErrorCategory* InTargetEnum, const int32 InEnumeratorIndex)
 		: TargetEnum(InTargetEnum)
 		, EnumeratorIndex(InEnumeratorIndex)
 		, bCausedChange(false)
@@ -176,7 +176,7 @@ public:
 	{
 		check(InIndex == 0);
 		TGuardValue<bool> CausingChange(bCausedChange, true);
-		ErrorCodes::SetErrorCodeMessage(*TargetEnum, EnumeratorIndex, InText);
+		ErrorCodes::SetResultCodeMessage(*TargetEnum, EnumeratorIndex, InText);
 	}
 
 	virtual bool IsValidText(const FText& InText, FText& OutErrorMsg) const override
@@ -203,7 +203,7 @@ public:
 
 private:
 	/** The user defined enum being edited */
-	UECErrorCategoryEnum* TargetEnum;
+	UECErrorCategory* TargetEnum;
 
 	/** Index of enumerator entry */
 	int32 EnumeratorIndex;
@@ -212,12 +212,12 @@ private:
 	bool bCausedChange;
 };
 
-TSharedRef<IDetailCustomization> FECCustomization_ErrorCategoryEnum::MakeInstance()
+TSharedRef<IDetailCustomization> FECCustomization_ErrorCategory::MakeInstance()
 {
-	return MakeShareable(new FECCustomization_ErrorCategoryEnum());
+	return MakeShareable(new FECCustomization_ErrorCategory());
 }
 
-void FECCustomization_ErrorCategoryEnum::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
+void FECCustomization_ErrorCategory::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
 	const TArray<TWeakObjectPtr<UObject>>& Objects = DetailBuilder.GetSelectedObjects();
 	check(Objects.Num() > 0);
@@ -227,7 +227,7 @@ void FECCustomization_ErrorCategoryEnum::CustomizeDetails(IDetailLayoutBuilder& 
 		return;
 	}
 
-	TargetErrorCategory = CastChecked<UECErrorCategoryEnum>(Objects[0].Get());
+	TargetErrorCategory = CastChecked<UECErrorCategory>(Objects[0].Get());
 	TSharedRef<IPropertyHandle> NamesProperty = DetailBuilder.GetProperty(TEXT("Names"), UEnum::StaticClass());
 	TSharedRef<IPropertyHandle> DescriptionProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UUserDefinedEnum, EnumDescription));
 
@@ -236,25 +236,25 @@ void FECCustomization_ErrorCategoryEnum::CustomizeDetails(IDetailLayoutBuilder& 
 	DetailBuilder.AddPropertyToCategory(DescriptionProperty)
 		.DisplayName(LOCTEXT("DisplayName_Description", "Description"));
 
-	ErrorCodesBuilder = MakeShareable(new FECErrorCodesBuilder(*TargetErrorCategory));
+	ErrorCodesBuilder = MakeShareable(new FECErrorCategoryNodeBuilder(*TargetErrorCategory));
 
 	IDetailCategoryBuilder& InputsCategory = DetailBuilder.EditCategory(TEXT("ErrorCodes"), LOCTEXT("CategoryLabel_ErrorCodes", "Error Codes"));
 	InputsCategory.AddCustomBuilder(ErrorCodesBuilder.ToSharedRef());
 }
 
-void FECCustomization_ErrorCategoryEnum::RequestRefresh()
+void FECCustomization_ErrorCategory::RequestRefresh()
 {
 	ErrorCodesBuilder->RequestRefresh();
 }
 
-void FECCustomization_ErrorCategoryEnum::PreChange(const UUserDefinedEnum* Enum,
+void FECCustomization_ErrorCategory::PreChange(const UUserDefinedEnum* Enum,
 	FEnumEditorUtils::EEnumEditorChangeInfo Info
 	)
 {
 	// Nothing to do
 }
 
-void FECCustomization_ErrorCategoryEnum::PostChange(const UUserDefinedEnum* Enum,
+void FECCustomization_ErrorCategory::PostChange(const UUserDefinedEnum* Enum,
 	FEnumEditorUtils::EEnumEditorChangeInfo Info
 	)
 {
@@ -264,25 +264,25 @@ void FECCustomization_ErrorCategoryEnum::PostChange(const UUserDefinedEnum* Enum
 	}
 }
 
-void FECCustomization_ErrorCategoryEnum::PostUndo(bool bSuccess)
+void FECCustomization_ErrorCategory::PostUndo(bool bSuccess)
 {
 	RequestRefresh();
 }
 
-void FECCustomization_ErrorCategoryEnum::PostRedo(bool bSuccess)
+void FECCustomization_ErrorCategory::PostRedo(bool bSuccess)
 {
 	RequestRefresh();
 }
 
-void FECErrorCodesBuilder::RequestRefresh()
+void FECErrorCategoryNodeBuilder::RequestRefresh()
 {
 	RefreshNextId();
 	RequestRebuild.ExecuteIfBound();
 }
 
-void FECErrorCodesBuilder::GenerateHeaderRowContent(FDetailWidgetRow& NodeRow)
+void FECErrorCategoryNodeBuilder::GenerateHeaderRowContent(FDetailWidgetRow& NodeRow)
 {
-	TSharedRef<SWidget> AddButton = PropertyCustomizationHelpers::MakeAddButton(FSimpleDelegate::CreateSP(this, &FECErrorCodesBuilder::AddEntry),
+	TSharedRef<SWidget> AddButton = PropertyCustomizationHelpers::MakeAddButton(FSimpleDelegate::CreateSP(this, &FECErrorCategoryNodeBuilder::AddEntry),
 		LOCTEXT("AddErrorCodeTooltip", "Add Error Code"));
 	
 	NodeRow
@@ -309,7 +309,7 @@ void FECErrorCodesBuilder::GenerateHeaderRowContent(FDetailWidgetRow& NodeRow)
 		];
 }
 
-void FECErrorCodesBuilder::GenerateChildContent(IDetailChildrenBuilder& ChildrenBuilder)
+void FECErrorCategoryNodeBuilder::GenerateChildContent(IDetailChildrenBuilder& ChildrenBuilder)
 {
 	NextId = 0;
 	const int32 NumValues = FMath::Max(0, TargetErrorCategory->NumEnums() - 1);
@@ -319,7 +319,7 @@ void FECErrorCodesBuilder::GenerateChildContent(IDetailChildrenBuilder& Children
 		TSharedRef<FECErrorMessageEditableText> ErrorMessageEditText = MakeShareable(new FECErrorMessageEditableText(TargetErrorCategory.Get(), EnumIdx));
 		
 		const bool bIsEditable = true;
-		TSharedRef<SWidget> RemoveButton = PropertyCustomizationHelpers::MakeDeleteButton(FSimpleDelegate::CreateSP(this, &FECErrorCodesBuilder::RemoveEntryAtIndex, EnumIdx),
+		TSharedRef<SWidget> RemoveButton = PropertyCustomizationHelpers::MakeDeleteButton(FSimpleDelegate::CreateSP(this, &FECErrorCategoryNodeBuilder::RemoveEntryAtIndex, EnumIdx),
 			LOCTEXT("Tooltip_RemoveErrorCode", "Remove Error Code"));
 		RemoveButton->SetEnabled(bIsEditable);
 
@@ -396,12 +396,12 @@ void FECErrorCodesBuilder::GenerateChildContent(IDetailChildrenBuilder& Children
 	}
 }
 
-void FECErrorCodesBuilder::AddEntry()
+void FECErrorCategoryNodeBuilder::AddEntry()
 {
-	ErrorCodes::AddErrorCodeToCategory(*TargetErrorCategory, NextId++);
+	ErrorCodes::AddResultCodeToCategory(*TargetErrorCategory, NextId++);
 }
 
-void FECErrorCodesBuilder::RefreshNextId()
+void FECErrorCategoryNodeBuilder::RefreshNextId()
 {
 	NextId = 0;
 	const int32 NumEnums = TargetErrorCategory->NumEnums() - 1;
@@ -411,12 +411,12 @@ void FECErrorCodesBuilder::RefreshNextId()
 	}
 }
 
-void FECErrorCodesBuilder::RemoveEntryAtIndex(int32 Index)
+void FECErrorCategoryNodeBuilder::RemoveEntryAtIndex(int32 Index)
 {
-	ErrorCodes::RemoveErrorCodeFromCategory(*TargetErrorCategory, Index);
+	ErrorCodes::RemoveResultCodeFromCategory(*TargetErrorCategory, Index);
 }
 
-void FECErrorCodesBuilder::CopyEnumsWithoutMax(TArray<TPair<FName, int64>>& OutEnumPairs, const UEnum& Enum)
+void FECErrorCategoryNodeBuilder::CopyEnumsWithoutMax(TArray<TPair<FName, int64>>& OutEnumPairs, const UEnum& Enum)
 {
 	const int32 NumEnums = Enum.NumEnums() - 1;
 	for (int32 Idx = 0; Idx < NumEnums; ++Idx)

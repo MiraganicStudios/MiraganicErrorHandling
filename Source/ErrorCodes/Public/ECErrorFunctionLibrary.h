@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ECErrorCode.h"
+#include "ECResultCode.h"
 #include "UObject/Object.h"
 
 #include "ECErrorFunctionLibrary.generated.h"
@@ -11,12 +11,12 @@
 UENUM(BlueprintType)
 enum class EECLogVerbosity : uint8
 {
-	// Normal (Printed in white)
-	Normal,
+	// Failure (Printed in red)
+	Error,
 	// Warning (Printed in yellow)
 	Warning,
-	// Failure (Printed in red)
-	Error
+	// Normal (Printed in white)
+	Normal,
 };
 
 /**
@@ -29,79 +29,101 @@ class ERRORCODES_API UECErrorFunctionLibrary : public UBlueprintFunctionLibrary
 
 public:
 	/**
-	 * Create an error code.
+	 * Create an result code.
 	 */
 	UFUNCTION(BlueprintPure, Category = "Errors", meta = (BlueprintThreadSafe, NativeMakeFunc))
-	static FECErrorCode MakeErrorCode(FECErrorCode ErrorCode);
+	static FECResultCode MakeResultCode(FECResultCode ResultCode);
 	
 	/**
-	 * Prints an error code's message to the output log.
+	 * Prints an result code's message to the output log.
 	 * @param Verbosity Verbosity of the message.
-	 * @param Error Error to log.
+	 * @param ResultCode Error to log.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Errors", DisplayName = "Log Error (Output Log)")
-	static void LogErrorToOutputLog(EECLogVerbosity Verbosity, FECErrorCode Error);
+	UFUNCTION(BlueprintCallable, Category = "Errors", DisplayName = "Log Error Code (Output Log)")
+	static void LogResultCodeToOutputLog(EECLogVerbosity Verbosity, FECResultCode ResultCode);
 
 	/**
-	 * Prints an error code's message to the message log.
+	 * Prints an result code's message to the message log.
 	 * @param Verbosity Verbosity of the message.
-	 * @param Error Error to log.
+	 * @param ResultCode Error to log.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Errors", DisplayName = "Log Error (Message Log)")
-	static void LogErrorToMessageLog(EECLogVerbosity Verbosity, FECErrorCode Error);
+	UFUNCTION(BlueprintCallable, Category = "Errors", DisplayName = "Log Error Code (Message Log)")
+	static void LogResultCodeToMessageLog(EECLogVerbosity Verbosity, FECResultCode ResultCode);
 
 	/**
-	 * Check if two error codes are equal.
+	 * Print an result code's message to the output log if it's a failure.
+	 * @param Verbosity Verbosity of the message.
+	 * @param ResultCode Error code to log.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Errors", DisplayName = "Log If Failure (Output Log)")
+	static void LogResultCodeToOutputLogIfFailure(EECLogVerbosity Verbosity, FECResultCode ResultCode);
+
+	/**
+	 * Print an result code's message to the message log if it's a failure.
+	 * @param Verbosity Verbosity of the message.
+	 * @param ResultCode Error code to log.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Errors", DisplayName = "Log If Failure (Message Log)")
+	static void LogResultCodeToMessageLogIfFailure(EECLogVerbosity Verbosity, FECResultCode ResultCode);
+
+	/**
+	 * Check if two result codes are equal.
 	 */
 	UFUNCTION(BlueprintPure, Category = "Errors", DisplayName = "Equal (Error Code)", meta = (CompactNodeTitle = "==", BlueprintThreadSafe))
-	static bool Equal_ErrorCodeErrorCode(FECErrorCode A, FECErrorCode B);
+	static bool Equal_ResultCodeResultCode(FECResultCode A, FECResultCode B);
 
 	/**
-	 * Check if two error codes are not equal.
+	 * Check if two result codes are not equal.
 	 */
 	UFUNCTION(BlueprintPure, Category = "Errors", DisplayName = "Not Equal (Error Code)", meta = (CompactNodeTitle = "!=", BlueprintThreadSafe))
-	static bool NotEqual_ErrorCodeErrorCode(FECErrorCode A, FECErrorCode B);
+	static bool NotEqual_ResultCodeResultCode(FECResultCode A, FECResultCode B);
 
 	/**
-	 * Get the message for an error code.
+	 * Get the message for an result code.
 	 */
 	UFUNCTION(BlueprintPure, Category = "Errors")
-	static FText GetErrorMessage(FECErrorCode ErrorCode);
+	static FText GetMessage(FECResultCode ResultCode);
 
 	/**
-	 * Get the title for an error code.
+	 * Get the title for an result code.
 	 */
 	UFUNCTION(BlueprintPure, Category = "Errors")
-	static FText GetErrorTitle(FECErrorCode ErrorCode);
+	static FText GetTitle(FECResultCode ResultCode);
 
 	/**
-	 * Check if an error code is a success (no error).
+	 * Check if an result code is a success (no error).
 	 */
 	UFUNCTION(BlueprintPure, Category = "Errors")
-	static bool IsSuccess(FECErrorCode ErrorCode);
+	static bool IsSuccess(FECResultCode ResultCode);
 
 	/**
-	 * Check if an error code is an error (it has a valid category and code).
+	 * Check if an result code is a failure (either a valid error or an invalid state).
 	 */
 	UFUNCTION(BlueprintPure, Category = "Errors")
-	static bool IsError(FECErrorCode ErrorCode);
+	static bool IsFailure(FECResultCode ResultCode);
 
 	/**
-	 * Check if an error code is valid (either IsSuccess or IsError).
+	 * Check if an result code has a valid error (its category is valid and contains the result code).
 	 */
 	UFUNCTION(BlueprintPure, Category = "Errors")
-	static bool IsValid(FECErrorCode ErrorCode);
+	static bool HasValidError(FECResultCode ResultCode);
 
 	/**
-	 * Convert an error code to a short string (Only category and title).
+	 * Check if an result code is in a valid state (either IsSuccess or HasValidError).
 	 */
 	UFUNCTION(BlueprintPure, Category = "Errors")
-	static FString ToShortString(FECErrorCode ErrorCode);
+	static bool IsValid(FECResultCode ResultCode);
 
 	/**
-	 * Convert an error code to a short string (category and title only).
+	 * Convert an result code to a short string (Only category and title).
 	 */
-	UFUNCTION(BlueprintPure, Category = "Errors", meta = (BlueprintAutocast, Keywords = "cast convert",
-		CompactNodeTitle = "->"))
-	static FString Conv_ErrorCodeToString(FECErrorCode ErrorCode);
+	UFUNCTION(BlueprintPure, Category = "Errors")
+	static FString ToShortString(FECResultCode ResultCode);
+
+	/**
+	 * Convert an result code to a short string (category and title only).
+	 */
+	UFUNCTION(BlueprintPure, Category = "Errors", DisplayName = "To String (Error Code)",
+		meta = (BlueprintAutocast, Keywords = "cast convert", CompactNodeTitle = "->"))
+	static FString Conv_ErrorCodeToString(FECResultCode ResultCode);
 };

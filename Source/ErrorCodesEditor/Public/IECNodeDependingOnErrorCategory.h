@@ -6,7 +6,7 @@
 #include "UObject/Interface.h"
 #include "IECNodeDependingOnErrorCategory.generated.h"
 
-class UECErrorCategoryEnum;
+class UECErrorCategory;
 
 UINTERFACE(meta = (CannotImplementInterfaceInBlueprint))
 class ERRORCODESEDITOR_API UECNodeDependingOnErrorCategory : public UInterface
@@ -22,9 +22,9 @@ class ERRORCODESEDITOR_API IECNodeDependingOnErrorCategory
 	GENERATED_BODY()
 
 public:
-	virtual bool DependsOnErrorCategory(const UECErrorCategoryEnum& Category) const = 0;
+	virtual bool DependsOnErrorCategory(const UECErrorCategory& Category) const = 0;
 	
-	virtual void ReloadErrorCategory(UECErrorCategoryEnum* Category) = 0;
+	virtual void ReloadErrorCategory(UECErrorCategory* Category) = 0;
 
 	virtual bool ShouldBeReconstructedAfterChanges() const { return false; }
 };

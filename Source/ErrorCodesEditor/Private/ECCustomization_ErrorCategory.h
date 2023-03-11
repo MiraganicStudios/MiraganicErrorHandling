@@ -7,11 +7,11 @@
 #include "IDetailCustomNodeBuilder.h"
 #include "Kismet2/EnumEditorUtils.h"
 
-class UECErrorCategoryEnum;
+class UECErrorCategory;
 /**
  * 
  */
-class FECCustomization_ErrorCategoryEnum : public IDetailCustomization, FEnumEditorUtils::INotifyOnEnumChanged, FEditorUndoClient
+class FECCustomization_ErrorCategory : public IDetailCustomization, FEnumEditorUtils::INotifyOnEnumChanged, FEditorUndoClient
 {
 public:
 	static TSharedRef<class IDetailCustomization> MakeInstance();
@@ -27,14 +27,14 @@ public:
 	virtual void PostUndo(bool bSuccess) override;
 	virtual void PostRedo(bool bSuccess) override;
 
-	TSharedPtr<class FECErrorCodesBuilder> ErrorCodesBuilder;
-	TWeakObjectPtr<UECErrorCategoryEnum> TargetErrorCategory;
+	TSharedPtr<class FECErrorCategoryNodeBuilder> ErrorCodesBuilder;
+	TWeakObjectPtr<UECErrorCategory> TargetErrorCategory;
 };
 
-class FECErrorCodesBuilder : public IDetailCustomNodeBuilder, public TSharedFromThis<FECErrorCodesBuilder>
+class FECErrorCategoryNodeBuilder : public IDetailCustomNodeBuilder, public TSharedFromThis<FECErrorCategoryNodeBuilder>
 {
 public:
-	FECErrorCodesBuilder(UECErrorCategoryEnum& InErrorCategory)
+	FECErrorCategoryNodeBuilder(UECErrorCategory& InErrorCategory)
 		: TargetErrorCategory(&InErrorCategory)
 		, NextId(0)
 	{}
@@ -58,7 +58,7 @@ private:
 	static void CopyEnumsWithoutMax(TArray<TPair<FName, int64>>& OutEnumPairs, const UEnum& Enum);
 	
 	FSimpleDelegate RequestRebuild;
-	TWeakObjectPtr<UECErrorCategoryEnum> TargetErrorCategory;
+	TWeakObjectPtr<UECErrorCategory> TargetErrorCategory;
 
 	int64 NextId;
 

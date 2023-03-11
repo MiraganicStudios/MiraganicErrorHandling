@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ECGraphPinFactory_ErrorCode.h"
+#include "ECGraphPinFactory_ResultCode.h"
 
-class FECGraphNodeFactory_SwitchErrorCode : public FGraphPanelNodeFactory
+class FECGraphNodeFactory_SwitchResultCode : public FGraphPanelNodeFactory
 {
 public:
 	virtual TSharedPtr<SGraphNode> CreateNode(UEdGraphNode* Node) const override;

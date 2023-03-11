@@ -3,35 +3,35 @@
 #include "ECErrorCodesEditorModule.h"
 
 #include "AssetToolsModule.h"
-#include "ECAssetTypeActions_ErrorEnum.h"
-#include "ECCustomization_ErrorCode.h"
-#include "ECCustomization_ErrorCodeSwitchNode.h"
+#include "ECAssetTypeActions_ErrorCategory.h"
+#include "ECCustomization_ResultCode.h"
+#include "ECCustomization_ResultCodeSwitchNode.h"
 #include "ECEditorLogging.h"
 #include "ECErrorCategoryUtils.h"
-#include "ECGraphPinFactory_ErrorCode.h"
-#include "ECGraphNodeFactory_SwitchErrorCode.h"
+#include "ECGraphPinFactory_ResultCode.h"
+#include "ECGraphNodeFactory_SwitchResultCode.h"
 #include "EdGraphUtilities.h"
-#include "ECErrorCode.h"
-#include "ECK2Node_SwitchErrorCode.h"
+#include "ECResultCode.h"
+#include "ECK2Node_SwitchResultCode.h"
 
 void FECErrorCodesEditorModule::StartupModule()
 {
-	ErrorCodePinFactory = MakeShareable(new FECGraphPinFactory_ErrorCode());
+	ErrorCodePinFactory = MakeShareable(new FECGraphPinFactory_ResultCode());
 	FEdGraphUtilities::RegisterVisualPinFactory(ErrorCodePinFactory);
-	SwitchErrorCodeNodeFactory = MakeShareable(new FECGraphNodeFactory_SwitchErrorCode());
+	SwitchErrorCodeNodeFactory = MakeShareable(new FECGraphNodeFactory_SwitchResultCode());
 	FEdGraphUtilities::RegisterVisualNodeFactory(SwitchErrorCodeNodeFactory);
 
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-	PropertyModule.RegisterCustomPropertyTypeLayout(FECErrorCode::StaticStruct()->GetFName(),
-		FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FECCustomization_ErrorCode::MakeInstance));
-	PropertyModule.RegisterCustomClassLayout(UECK2Node_SwitchErrorCode::StaticClass()->GetFName(),
-		FOnGetDetailCustomizationInstance::CreateStatic(&FECCustomization_ErrorCodeSwitchNode::MakeInstance));
+	PropertyModule.RegisterCustomPropertyTypeLayout(FECResultCode::StaticStruct()->GetFName(),
+		FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FECCustomization_ResultCode::MakeInstance));
+	PropertyModule.RegisterCustomClassLayout(UECK2Node_SwitchResultCode::StaticClass()->GetFName(),
+		FOnGetDetailCustomizationInstance::CreateStatic(&FECCustomization_ResultCodeSwitchNode::MakeInstance));
 
 	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
-	ErrorCategoryAssetActions = MakeShareable(new FECAssetTypeActions_ErrorEnum());
+	ErrorCategoryAssetActions = MakeShareable(new FECAssetTypeActions_ErrorCategory());
 	AssetTools.RegisterAssetTypeActions(ErrorCategoryAssetActions.ToSharedRef());
 
-	UECErrorCategoryEnum::PostChangedInEditor().AddRaw(this, &FECErrorCodesEditorModule::BroadcastErrorCategoryChanged);
+	UECErrorCategory::PostChangedInEditor().AddRaw(this, &FECErrorCodesEditorModule::BroadcastErrorCategoryChanged);
 }
 
 void FECErrorCodesEditorModule::ShutdownModule()
@@ -51,8 +51,8 @@ void FECErrorCodesEditorModule::ShutdownModule()
 	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
 	{
 		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
-		PropertyModule.UnregisterCustomPropertyTypeLayout(FECErrorCode::StaticStruct()->GetFName());
-		PropertyModule.UnregisterCustomClassLayout(UECK2Node_SwitchErrorCode::StaticClass()->GetFName());
+		PropertyModule.UnregisterCustomPropertyTypeLayout(FECResultCode::StaticStruct()->GetFName());
+		PropertyModule.UnregisterCustomClassLayout(UECK2Node_SwitchResultCode::StaticClass()->GetFName());
 	}
 
 	if (FModuleManager::Get().IsModuleLoaded("AssetTools"))
@@ -64,10 +64,10 @@ void FECErrorCodesEditorModule::ShutdownModule()
 		}
 	}
 
-	UECErrorCategoryEnum::PostChangedInEditor().RemoveAll(this);
+	UECErrorCategory::PostChangedInEditor().RemoveAll(this);
 }
 
-void FECErrorCodesEditorModule::BroadcastErrorCategoryChanged(const UECErrorCategoryEnum& ErrorCategory,
+void FECErrorCodesEditorModule::BroadcastErrorCategoryChanged(const UECErrorCategory& ErrorCategory,
 	const TArray<TPair<FName, int64>>& OldNames,
 	bool bResolveData
 	)

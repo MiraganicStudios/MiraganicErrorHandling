@@ -1,24 +1,24 @@
 ﻿// Copyright 2022 Miraganic Studios. All rights reserved.
 
 
-#include "ECCustomization_ErrorCodeSwitchNode.h"
+#include "ECCustomization_ResultCodeSwitchNode.h"
 
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
-#include "ECK2Node_SwitchErrorCode.h"
+#include "ECK2Node_SwitchResultCode.h"
 #include "PropertyCustomizationHelpers.h"
 #include "SECWidget_ErrorCategoryList.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 
 #define LOCTEXT_NAMESPACE "ErrorCodesEditor_ErrorCodeSwitchNodeCustomization"
 
-TSharedRef<IDetailCustomization> FECCustomization_ErrorCodeSwitchNode::MakeInstance()
+TSharedRef<IDetailCustomization> FECCustomization_ResultCodeSwitchNode::MakeInstance()
 {
-	return MakeShareable(new FECCustomization_ErrorCodeSwitchNode());
+	return MakeShareable(new FECCustomization_ResultCodeSwitchNode());
 }
 
-void FECCustomization_ErrorCodeSwitchNode::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
+void FECCustomization_ResultCodeSwitchNode::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
 	const TArray<TWeakObjectPtr<UObject>>& Objects = DetailBuilder.GetSelectedObjects();
 	check(Objects.Num() > 0);
@@ -28,8 +28,8 @@ void FECCustomization_ErrorCodeSwitchNode::CustomizeDetails(IDetailLayoutBuilder
 		return;
 	}
 
-	TargetNode = CastChecked<UECK2Node_SwitchErrorCode>(Objects[0].Get());
-	TSharedRef<IPropertyHandle> PinErrorCodesProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UECK2Node_SwitchErrorCode, PinErrorCodes));
+	TargetNode = CastChecked<UECK2Node_SwitchResultCode>(Objects[0].Get());
+	TSharedRef<IPropertyHandle> PinErrorCodesProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UECK2Node_SwitchResultCode, PinResultCodes));
 	
 	IDetailCategoryBuilder& PinOptionsBuilder = DetailBuilder.EditCategory(TEXT("PinOptions"));
 	PinOptionsBuilder.AddProperty(PinErrorCodesProperty);
@@ -42,7 +42,7 @@ void FECCustomization_ErrorCodeSwitchNode::CustomizeDetails(IDetailLayoutBuilder
 			.AutoWidth()
 			[
 				SAssignNew(AddCategoryComboButton, SComboButton)
-				.OnGetMenuContent(this, &FECCustomization_ErrorCodeSwitchNode::GenerateAddCategoryMenu)
+				.OnGetMenuContent(this, &FECCustomization_ResultCodeSwitchNode::GenerateAddCategoryMenu)
 				.ContentPadding(2.f)
 				.ToolTipText(LOCTEXT("Tooltip_AddCategory", "Add all error codes from a category"))
 				.IsEnabled(PinErrorCodesProperty->IsEditable())
@@ -75,7 +75,7 @@ void FECCustomization_ErrorCodeSwitchNode::CustomizeDetails(IDetailLayoutBuilder
 		];
 }
 
-TSharedRef<SWidget> FECCustomization_ErrorCodeSwitchNode::GenerateAddCategoryMenu()
+TSharedRef<SWidget> FECCustomization_ResultCodeSwitchNode::GenerateAddCategoryMenu()
 {
 	return SNew(SBox)
 		.WidthOverride(280.f)
@@ -86,13 +86,13 @@ TSharedRef<SWidget> FECCustomization_ErrorCodeSwitchNode::GenerateAddCategoryMen
 			.MaxHeight(500.f)
 			[
 				SNew(SECWidget_ErrorCategoryList)
-				.PostErrorCategoryPicked(this, &FECCustomization_ErrorCodeSwitchNode::AddUniqueCodesFromCategory)
+				.PostErrorCategoryPicked(this, &FECCustomization_ResultCodeSwitchNode::AddUniqueCodesFromCategory)
 				.bAutoFocus(true)
 			]
 		];
 }
 
-void FECCustomization_ErrorCodeSwitchNode::AddUniqueCodesFromCategory(const UEnum* ErrorCategory)
+void FECCustomization_ResultCodeSwitchNode::AddUniqueCodesFromCategory(const UEnum* ErrorCategory)
 {
 	check(IsValid(ErrorCategory));
 

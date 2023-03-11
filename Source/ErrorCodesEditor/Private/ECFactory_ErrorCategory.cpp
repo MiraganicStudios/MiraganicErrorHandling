@@ -1,26 +1,26 @@
 ﻿// Copyright 2022 Miraganic Studios. All rights reserved.
 
 
-#include "ECFactory_ErrorEnum.h"
+#include "ECFactory_ErrorCategory.h"
 
-#include "ECErrorCategoryEnum.h"
+#include "ECErrorCategory.h"
 #include "Engine/UserDefinedEnum.h"
 #include "Kismet2/EnumEditorUtils.h"
 
-UECFactory_ErrorEnum::UECFactory_ErrorEnum(const FObjectInitializer& ObjectInitializer)
+UECFactory_ErrorCategory::UECFactory_ErrorCategory(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	SupportedClass = UECErrorCategoryEnum::StaticClass();
+	SupportedClass = UECErrorCategory::StaticClass();
 	bCreateNew = true;
 	bEditAfterNew = true;
 }
 
-FText UECFactory_ErrorEnum::GetDisplayName() const
+FText UECFactory_ErrorCategory::GetDisplayName() const
 {
 	return NSLOCTEXT("ErrorCodes", "ErrorEnum_DisplayName", "ErrorCategory");
 }
 
-UObject* UECFactory_ErrorEnum::FactoryCreateNew(UClass* InClass,
+UObject* UECFactory_ErrorCategory::FactoryCreateNew(UClass* InClass,
 	UObject* InParent,
 	FName InName,
 	EObjectFlags Flags,
@@ -28,7 +28,7 @@ UObject* UECFactory_ErrorEnum::FactoryCreateNew(UClass* InClass,
 	FFeedbackContext* Warn
 	)
 {
-	UEnum* Enum = NewObject<UECErrorCategoryEnum>(InParent, InName, Flags);
+	UEnum* Enum = NewObject<UECErrorCategory>(InParent, InName, Flags);
 	if (Enum)
 	{
 		TArray<TPair<FName, int64>> EmptyNames;

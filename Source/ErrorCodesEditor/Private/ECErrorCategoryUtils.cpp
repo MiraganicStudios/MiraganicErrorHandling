@@ -2,7 +2,7 @@
 
 
 #include "ECErrorCategoryUtils.h"
-#include "ECErrorCategoryEnum.h"
+#include "ECErrorCategory.h"
 #include "IECNodeDependingOnErrorCategory.h"
 #include "K2Node_Variable.h"
 #include "NodeDependingOnEnumInterface.h"
@@ -33,14 +33,14 @@ public:
 	}
 };
 
-void ErrorCodes::BroadcastPreChange(UECErrorCategoryEnum& ErrorCategory)
+void ErrorCodes::BroadcastPreChange(UECErrorCategory& ErrorCategory)
 {
 	FEnumEditorUtils::FEnumEditorManager::Get().PreChange(&ErrorCategory, FEnumEditorUtils::Changed);
 	ErrorCategory.Modify();
 }
 
 // Copied from FEnumEditorUtils::BroadcastChanges
-void ErrorCodes::BroadcastPostChange(const UECErrorCategoryEnum& ErrorCategory,
+void ErrorCodes::BroadcastPostChange(const UECErrorCategory& ErrorCategory,
 	const TArray<TPair<FName, int64>>& OldNames,
 	bool bResolveData
 )
@@ -262,7 +262,7 @@ void ErrorCodes::BroadcastPostChange(const UECErrorCategoryEnum& ErrorCategory,
 	FEnumEditorUtils::FEnumEditorManager::Get().PostChange(&ErrorCategory, FEnumEditorUtils::Changed);
 }
 
-void ErrorCodes::SetErrorCodeDisplayName(UECErrorCategoryEnum& Category,
+void ErrorCodes::SetResultCodeDisplayName(UECErrorCategory& Category,
 	int32 Idx,
 	const FText& NewDisplayName
 	)
@@ -303,7 +303,7 @@ void ErrorCodes::SetErrorCodeDisplayName(UECErrorCategoryEnum& Category,
 	ErrorCodes::BroadcastPostChange(Category, TArray<TPair<FName, int64>>(), false);
 }
 
-void ErrorCodes::SetErrorCodeMessage(UECErrorCategoryEnum& Category, int32 Idx, const FText& NewMessage)
+void ErrorCodes::SetResultCodeMessage(UECErrorCategory& Category, int32 Idx, const FText& NewMessage)
 {
 	//@TODO: Metadata is not transactional right now, so we cannot transact a tooltip edit
 	// const FScopedTransaction Transaction(NSLOCTEXT("EnumEditor", "SetEnumeratorTooltip", "Set Description"));
@@ -311,14 +311,14 @@ void ErrorCodes::SetErrorCodeMessage(UECErrorCategoryEnum& Category, int32 Idx, 
 	Category.SetMetaData(TEXT("ToolTip"), *NewMessage.ToString(), Idx);
 }
 
-void ErrorCodes::AddErrorCodeToCategory(UECErrorCategoryEnum& Category, int64 NewCode)
+void ErrorCodes::AddResultCodeToCategory(UECErrorCategory& Category, int64 NewCode)
 {
 	const FScopedTransaction Transaction(LOCTEXT("Transaction_AddEntry", "Add Error Code"));
 
 	ErrorCodes::BroadcastPreChange(Category);
 	
 	TArray<TPair<FName, int64>> OldNames;
-	CopyErrorCodesWithoutMax(OldNames, Category);
+	CopyResultCodesWithoutMax(OldNames, Category);
 	TArray<TPair<FName, int64>> Names = OldNames;
 
 	FString EnumNameStr = Category.GenerateNewErrorCodeName();
@@ -336,7 +336,7 @@ void ErrorCodes::AddErrorCodeToCategory(UECErrorCategoryEnum& Category, int64 Ne
 	Category.MarkPackageDirty();
 }
 
-void ErrorCodes::RemoveErrorCodeFromCategory(UECErrorCategoryEnum& Category, int32 Idx)
+void ErrorCodes::RemoveResultCodeFromCategory(UECErrorCategory& Category, int32 Idx)
 {
 	if (Idx < 0 || Idx >= Category.NumEnums() - 1)
 	{
@@ -348,7 +348,7 @@ void ErrorCodes::RemoveErrorCodeFromCategory(UECErrorCategoryEnum& Category, int
 	ErrorCodes::BroadcastPreChange(Category);
 
 	TArray<TPair<FName, int64>> OldNames;
-	CopyErrorCodesWithoutMax(OldNames, Category);
+	CopyResultCodesWithoutMax(OldNames, Category);
 	TArray<TPair<FName, int64>> Names = OldNames;
 
 	Names.RemoveAt(Idx);
@@ -363,7 +363,7 @@ void ErrorCodes::RemoveErrorCodeFromCategory(UECErrorCategoryEnum& Category, int
 	Category.MarkPackageDirty();
 }
 
-void ErrorCodes::CopyErrorCodesWithoutMax(TArray<TPair<FName, int64>>& OutEnumPairs, const UECErrorCategoryEnum& Category)
+void ErrorCodes::CopyResultCodesWithoutMax(TArray<TPair<FName, int64>>& OutEnumPairs, const UECErrorCategory& Category)
 {
 	const int32 NumEnums = Category.NumEnums() - 1;
 	for (int32 Idx = 0; Idx < NumEnums; ++Idx)
@@ -379,7 +379,7 @@ void ErrorCodes::FindAllErrorCategories(TArray<const UEnum*>& OutErrorCategories
 	{
 		UEnum* Category = *EnumIt;
 		// BP error categories are found by the asset search in the loop below
-		if (!IsValid(Category) || Category->IsA<UECErrorCategoryEnum>() || !Category->HasMetaData(TEXT("ErrorCategory")))
+		if (!IsValid(Category) || Category->IsA<UECErrorCategory>() || !Category->HasMetaData(TEXT("ErrorCategory")))
 		{
 			continue;
 		}
@@ -391,12 +391,12 @@ void ErrorCodes::FindAllErrorCategories(TArray<const UEnum*>& OutErrorCategories
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
 	TArray<FAssetData> EnumList;
 	FARFilter AssetFilter;
-	AssetFilter.ClassNames.Add(UECErrorCategoryEnum::StaticClass()->GetFName());
+	AssetFilter.ClassNames.Add(UECErrorCategory::StaticClass()->GetFName());
 	AssetFilter.bRecursiveClasses = true;
 	AssetRegistryModule.Get().GetAssets(AssetFilter, EnumList);
 	for (const FAssetData& AssetData : EnumList)
 	{
-		if (!AssetData.IsInstanceOf(UECErrorCategoryEnum::StaticClass()))
+		if (!AssetData.IsInstanceOf(UECErrorCategory::StaticClass()))
 		{
 			continue;
 		}

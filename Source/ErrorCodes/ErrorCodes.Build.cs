@@ -1,4 +1,5 @@
-﻿using UnrealBuildTool;
+﻿using System.IO;
+using UnrealBuildTool;
 
 public class ErrorCodes : ModuleRules
 {
@@ -6,6 +7,12 @@ public class ErrorCodes : ModuleRules
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
+		PublicIncludePaths.AddRange(
+			new string[] {
+				Path.Combine(ModuleDirectory, "Public"),
+			}
+		);
+		
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{

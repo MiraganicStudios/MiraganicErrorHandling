@@ -5,9 +5,9 @@
 #include "CoreMinimal.h"
 #include "IDetailCustomization.h"
 
-class UECK2Node_SwitchErrorCode;
+class UECK2Node_SwitchResultCode;
 
-class ERRORCODESEDITOR_API FECCustomization_ErrorCodeSwitchNode : public IDetailCustomization
+class ERRORCODESEDITOR_API FECCustomization_ResultCodeSwitchNode : public IDetailCustomization
 {
 public:
 	static TSharedRef<IDetailCustomization> MakeInstance();
@@ -19,7 +19,7 @@ private:
 
 	void AddUniqueCodesFromCategory(const UEnum* ErrorCategory);
 	
-	TWeakObjectPtr<UECK2Node_SwitchErrorCode> TargetNode;
+	TWeakObjectPtr<UECK2Node_SwitchResultCode> TargetNode;
 
 	TSharedPtr<SComboButton> AddCategoryComboButton;
 	

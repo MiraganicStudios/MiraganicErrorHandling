@@ -4,21 +4,21 @@
 
 #include "CoreMinimal.h"
 #include "K2Node_Switch.h"
-#include "ECErrorCode.h"
+#include "ECResultCode.h"
 #include "IECNodeDependingOnErrorCategory.h"
 #include "UObject/Object.h"
-#include "ECK2Node_SwitchErrorCode.generated.h"
+#include "ECK2Node_SwitchResultCode.generated.h"
 
 /**
  * Blueprint node for switching over error codes.
  */
 UCLASS(MinimalAPI)
-class UECK2Node_SwitchErrorCode : public UK2Node_Switch, public IECNodeDependingOnErrorCategory
+class UECK2Node_SwitchResultCode : public UK2Node_Switch, public IECNodeDependingOnErrorCategory
 {
 	GENERATED_BODY()
 
 public:
-	UECK2Node_SwitchErrorCode(const FObjectInitializer& ObjectInitializer);
+	UECK2Node_SwitchResultCode(const FObjectInitializer& ObjectInitializer);
 	
 	// UObject interface
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -46,8 +46,8 @@ public:
 	// End of UK2Node_Switch Interface
 
 	// IECNodeDependingOnErrorCategory Interface
-	virtual bool DependsOnErrorCategory(const UECErrorCategoryEnum& Category) const override;
-	virtual void ReloadErrorCategory(UECErrorCategoryEnum* Category) override;
+	virtual bool DependsOnErrorCategory(const UECErrorCategory& Category) const override;
+	virtual void ReloadErrorCategory(UECErrorCategory* Category) override;
 	virtual bool ShouldBeReconstructedAfterChanges() const override { return true; }
 	// End IECNodeDependingOnErrorCategory Interface
 
@@ -65,14 +65,14 @@ protected:
 	virtual void CreateCasePins() override;
 	virtual void RemovePin(UEdGraphPin* TargetPin) override;
 
-	FName GetNameForErrorCodePin(const FECErrorCode& ErrorCode) const;
-	FString GetTooltipForErrorCodePin(const FECErrorCode& ErrorCode) const;
+	FName GetNameForErrorCodePin(const FECResultCode& ErrorCode) const;
+	FString GetTooltipForErrorCodePin(const FECResultCode& ErrorCode) const;
 
 	static FName GetSuccessPinName();
 
 public:
 	UPROPERTY(EditAnywhere, Category = PinOptions)
-	TArray<FECErrorCode> PinErrorCodes;
+	TArray<FECResultCode> PinResultCodes;
 
 	UPROPERTY()
 	TArray<FName> PinNames;

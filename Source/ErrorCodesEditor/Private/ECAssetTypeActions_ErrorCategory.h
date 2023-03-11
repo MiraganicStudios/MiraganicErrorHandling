@@ -4,19 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "AssetTypeActions_Base.h"
-#include "ECErrorCategoryEnum.h"
+#include "ECErrorCategory.h"
 
 /**
  * 
  */
-class FECAssetTypeActions_ErrorEnum : public FAssetTypeActions_Base
+class FECAssetTypeActions_ErrorCategory : public FAssetTypeActions_Base
 {
 public:
 	// IAssetTypeActions Implementation
 	virtual FText GetName() const override { return NSLOCTEXT("ErrorCodesEditor_ErrorCategoryAssetActions", "DisplayName", "Error Category"); }
 	virtual FText GetAssetDescription(const FAssetData& AssetData) const override;
 	virtual FColor GetTypeColor() const override { return FColor(209, 71, 71); }
-	virtual UClass* GetSupportedClass() const override { return UECErrorCategoryEnum::StaticClass(); }
+	virtual UClass* GetSupportedClass() const override { return UECErrorCategory::StaticClass(); }
 	virtual uint32 GetCategories() override { return EAssetTypeCategories::Blueprint; }
 	virtual bool CanLocalize() const override { return false; }
 
