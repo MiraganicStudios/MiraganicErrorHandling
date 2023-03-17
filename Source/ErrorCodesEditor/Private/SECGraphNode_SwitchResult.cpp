@@ -1,10 +1,10 @@
 ﻿// Copyright 2022 Miraganic Studios. All rights reserved.
 
 
-#include "SECGraphNode_SwitchResultCode.h"
+#include "SECGraphNode_SwitchResult.h"
 
 #include "K2Node_SwitchEnum.h"
-#include "ECK2Node_SwitchResultCode.h"
+#include "ECK2Node_SwitchResult.h"
 #include "GraphEditorSettings.h"
 #include "NodeFactory.h"
 #include "SECWidget_ErrorCategoryList.h"
@@ -30,14 +30,14 @@ public:
 	}
 };
 
-void SECGraphNode_SwitchResultCode::Construct(const FArguments& InArgs, UECK2Node_SwitchResultCode* InNode)
+void SECGraphNode_SwitchResult::Construct(const FArguments& InArgs, UECK2Node_SwitchResult* InNode)
 {
 	GraphNode = InNode;
 	SetCursor(EMouseCursor::CardinalCross);
 	UpdateGraphNode();
 }
 
-void SECGraphNode_SwitchResultCode::CreatePinWidgets()
+void SECGraphNode_SwitchResult::CreatePinWidgets()
 {
 	UK2Node_Switch* SwitchNode = CastChecked<UK2Node_Switch>(GraphNode);
 	UEdGraphPin* DefaultPin = SwitchNode->GetDefaultPin();
@@ -76,12 +76,12 @@ void SECGraphNode_SwitchResultCode::CreatePinWidgets()
 	}
 }
 
-void SECGraphNode_SwitchResultCode::CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox)
+void SECGraphNode_SwitchResult::CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox)
 {
 	// Don't include an add button; it clutters the node
 }
 
-EVisibility SECGraphNode_SwitchResultCode::IsAddPinButtonVisible() const
+EVisibility SECGraphNode_SwitchResult::IsAddPinButtonVisible() const
 {
 	if (!GraphNode->IsA<UK2Node_SwitchEnum>())
 	{
@@ -91,7 +91,7 @@ EVisibility SECGraphNode_SwitchResultCode::IsAddPinButtonVisible() const
 	return EVisibility::Collapsed;
 }
 
-FReply SECGraphNode_SwitchResultCode::OnAddPin()
+FReply SECGraphNode_SwitchResult::OnAddPin()
 {
 	UK2Node_Switch* SwitchNode = CastChecked<UK2Node_Switch>(GraphNode);
 

@@ -4,112 +4,112 @@
 
 #include "ECLogging.h"
 
-FECResultCode UECErrorFunctionLibrary::MakeResultCode(FECResultCode ResultCode)
+FECResult UECErrorFunctionLibrary::MakeResult(FECResult Result)
 {
-	return ResultCode;
+	return Result;
 }
 
-void UECErrorFunctionLibrary::LogResultCodeToOutputLog(EECLogVerbosity Verbosity, FECResultCode ResultCode)
+void UECErrorFunctionLibrary::LogResultToOutputLog(EECLogVerbosity Verbosity, FECResult Result)
 {
 	switch (Verbosity)
 	{
 		default:
 		case EECLogVerbosity::Normal:
-			UE_LOG(LogErrorCodes, Display, TEXT("%s"), *ResultCode.ToString());
+			UE_LOG(LogErrorCodes, Display, TEXT("%s"), *Result.ToString());
 			return;
 		case EECLogVerbosity::Warning:
-			UE_LOG(LogErrorCodes, Warning, TEXT("%s"), *ResultCode.ToString());
+			UE_LOG(LogErrorCodes, Warning, TEXT("%s"), *Result.ToString());
 			return;
 		case EECLogVerbosity::Error:
-			UE_LOG(LogErrorCodes, Error, TEXT("%s"), *ResultCode.ToString());
+			UE_LOG(LogErrorCodes, Error, TEXT("%s"), *Result.ToString());
 			return;
 	}
 }
 
-void UECErrorFunctionLibrary::LogResultCodeToMessageLog(EECLogVerbosity Verbosity, FECResultCode ResultCode)
+void UECErrorFunctionLibrary::LogResultToMessageLog(EECLogVerbosity Verbosity, FECResult Result)
 {
 	FMessageLog MessageLog("PIE");
 	switch (Verbosity)
 	{
 		default:
 		case EECLogVerbosity::Normal:
-			MessageLog.Info(ResultCode.GetFormattedMessage());
+			MessageLog.Info(Result.GetFormattedMessage());
 		return;
 		case EECLogVerbosity::Warning:
-			MessageLog.Warning(ResultCode.GetFormattedMessage());
+			MessageLog.Warning(Result.GetFormattedMessage());
 		return;
 		case EECLogVerbosity::Error:
-			MessageLog.Error(ResultCode.GetFormattedMessage());
+			MessageLog.Error(Result.GetFormattedMessage());
 		return;
 	}
 }
 
-void UECErrorFunctionLibrary::LogResultCodeToOutputLogIfFailure(EECLogVerbosity Verbosity, FECResultCode ResultCode)
+void UECErrorFunctionLibrary::LogResultToOutputLogIfFailure(EECLogVerbosity Verbosity, FECResult Result)
 {
-	if (ResultCode.IsSuccess())
+	if (Result.IsSuccess())
 	{
 		return;
 	}
 
-	LogResultCodeToOutputLog(Verbosity, ResultCode);
+	LogResultToOutputLog(Verbosity, Result);
 }
 
-void UECErrorFunctionLibrary::LogResultCodeToMessageLogIfFailure(EECLogVerbosity Verbosity, FECResultCode ResultCode)
+void UECErrorFunctionLibrary::LogResultToMessageLogIfFailure(EECLogVerbosity Verbosity, FECResult Result)
 {
-	if (ResultCode.IsSuccess())
+	if (Result.IsSuccess())
 	{
 		return;
 	}
 
-	LogResultCodeToMessageLog(Verbosity, ResultCode);
+	LogResultToMessageLog(Verbosity, Result);
 }
 
-bool UECErrorFunctionLibrary::Equal_ResultCodeResultCode(FECResultCode A, FECResultCode B)
+bool UECErrorFunctionLibrary::Equal_ResultResult(FECResult A, FECResult B)
 {
 	return A == B;
 }
 
-bool UECErrorFunctionLibrary::NotEqual_ResultCodeResultCode(FECResultCode A, FECResultCode B)
+bool UECErrorFunctionLibrary::NotEqual_ResultResult(FECResult A, FECResult B)
 {
 	return A != B;
 }
 
-FText UECErrorFunctionLibrary::GetMessage(FECResultCode ResultCode)
+FText UECErrorFunctionLibrary::GetMessage(FECResult Result)
 {
-	return ResultCode.GetMessage();
+	return Result.GetMessage();
 }
 
-FText UECErrorFunctionLibrary::GetTitle(FECResultCode ResultCode)
+FText UECErrorFunctionLibrary::GetTitle(FECResult Result)
 {
-	return ResultCode.GetTitle();
+	return Result.GetTitle();
 }
 
-bool UECErrorFunctionLibrary::IsSuccess(FECResultCode ResultCode)
+bool UECErrorFunctionLibrary::IsSuccess(FECResult Result)
 {
-	return ResultCode.IsSuccess();
+	return Result.IsSuccess();
 }
 
-bool UECErrorFunctionLibrary::IsFailure(FECResultCode ResultCode)
+bool UECErrorFunctionLibrary::IsFailure(FECResult Result)
 {
-	return ResultCode.IsFailure();
+	return Result.IsFailure();
 }
 
-bool UECErrorFunctionLibrary::HasValidError(FECResultCode ResultCode)
+bool UECErrorFunctionLibrary::HasValidError(FECResult Result)
 {
-	return ResultCode.HasValidError();
+	return Result.HasValidError();
 }
 
-bool UECErrorFunctionLibrary::IsValid(FECResultCode ResultCode)
+bool UECErrorFunctionLibrary::IsValid(FECResult Result)
 {
-	return ResultCode.IsValid();
+	return Result.IsValid();
 }
 
-FString UECErrorFunctionLibrary::ToShortString(FECResultCode ResultCode)
+FString UECErrorFunctionLibrary::ToShortString(FECResult Result)
 {
-	return ResultCode.ToShortString();
+	return Result.ToShortString();
 }
 
-FString UECErrorFunctionLibrary::Conv_ErrorCodeToString(FECResultCode ResultCode)
+FString UECErrorFunctionLibrary::Conv_ErrorCodeToString(FECResult Result)
 {
-	return ResultCode.ToString();
+	return Result.ToString();
 }

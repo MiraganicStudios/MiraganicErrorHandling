@@ -1,25 +1,25 @@
 ﻿// Copyright 2022 Miraganic Studios. All rights reserved.
 
 
-#include "SECGraphPin_ResultCode.h"
+#include "SECGraphPin_Result.h"
 
-#include "ECResultCode.h"
-#include "SECWidget_ResultCode.h"
+#include "ECResult.h"
+#include "SECWidget_Result.h"
 #include "SlateOptMacros.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
-void SECGraphPin_ResultCode::Construct(const FArguments& InArgs, UEdGraphPin* InGraphPinObj)
+void SECGraphPin_Result::Construct(const FArguments& InArgs, UEdGraphPin* InGraphPinObj)
 {
 	SGraphPin::Construct(SGraphPin::FArguments(), InGraphPinObj);
 }
 
-TSharedRef<SWidget> SECGraphPin_ResultCode::GetDefaultValueWidget()
+TSharedRef<SWidget> SECGraphPin_Result::GetDefaultValueWidget()
 {
 	FString DefaultString = GraphPinObj->GetDefaultAsString();
-	FECResultCode DefaultErrorCode;
+	FECResult DefaultErrorCode;
 
-	UScriptStruct* PinStructType = FECResultCode::StaticStruct();
+	UScriptStruct* PinStructType = FECResult::StaticStruct();
 	if (!DefaultString.IsEmpty())
 	{
 		PinStructType->ImportText(*DefaultString, &DefaultErrorCode, nullptr,
@@ -30,19 +30,19 @@ TSharedRef<SWidget> SECGraphPin_ResultCode::GetDefaultValueWidget()
 		+SVerticalBox::Slot()
 		.AutoHeight()
 		[
-			SNew(SECWidget_ResultCode)
-			.PostResultCodeChanged(this, &SECGraphPin_ResultCode::UpdatePinValue)
+			SNew(SECWidget_Result)
+			.PostResultCodeChanged(this, &SECGraphPin_Result::UpdatePinValue)
 			.DefaultValue(DefaultErrorCode)
 			.Visibility(this, &SGraphPin::GetDefaultValueVisibility)
 			.IsEnabled(this, &SGraphPin::GetDefaultValueIsEditable)
 		];
 }
 
-void SECGraphPin_ResultCode::UpdatePinValue(FECResultCode NewValue)
+void SECGraphPin_Result::UpdatePinValue(FECResult NewValue)
 {
 	FString StringValue;
-	FECResultCode DefaultValue;
-	FECResultCode::StaticStruct()->ExportText(StringValue, &NewValue, &DefaultValue, nullptr,
+	FECResult DefaultValue;
+	FECResult::StaticStruct()->ExportText(StringValue, &NewValue, &DefaultValue, nullptr,
 		EPropertyPortFlags::PPF_SerializedAsImportText, nullptr);
 
 	if (StringValue != GraphPinObj->GetDefaultAsString())

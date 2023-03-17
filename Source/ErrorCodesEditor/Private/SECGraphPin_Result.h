@@ -6,15 +6,15 @@
 #include "SGraphPin.h"
 #include "Widgets/SCompoundWidget.h"
 
-struct FECResultCode;
+struct FECResult;
 
 /**
  * Graph pin for error codes.
  */
-class SECGraphPin_ResultCode : public SGraphPin
+class SECGraphPin_Result : public SGraphPin
 {
 public:
-	SLATE_BEGIN_ARGS(SECGraphPin_ResultCode) {}
+	SLATE_BEGIN_ARGS(SECGraphPin_Result) {}
 	SLATE_END_ARGS()
 
 	/** Constructs this widget with InArgs */
@@ -22,5 +22,5 @@ public:
 
 	virtual TSharedRef<SWidget> GetDefaultValueWidget() override;
 
-	void UpdatePinValue(FECResultCode NewValue);
+	void UpdatePinValue(FECResult NewValue);
 };

@@ -1,34 +1,36 @@
 ﻿// Copyright 2022 Miraganic Studios. All rights reserved.
 
 
-#include "ECResultCode.h"
+#include "ECResult.h"
+
+#include "ECLogging.h"
 
 #define LOCTEXT_NAMESPACE "ErrorCodes"
 
-FECResultCode::FECResultCode()
+FECResult::FECResult()
 	: Category(nullptr)
 	, Code(-1)
 {}
 
-FECResultCode::FECResultCode(const UEnum* InCategory, int64 InCode)
+FECResult::FECResult(const UEnum* InCategory, int64 InCode)
 	: Category(InCategory)
 	, Code(InCode)
 {
 }
 
-FECResultCode::FECResultCode(const UEnum& InCategory, int64 InCode)
+FECResult::FECResult(const UEnum& InCategory, int64 InCode)
 	: Category(&InCategory)
 	, Code(InCode)
 {
 	ensure(InCode != -1);
 }
 
-bool FECResultCode::IsSuccess() const
+bool FECResult::IsSuccess() const
 {
 	return Code == -1 && !::IsValid(Category);
 }
 
-bool FECResultCode::IsFailure() const
+bool FECResult::IsFailure() const
 {
 	return !IsSuccess();
 	// if (Code == -1 || !::IsValid(Category))
@@ -42,18 +44,18 @@ bool FECResultCode::IsFailure() const
 	// return Idx >= 0 && Idx < MaxIdx;
 }
 
-bool FECResultCode::HasValidError() const
+bool FECResult::HasValidError() const
 {
 	return GetErrorIndex().IsSet();
 }
 
-bool FECResultCode::IsValid() const
+bool FECResult::IsValid() const
 {
 	// Other states (E.g., {Category:Null, Code > 0}, {Category:Valid, Code == 0} are invalid)
 	return IsSuccess() || HasValidError();
 }
 
-TOptional<int32> FECResultCode::GetErrorIndex() const
+TOptional<int32> FECResult::GetErrorIndex() const
 {
 	if (Code == -1 || !::IsValid(Category))
 	{
@@ -70,7 +72,7 @@ TOptional<int32> FECResultCode::GetErrorIndex() const
 	return ErrorIdx;
 }
 
-TOptional<int32> FECResultCode::GetMaxErrorIndex() const
+TOptional<int32> FECResult::GetMaxErrorIndex() const
 {
 	if (Code == -1 || !::IsValid(Category))
 	{
@@ -80,7 +82,7 @@ TOptional<int32> FECResultCode::GetMaxErrorIndex() const
 	return Category->NumEnums() - 1;
 }
 
-FText FECResultCode::GetCategoryName() const
+FText FECResult::GetCategoryName() const
 {
 	if (!IsFailure())
 	{
@@ -90,7 +92,7 @@ FText FECResultCode::GetCategoryName() const
 	return GetEnumDisplayName(*Category);
 }
 
-FText FECResultCode::GetFormattedMessage() const
+FText FECResult::GetFormattedMessage() const
 {
 	if (IsSuccess())
 	{
@@ -112,7 +114,7 @@ FText FECResultCode::GetFormattedMessage() const
 	}
 }
 
-FText FECResultCode::GetMessage() const
+FText FECResult::GetMessage() const
 {
 	if (IsSuccess())
 	{
@@ -132,7 +134,7 @@ FText FECResultCode::GetMessage() const
 	}
 }
 
-FText FECResultCode::GetTitle() const
+FText FECResult::GetTitle() const
 {
 	if (IsSuccess())
 	{
@@ -152,7 +154,7 @@ FText FECResultCode::GetTitle() const
 	}
 }
 
-FString FECResultCode::ToShortString() const
+FString FECResult::ToShortString() const
 {
 	if (IsSuccess())
 	{
@@ -173,7 +175,7 @@ FString FECResultCode::ToShortString() const
 	}
 }
 
-FString FECResultCode::ToString() const
+FString FECResult::ToString() const
 {
 	if (IsSuccess())
 	{
@@ -199,32 +201,32 @@ FString FECResultCode::ToString() const
 	}
 }
 
-FECResultCode FECResultCode::Success()
+FECResult FECResult::Success()
 {
-	return FECResultCode();
+	return FECResult();
 }
 
-const UEnum* FECResultCode::GetCategory() const
+const UEnum* FECResult::GetCategory() const
 {
 	return Category;
 }
 
-FName FECResultCode::GetPropertyName_Category()
+FName FECResult::GetPropertyName_Category()
 {
-	return GET_MEMBER_NAME_CHECKED(FECResultCode, Category);
+	return GET_MEMBER_NAME_CHECKED(FECResult, Category);
 }
 
-FName FECResultCode::GetPropertyName_Code()
+FName FECResult::GetPropertyName_Code()
 {
-	return GET_MEMBER_NAME_CHECKED(FECResultCode, Code);
+	return GET_MEMBER_NAME_CHECKED(FECResult, Code);
 }
 
-FECResultCode FECResultCode::ConstructRaw(const UEnum* InCategory, int64 InCode)
+FECResult FECResult::ConstructRaw(const UEnum* InCategory, int64 InCode)
 {
-	return FECResultCode(InCategory, InCode);
+	return FECResult(InCategory, InCode);
 }
 
-FText FECResultCode::GetEnumDisplayName(const UEnum& Enum)
+FText FECResult::GetEnumDisplayName(const UEnum& Enum)
 {
 #if WITH_EDITOR
 	return Enum.GetDisplayNameText();
@@ -233,7 +235,7 @@ FText FECResultCode::GetEnumDisplayName(const UEnum& Enum)
 #endif
 }
 
-FText FECResultCode::GetEnumTooltip(const UEnum& Enum, int32 Index)
+FText FECResult::GetEnumTooltip(const UEnum& Enum, int32 Index)
 {
 #if WITH_EDITOR
 	return Enum.GetToolTipTextByIndex(Index);

@@ -4,21 +4,21 @@
 
 #include "CoreMinimal.h"
 #include "K2Node_Switch.h"
-#include "ECResultCode.h"
+#include "ECResult.h"
 #include "IECNodeDependingOnErrorCategory.h"
 #include "UObject/Object.h"
-#include "ECK2Node_SwitchResultCode.generated.h"
+#include "ECK2Node_SwitchResult.generated.h"
 
 /**
  * Blueprint node for switching over error codes.
  */
 UCLASS(MinimalAPI)
-class UECK2Node_SwitchResultCode : public UK2Node_Switch, public IECNodeDependingOnErrorCategory
+class UECK2Node_SwitchResult : public UK2Node_Switch, public IECNodeDependingOnErrorCategory
 {
 	GENERATED_BODY()
 
 public:
-	UECK2Node_SwitchResultCode(const FObjectInitializer& ObjectInitializer);
+	UECK2Node_SwitchResult(const FObjectInitializer& ObjectInitializer);
 	
 	// UObject interface
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -65,14 +65,14 @@ protected:
 	virtual void CreateCasePins() override;
 	virtual void RemovePin(UEdGraphPin* TargetPin) override;
 
-	FName GetNameForErrorCodePin(const FECResultCode& ErrorCode) const;
-	FString GetTooltipForErrorCodePin(const FECResultCode& ErrorCode) const;
+	FName GetNameForErrorCodePin(const FECResult& ErrorCode) const;
+	FString GetTooltipForErrorCodePin(const FECResult& ErrorCode) const;
 
 	static FName GetSuccessPinName();
 
 public:
 	UPROPERTY(EditAnywhere, Category = PinOptions)
-	TArray<FECResultCode> PinResultCodes;
+	TArray<FECResult> PinResultCodes;
 
 	UPROPERTY()
 	TArray<FName> PinNames;

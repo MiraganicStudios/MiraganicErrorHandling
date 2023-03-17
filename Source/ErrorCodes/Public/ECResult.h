@@ -3,23 +3,23 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ECResultCode.generated.h"
+#include "ECResult.generated.h"
 
 /**
  * Generic result which can be a 'Success' or a specific type of error.
  */
 USTRUCT(BlueprintType, meta = (DisableSplitPin, 
-	HasNativeMake = "ErrorCodes.ECErrorFunctionLibrary.MakeErrorCode"))
-struct ERRORCODES_API FECResultCode
+	HasNativeMake = "ErrorCodes.ECErrorFunctionLibrary.MakeResult"))
+struct ERRORCODES_API FECResult
 {
 	GENERATED_BODY()
 	
 public:
 	// Default construct to 'Success'.
-	FECResultCode();
+	FECResult();
 
 	// Construct an error from a category and a code. Prefer using the enum conversion constructor if possible.
-	FECResultCode(const UEnum& InCategory, int64 InCode);
+	FECResult(const UEnum& InCategory, int64 InCode);
 
 	/**
 	 * Construct an result code using an error enum.
@@ -27,8 +27,8 @@ public:
 	 * Note that this will work for all UENUMs, even if they don't have the metadata 'ErrorCategory'.
 	 */
 	template<typename T, typename = typename TEnableIf<TIsEnumClass<T>::Value || TIsEnum<T>::Value>::Type>
-	FECResultCode(T InCode)
-		: FECResultCode(*StaticEnum<T>(), static_cast<int64>(InCode))
+	FECResult(T InCode)
+		: FECResult(*StaticEnum<T>(), static_cast<int64>(InCode))
 	{}
 
 	// Check if this is a success.
@@ -56,20 +56,20 @@ public:
 	// Format this result code's category, title, and message as a string.
 	FString ToString() const;
 	// Construct a 'Success' result code.
-	static FECResultCode Success();
+	static FECResult Success();
 
 	const UEnum* GetCategory() const;
 	int64 GetCode() const { return Code; }
 
-	FORCEINLINE bool operator==(const FECResultCode& Other) const
+	FORCEINLINE bool operator==(const FECResult& Other) const
 	{
 		return Category == Other.Category && Code == Other.Code;
 	}
-	FORCEINLINE bool operator!=(const FECResultCode& Other) const
+	FORCEINLINE bool operator!=(const FECResult& Other) const
 	{
 		return !(*this == Other);
 	}
-	FORCEINLINE friend uint32 GetTypeHash(const FECResultCode& Elem)
+	FORCEINLINE friend uint32 GetTypeHash(const FECResult& Elem)
 	{
 		return HashCombineFast(GetTypeHash(Elem.Category), GetTypeHash(Elem.Code));
 	}
@@ -78,12 +78,12 @@ public:
 	static FName GetPropertyName_Code();
 
 	// Construct a result code using a category and code. This can return an invalid result code.
-	static FECResultCode ConstructRaw(const UEnum* InCategory, int64 InCode);
+	static FECResult ConstructRaw(const UEnum* InCategory, int64 InCode);
 
 protected:
 	
 	// Construct a result code from an enum
-	FECResultCode(const UEnum* InCategory, int64 InCode);
+	FECResult(const UEnum* InCategory, int64 InCode);
 
 	// Get an enum's display name if building with editor, else use its authored name.
 	static FText GetEnumDisplayName(const UEnum& Enum);

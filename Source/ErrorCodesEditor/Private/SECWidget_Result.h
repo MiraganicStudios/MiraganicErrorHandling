@@ -4,40 +4,40 @@
 
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
-#include "ECResultCode.h"
+#include "ECResult.h"
 
-DECLARE_DELEGATE_OneParam(FECResultCodeChangedDelegate, FECResultCode);
+DECLARE_DELEGATE_OneParam(FECResultChangedDelegate, FECResult);
 
 /**
  * Widget which selects a single Error Code from a dropdown list.
  */
-class SECWidget_ResultCode : public SCompoundWidget
+class SECWidget_Result : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS(SECWidget_ResultCode) {}
+	SLATE_BEGIN_ARGS(SECWidget_Result) {}
 	SLATE_ARGUMENT(FString, FilterString)
-	SLATE_ARGUMENT(FECResultCode, DefaultValue)
-	SLATE_EVENT(FECResultCodeChangedDelegate, PostResultCodeChanged)
+	SLATE_ARGUMENT(FECResult, DefaultValue)
+	SLATE_EVENT(FECResultChangedDelegate, PostResultCodeChanged)
 	SLATE_END_ARGS()
 
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs);
 
-	void SetSelectedResultCode(const FECResultCode& ResultCode);
+	void SetSelectedResultCode(const FECResult& Result);
 
 protected:
 	TSharedRef<SWidget> GenerateDropdownWidget();
 	FText FormatToolTipText() const;
 	FText GetSelectedValueCategoryAndTitle() const;
 	FText GetSelectedValueTitle() const;
-	void BroadcastResultCodeChanged(FECResultCode NewResultCode);
+	void BroadcastResultCodeChanged(FECResult NewResult);
 
-	FECResultCodeChangedDelegate PostResultCodeChanged;
+	FECResultChangedDelegate PostResultChanged;
 
 	/** String used to filter error codes*/
 	FString FilterString;
 
-	FECResultCode SelectedResultCode;
+	FECResult SelectedResult;
 
 	TSharedPtr<class SComboButton> ComboButton;
 };

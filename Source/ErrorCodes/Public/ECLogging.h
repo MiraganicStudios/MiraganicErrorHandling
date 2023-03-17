@@ -4,4 +4,4 @@
 
 #include "CoreMinimal.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogErrorCodes, Log, Log);
+ERRORCODES_API DECLARE_LOG_CATEGORY_EXTERN(LogErrorCodes, Log, Log);

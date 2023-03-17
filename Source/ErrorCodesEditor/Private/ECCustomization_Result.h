@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 
-class SECWidget_ResultCode;
-struct FECResultCode;
+class SECWidget_Result;
+struct FECResult;
 
-class FECCustomization_ResultCode : public IPropertyTypeCustomization
+class FECCustomization_Result : public IPropertyTypeCustomization
 {
 public:
 	static TSharedRef<IPropertyTypeCustomization> MakeInstance();
@@ -22,12 +22,12 @@ public:
 		) override;
 
 private:
-	void UpdateErrorCodeProperties(FECResultCode NewErrorCode);
+	void UpdateErrorCodeProperties(FECResult NewErrorCode);
 	void SyncErrorCodeWidgetToProperty();
 
 	TSharedPtr<IPropertyHandle> StructProperty;
 	TSharedPtr<IPropertyHandle> CategoryProperty;
 	TSharedPtr<IPropertyHandle> CodeProperty;
 
-	TSharedPtr<SECWidget_ResultCode> ErrorCodeWidget;
+	TSharedPtr<SECWidget_Result> ErrorCodeWidget;
 };

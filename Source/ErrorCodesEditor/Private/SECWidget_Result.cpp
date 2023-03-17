@@ -1,7 +1,7 @@
 ﻿// Copyright 2022 Miraganic Studios. All rights reserved.
 
 
-#include "SECWidget_ResultCode.h"
+#include "SECWidget_Result.h"
 
 #include "DetailLayoutBuilder.h"
 #include "ECErrorCategory.h"
@@ -15,7 +15,7 @@
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
-FText GetResultCodeCategoryAndTitle(const FECResultCode& ResultCode)
+FText GetResultCodeCategoryAndTitle(const FECResult& ResultCode)
 {
 	if (ResultCode.IsSuccess())
 	{
@@ -32,7 +32,7 @@ FText GetResultCodeCategoryAndTitle(const FECResultCode& ResultCode)
 	}
 }
 
-FText FormatResultCodeTooltip(const FECResultCode& ResultCode)
+FText FormatResultCodeTooltip(const FECResult& ResultCode)
 {
 	if (ResultCode.HasValidError())
 	{
@@ -54,7 +54,7 @@ enum class EECResultCodeTreeNodeType
 
 struct FECResultCodeTreeNode
 {
-	FECResultCodeTreeNode(const FECResultCode& InCode)
+	FECResultCodeTreeNode(const FECResult& InCode)
 		: ResultCode(InCode)
 		, Category(nullptr)
 		, Mode(EECResultCodeTreeNodeType::ResultCode)
@@ -72,7 +72,7 @@ struct FECResultCodeTreeNode
 	void SetFilteredChildren(TArrayView<const TSharedPtr<FECResultCodeTreeNode>> InFilteredChildren);
 	
 	// Get this node's error code, if mode == ResultCode
-	TOptional<FECResultCode> GetResultCode() const;
+	TOptional<FECResult> GetResultCode() const;
 
 	// Get this node's category, if mode == Category
 	const UEnum* GetCategory() const;
@@ -91,7 +91,7 @@ struct FECResultCodeTreeNode
 private:
 	
 	// Code itself, if Mode == ResultCode
-	FECResultCode ResultCode;
+	FECResult ResultCode;
 	
 	// Category, if Mode == Category
 	const UEnum* Category;
@@ -119,7 +119,7 @@ void FECResultCodeTreeNode::SortChildren()
 	});
 }
 
-TOptional<FECResultCode> FECResultCodeTreeNode::GetResultCode() const
+TOptional<FECResult> FECResultCodeTreeNode::GetResultCode() const
 {
 	if (Mode != EECResultCodeTreeNodeType::ResultCode)
 	{
@@ -271,8 +271,8 @@ public:
 	}
 
 	SLATE_ARGUMENT(FString, FilterString)
-	SLATE_ARGUMENT(FECResultCode, DefaultSelection)
-	SLATE_EVENT(FECResultCodeChangedDelegate, PostResultCodeSelected)
+	SLATE_ARGUMENT(FECResult, DefaultSelection)
+	SLATE_EVENT(FECResultChangedDelegate, PostResultCodeSelected)
 	SLATE_ARGUMENT(bool, bAutoFocus)
 	SLATE_END_ARGS()
 
@@ -322,11 +322,11 @@ private:
 
 	TSharedPtr<FECResultCodeTextFilter> SearchFilter;
 	
-	FECResultCode SelectedResultCode;
+	FECResult SelectedResultCode;
 	
 	FString FilterString;
 	
-	FECResultCodeChangedDelegate PostResultCodeSelected;
+	FECResultChangedDelegate PostResultCodeSelected;
 
 	bool bAwaitingFocus = false;
 };
@@ -402,7 +402,7 @@ void SECResultCodeTreeWidget::Tick(const FGeometry& AllottedGeometry,
 void SECResultCodeTreeWidget::UpdateResultCodeOptions()
 {
 	ResultCodeNodes.Reset();
-	TSharedPtr<FECResultCodeTreeNode> SuccessCode = MakeShareable(new FECResultCodeTreeNode(FECResultCode::Success()));
+	TSharedPtr<FECResultCodeTreeNode> SuccessCode = MakeShareable(new FECResultCodeTreeNode(FECResult::Success()));
 	RootNodes.Emplace(SuccessCode);
 
 	TArray<const UEnum*> ErrorCategories;
@@ -420,7 +420,7 @@ void SECResultCodeTreeWidget::UpdateResultCodeOptions()
 		for (int32 Idx = 0; Idx < NumValues; ++Idx)
 		{
 			int64 Value = Category->GetValueByIndex(Idx);
-			if (Value == FECResultCode::Success().GetCode())
+			if (Value == FECResult::Success().GetCode())
 			{
 				continue;
 			}
@@ -430,7 +430,7 @@ void SECResultCodeTreeWidget::UpdateResultCodeOptions()
 				continue;
 			}
 
-			TSharedPtr<FECResultCodeTreeNode> Entry = MakeShareable(new FECResultCodeTreeNode(FECResultCode(*Category, Value)));
+			TSharedPtr<FECResultCodeTreeNode> Entry = MakeShareable(new FECResultCodeTreeNode(FECResult(*Category, Value)));
 			CategoryNode->AddChild(Entry);
 			ResultCodeNodes.Emplace(Entry);
 		}
@@ -549,33 +549,33 @@ bool SECResultCodeTreeWidget::IsResultCodeNode(TSharedPtr<FECResultCodeTreeNode>
 	return Node->GetMode() == EECResultCodeTreeNodeType::ResultCode;
 }
 
-void SECWidget_ResultCode::Construct(const FArguments& InArgs)
+void SECWidget_Result::Construct(const FArguments& InArgs)
 {
 	FilterString = InArgs._FilterString;
-	SelectedResultCode = InArgs._DefaultValue;
-	PostResultCodeChanged = InArgs._PostResultCodeChanged;
+	SelectedResult = InArgs._DefaultValue;
+	PostResultChanged = InArgs._PostResultCodeChanged;
 
 	ChildSlot
 		[
 			SAssignNew(ComboButton, SComboButton)
-			.OnGetMenuContent(this, &SECWidget_ResultCode::GenerateDropdownWidget)
+			.OnGetMenuContent(this, &SECWidget_Result::GenerateDropdownWidget)
 			.ContentPadding(0.f)
-			.ToolTipText(this, &SECWidget_ResultCode::FormatToolTipText)
+			.ToolTipText(this, &SECWidget_Result::FormatToolTipText)
 			.ButtonContent()
 			[
 				SNew(STextBlock)
-				.Text(this, &SECWidget_ResultCode::GetSelectedValueTitle)
+				.Text(this, &SECWidget_Result::GetSelectedValueTitle)
 				.Font(IDetailLayoutBuilder::GetDetailFont())
 			]
 		];
 }
 
-void SECWidget_ResultCode::SetSelectedResultCode(const FECResultCode& ResultCode)
+void SECWidget_Result::SetSelectedResultCode(const FECResult& Result)
 {
-	SelectedResultCode = ResultCode;
+	SelectedResult = Result;
 }
 
-TSharedRef<SWidget> SECWidget_ResultCode::GenerateDropdownWidget()
+TSharedRef<SWidget> SECWidget_Result::GenerateDropdownWidget()
 {
 	// Tree Widget
 	return SNew(SBox)
@@ -587,33 +587,33 @@ TSharedRef<SWidget> SECWidget_ResultCode::GenerateDropdownWidget()
 			.MaxHeight(500)
 			[
 				SNew(SECResultCodeTreeWidget)
-				.PostResultCodeSelected(this, &SECWidget_ResultCode::BroadcastResultCodeChanged)
+				.PostResultCodeSelected(this, &SECWidget_Result::BroadcastResultCodeChanged)
 				.FilterString(FilterString)
-				.DefaultSelection(SelectedResultCode)
+				.DefaultSelection(SelectedResult)
 				.bAutoFocus(true)
 			]
 		];
 }
 
-FText SECWidget_ResultCode::FormatToolTipText() const
+FText SECWidget_Result::FormatToolTipText() const
 {
-	return FormatResultCodeTooltip(SelectedResultCode);
+	return FormatResultCodeTooltip(SelectedResult);
 }
 
-FText SECWidget_ResultCode::GetSelectedValueCategoryAndTitle() const
+FText SECWidget_Result::GetSelectedValueCategoryAndTitle() const
 {
-	return GetResultCodeCategoryAndTitle(SelectedResultCode);
+	return GetResultCodeCategoryAndTitle(SelectedResult);
 }
 
-FText SECWidget_ResultCode::GetSelectedValueTitle() const
+FText SECWidget_Result::GetSelectedValueTitle() const
 {
-	return SelectedResultCode.GetTitle();
+	return SelectedResult.GetTitle();
 }
 
-void SECWidget_ResultCode::BroadcastResultCodeChanged(FECResultCode NewResultCode)
+void SECWidget_Result::BroadcastResultCodeChanged(FECResult NewResult)
 {
-	PostResultCodeChanged.ExecuteIfBound(NewResultCode);
-	SelectedResultCode = NewResultCode;
+	PostResultChanged.ExecuteIfBound(NewResult);
+	SelectedResult = NewResult;
 	ComboButton->SetIsOpen(false);
 }
 
