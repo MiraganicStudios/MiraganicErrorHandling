@@ -20,12 +20,12 @@ void FECCustomization_Result::CustomizeHeader(TSharedRef<IPropertyHandle> Proper
 {
 	StructProperty = PropertyHandle;
 	CategoryProperty = PropertyHandle->GetChildHandle(FECResult::GetPropertyName_Category());
-	CodeProperty = PropertyHandle->GetChildHandle(FECResult::GetPropertyName_Code());
+	CodeProperty = PropertyHandle->GetChildHandle(FECResult::GetPropertyName_Value());
 
 	// E.g., if the property receives a paste, we must sync the dropdown widget.
-	FSimpleDelegate OnErrorCodeChanged = FSimpleDelegate::CreateSP(this,
-		&FECCustomization_Result::SyncErrorCodeWidgetToProperty);
-	PropertyHandle->SetOnPropertyValueChanged(OnErrorCodeChanged);
+	FSimpleDelegate OnResultChanged = FSimpleDelegate::CreateSP(this,
+		&FECCustomization_Result::SyncResultWidgetToProperty);
+	PropertyHandle->SetOnPropertyValueChanged(OnResultChanged);
 
 	FECResult DefaultValue;
 	UObject* CategoryObj = nullptr;
@@ -50,8 +50,8 @@ void FECCustomization_Result::CustomizeHeader(TSharedRef<IPropertyHandle> Proper
 			.HAlign(HAlign_Fill)
 			.Padding(0.f, 2.f, 2.f, 2.f)
 			[
-				SAssignNew(ErrorCodeWidget, SECWidget_Result)
-				.PostResultCodeChanged(this, &FECCustomization_Result::UpdateErrorCodeProperties)
+				SAssignNew(ResultWidget, SECWidget_Result)
+				.PostResultChanged(this, &FECCustomization_Result::UpdateResultProperties)
 				.DefaultValue(DefaultValue)
 			]
 		];
@@ -65,7 +65,7 @@ void FECCustomization_Result::CustomizeChildren(TSharedRef<IPropertyHandle> Prop
 	
 }
 
-void FECCustomization_Result::UpdateErrorCodeProperties(FECResult NewErrorCode)
+void FECCustomization_Result::UpdateResultProperties(FECResult NewResult)
 {
 	if (!StructProperty.IsValid() || !StructProperty->GetProperty())
 	{
@@ -75,14 +75,14 @@ void FECCustomization_Result::UpdateErrorCodeProperties(FECResult NewErrorCode)
 
 	TArray<void*> RawData;
 	StructProperty->AccessRawData(RawData);
-	FECResult* PreviousErrorCode = static_cast<FECResult*>(RawData[0]);
+	FECResult* PreviousResult = static_cast<FECResult*>(RawData[0]);
 
 	FString TextValue;
-	FECResult::StaticStruct()->ExportText(TextValue, &NewErrorCode, PreviousErrorCode, nullptr, PPF_None, nullptr);
+	FECResult::StaticStruct()->ExportText(TextValue, &NewResult, PreviousResult, nullptr, PPF_None, nullptr);
 	ensure(StructProperty->SetValueFromFormattedString(TextValue) == FPropertyAccess::Success);
 }
 
-void FECCustomization_Result::SyncErrorCodeWidgetToProperty()
+void FECCustomization_Result::SyncResultWidgetToProperty()
 {
 	if (StructProperty.IsValid() && StructProperty->GetProperty())
 	{
@@ -90,10 +90,10 @@ void FECCustomization_Result::SyncErrorCodeWidgetToProperty()
 		StructProperty->AccessRawData(RawStructData);
 		if (RawStructData.Num() > 0)
 		{
-			FECResult* ErrorCodePtr = static_cast<FECResult*>(RawStructData[0]);
-			if (ErrorCodePtr && ErrorCodeWidget)
+			FECResult* ResultPtr = static_cast<FECResult*>(RawStructData[0]);
+			if (ResultPtr && ResultWidget)
 			{
-				ErrorCodeWidget->SetSelectedResultCode(*ErrorCodePtr);
+				ResultWidget->SetSelectedResult(*ResultPtr);
 			}
 		}
 	}

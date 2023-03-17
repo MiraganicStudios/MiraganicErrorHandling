@@ -19,7 +19,7 @@ public:
 	FECResult();
 
 	// Construct an error from a category and a code. Prefer using the enum conversion constructor if possible.
-	FECResult(const UEnum& InCategory, int64 InCode);
+	FECResult(const UEnum& InCategory, int64 InValue);
 
 	/**
 	 * Construct an result code using an error enum.
@@ -27,9 +27,27 @@ public:
 	 * Note that this will work for all UENUMs, even if they don't have the metadata 'ErrorCategory'.
 	 */
 	template<typename T, typename = typename TEnableIf<TIsEnumClass<T>::Value || TIsEnum<T>::Value>::Type>
-	FECResult(T InCode)
-		: FECResult(*StaticEnum<T>(), static_cast<int64>(InCode))
-	{}
+	FECResult(T InEnum)
+		: Category(StaticEnum<T>())
+		, Value(static_cast<int64>(InEnum))
+	{
+		// Set to 'Success' if the code is -1. This allows easy implicit conversion from functions returning
+		// enums as errors to FECResult.
+		// E.g.,:
+		// 
+		// enum class EMyError : int64
+		// {
+		//     Success = -1,
+		//     ErrorA
+		// }
+		// EMyError MyFunction();
+		// FECResult MyWrapperFunction() { return MyFunction(); } // Can implicitly convert; EMyError::Success
+		// converts to FECResult::Success
+		if (Value == -1)
+		{
+			Category = nullptr;
+		}
+	}
 
 	// Check if this is a success.
 	bool IsSuccess() const;
@@ -59,11 +77,11 @@ public:
 	static FECResult Success();
 
 	const UEnum* GetCategory() const;
-	int64 GetCode() const { return Code; }
+	int64 GetCode() const { return Value; }
 
 	FORCEINLINE bool operator==(const FECResult& Other) const
 	{
-		return Category == Other.Category && Code == Other.Code;
+		return Category == Other.Category && Value == Other.Value;
 	}
 	FORCEINLINE bool operator!=(const FECResult& Other) const
 	{
@@ -71,19 +89,19 @@ public:
 	}
 	FORCEINLINE friend uint32 GetTypeHash(const FECResult& Elem)
 	{
-		return HashCombineFast(GetTypeHash(Elem.Category), GetTypeHash(Elem.Code));
+		return HashCombineFast(GetTypeHash(Elem.Category), GetTypeHash(Elem.Value));
 	}
 
 	static FName GetPropertyName_Category();
-	static FName GetPropertyName_Code();
+	static FName GetPropertyName_Value();
 
-	// Construct a result code using a category and code. This can return an invalid result code.
-	static FECResult ConstructRaw(const UEnum* InCategory, int64 InCode);
+	// Construct a result code using a category and value. This can return an invalid result.
+	static FECResult ConstructRaw(const UEnum* InCategory, int64 InValue);
 
 protected:
 	
 	// Construct a result code from an enum
-	FECResult(const UEnum* InCategory, int64 InCode);
+	FECResult(const UEnum* InCategory, int64 InValue);
 
 	// Get an enum's display name if building with editor, else use its authored name.
 	static FText GetEnumDisplayName(const UEnum& Enum);
@@ -94,7 +112,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Error")
 	TObjectPtr<const UEnum> Category;
 
-	// The code for the result.
+	// The value for the result.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Error")
-	int64 Code;
+	int64 Value;
 };

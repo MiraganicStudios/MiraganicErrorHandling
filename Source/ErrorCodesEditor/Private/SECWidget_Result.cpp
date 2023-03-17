@@ -11,73 +11,73 @@
 #include "Widgets/Input/SSearchBox.h"
 #include "Widgets/Layout/SSeparator.h"
 
-#define LOCTEXT_NAMESPACE "ErrorCodesEditor_ResultCodeWidget"
+#define LOCTEXT_NAMESPACE "ErrorCodesEditor_ResultWidget"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
-FText GetResultCodeCategoryAndTitle(const FECResult& ResultCode)
+FText GetResultCategoryAndTitle(const FECResult& Result)
 {
-	if (ResultCode.IsSuccess())
+	if (Result.IsSuccess())
 	{
-		return ResultCode.GetTitle();
+		return Result.GetTitle();
 	}
-	else if (!ResultCode.IsValid())
+	else if (!Result.IsValid())
 	{
-		return LOCTEXT("DisplayName_InvalidResultCode", "[INVALID]");
+		return LOCTEXT("DisplayName_InvalidResult", "[INVALID]");
 	}
 	else
 	{
 		return FText::Format(LOCTEXT("DisplayNameFmt", "{0}: {1}"),
-		{ResultCode.GetCategoryName(), ResultCode.GetTitle()});
+		{Result.GetCategoryName(), Result.GetTitle()});
 	}
 }
 
-FText FormatResultCodeTooltip(const FECResult& ResultCode)
+FText FormatResultTooltip(const FECResult& Result)
 {
-	if (ResultCode.HasValidError())
+	if (Result.HasValidError())
 	{
 		return FText::Format(LOCTEXT("TooltipFmt", "{0}: {1}{2}{3}"),
-			{ResultCode.GetCategoryName(), ResultCode.GetTitle(), FText::FromString(LINE_TERMINATOR),
-			ResultCode.GetMessage()});
+			{Result.GetCategoryName(), Result.GetTitle(), FText::FromString(LINE_TERMINATOR),
+			Result.GetMessage()});
 	}
 	else
 	{
-		return ResultCode.GetFormattedMessage();
+		return Result.GetFormattedMessage();
 	}
 }
 
-enum class EECResultCodeTreeNodeType
+enum class EECResultTreeNodeType
 {
 	Category,
-	ResultCode
+	Result
 };
 
-struct FECResultCodeTreeNode
+struct FECResultTreeNode
 {
-	FECResultCodeTreeNode(const FECResult& InCode)
-		: ResultCode(InCode)
+	FECResultTreeNode(const FECResult& InCode)
+		: Result(InCode)
 		, Category(nullptr)
-		, Mode(EECResultCodeTreeNodeType::ResultCode)
+		, Mode(EECResultTreeNodeType::Result)
 	{}
 
-	FECResultCodeTreeNode(const UEnum& InCategory)
+	FECResultTreeNode(const UEnum& InCategory)
 		: Category(&InCategory)
-		, Mode(EECResultCodeTreeNodeType::Category)
+		, Mode(EECResultTreeNodeType::Category)
 	{}
 
-	void AddChild(const TSharedPtr<FECResultCodeTreeNode>& InChild);
+	void AddChild(const TSharedPtr<FECResultTreeNode>& InChild);
 	
 	void SortChildren();
 
-	void SetFilteredChildren(TArrayView<const TSharedPtr<FECResultCodeTreeNode>> InFilteredChildren);
+	void SetFilteredChildren(TArrayView<const TSharedPtr<FECResultTreeNode>> InFilteredChildren);
 	
-	// Get this node's error code, if mode == ResultCode
-	TOptional<FECResult> GetResultCode() const;
+	// Get this node's error code, if mode == Result
+	TOptional<FECResult> GetResult() const;
 
 	// Get this node's category, if mode == Category
 	const UEnum* GetCategory() const;
 
-	EECResultCodeTreeNodeType GetMode() const { return Mode; }
+	EECResultTreeNodeType GetMode() const { return Mode; }
 
 	FString GetSearchTerms() const;
 	FString GetSortString() const;
@@ -85,53 +85,53 @@ struct FECResultCodeTreeNode
 	FText GetDisplayName() const;
 	FText GetToolTip() const;
 
-	const TArray<TSharedPtr<FECResultCodeTreeNode>>& GetChildren() const { return AllChildren; }
-	const TArray<TSharedPtr<FECResultCodeTreeNode>>& GetFilteredChildren() const { return FilteredChildren; }
+	const TArray<TSharedPtr<FECResultTreeNode>>& GetChildren() const { return AllChildren; }
+	const TArray<TSharedPtr<FECResultTreeNode>>& GetFilteredChildren() const { return FilteredChildren; }
 
 private:
 	
-	// Code itself, if Mode == ResultCode
-	FECResult ResultCode;
+	// Code itself, if Mode == Result
+	FECResult Result;
 	
 	// Category, if Mode == Category
 	const UEnum* Category;
 
 	// Children, if Mode == Category
-	TArray<TSharedPtr<FECResultCodeTreeNode>> AllChildren;
+	TArray<TSharedPtr<FECResultTreeNode>> AllChildren;
 
 	// Filtered Children, if Mode == Category
-	TArray<TSharedPtr<FECResultCodeTreeNode>> FilteredChildren;
+	TArray<TSharedPtr<FECResultTreeNode>> FilteredChildren;
 
-	EECResultCodeTreeNodeType Mode;
+	EECResultTreeNodeType Mode;
 };
 
-void FECResultCodeTreeNode::AddChild(const TSharedPtr<FECResultCodeTreeNode>& InChild)
+void FECResultTreeNode::AddChild(const TSharedPtr<FECResultTreeNode>& InChild)
 {
-	check(Mode == EECResultCodeTreeNodeType::Category);
+	check(Mode == EECResultTreeNodeType::Category);
 	AllChildren.Emplace(InChild);
 }
 
-void FECResultCodeTreeNode::SortChildren()
+void FECResultTreeNode::SortChildren()
 {
-	AllChildren.Sort([this](const TSharedPtr<FECResultCodeTreeNode>& A, const TSharedPtr<FECResultCodeTreeNode>& B)
+	AllChildren.Sort([this](const TSharedPtr<FECResultTreeNode>& A, const TSharedPtr<FECResultTreeNode>& B)
 	{
 		return A->GetSortString().Compare(B->GetSortString()) < 0;
 	});
 }
 
-TOptional<FECResult> FECResultCodeTreeNode::GetResultCode() const
+TOptional<FECResult> FECResultTreeNode::GetResult() const
 {
-	if (Mode != EECResultCodeTreeNodeType::ResultCode)
+	if (Mode != EECResultTreeNodeType::Result)
 	{
 		return {};
 	}
 
-	return ResultCode;
+	return Result;
 }
 
-const UEnum* FECResultCodeTreeNode::GetCategory() const
+const UEnum* FECResultTreeNode::GetCategory() const
 {
-	if (Mode != EECResultCodeTreeNodeType::Category)
+	if (Mode != EECResultTreeNodeType::Category)
 	{
 		return {};
 	}
@@ -139,11 +139,11 @@ const UEnum* FECResultCodeTreeNode::GetCategory() const
 	return Category;
 }
 
-FString FECResultCodeTreeNode::GetSearchTerms() const
+FString FECResultTreeNode::GetSearchTerms() const
 {
-	if (Mode == EECResultCodeTreeNodeType::ResultCode)
+	if (Mode == EECResultTreeNodeType::Result)
 	{
-		return ResultCode.ToString();
+		return Result.ToString();
 	}
 	else
 	{
@@ -151,11 +151,11 @@ FString FECResultCodeTreeNode::GetSearchTerms() const
 	}
 }
 
-FString FECResultCodeTreeNode::GetSortString() const
+FString FECResultTreeNode::GetSortString() const
 {
-	if (Mode == EECResultCodeTreeNodeType::ResultCode)
+	if (Mode == EECResultTreeNodeType::Result)
 	{
-		return ResultCode.ToShortString();
+		return Result.ToShortString();
 	}
 	else
 	{
@@ -163,11 +163,11 @@ FString FECResultCodeTreeNode::GetSortString() const
 	}
 }
 
-FText FECResultCodeTreeNode::GetDisplayName() const
+FText FECResultTreeNode::GetDisplayName() const
 {
-	if (Mode == EECResultCodeTreeNodeType::ResultCode)
+	if (Mode == EECResultTreeNodeType::Result)
 	{
-		return ResultCode.GetTitle();
+		return Result.GetTitle();
 	}
 	else
 	{
@@ -175,11 +175,11 @@ FText FECResultCodeTreeNode::GetDisplayName() const
 	}
 }
 
-FText FECResultCodeTreeNode::GetToolTip() const
+FText FECResultTreeNode::GetToolTip() const
 {
-	if (Mode == EECResultCodeTreeNodeType::ResultCode)
+	if (Mode == EECResultTreeNodeType::Result)
 	{
-		return FormatResultCodeTooltip(ResultCode);
+		return FormatResultTooltip(Result);
 	}
 	else
 	{
@@ -187,7 +187,7 @@ FText FECResultCodeTreeNode::GetToolTip() const
 	}
 }
 
-void FECResultCodeTreeNode::SetFilteredChildren(TArrayView<const TSharedPtr<FECResultCodeTreeNode>> InFilteredChildren)
+void FECResultTreeNode::SetFilteredChildren(TArrayView<const TSharedPtr<FECResultTreeNode>> InFilteredChildren)
 {
 	FilteredChildren = InFilteredChildren;
 }
@@ -196,10 +196,10 @@ void FECResultCodeTreeNode::SetFilteredChildren(TArrayView<const TSharedPtr<FECR
 //------------------------------------------------------------------------------------------------------------
 // TREE ENTRY
 
-class SECResultCodeTreeEntry : public SComboRow<TSharedPtr<FECResultCodeTreeNode>>
+class SECResultTreeEntry : public SComboRow<TSharedPtr<FECResultTreeNode>>
 {
 public:
-	SLATE_BEGIN_ARGS(SECResultCodeTreeEntry)
+	SLATE_BEGIN_ARGS(SECResultTreeEntry)
 		: _HighlightText()
 		, _SelectedColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f))
 	{}
@@ -209,7 +209,7 @@ public:
 	SLATE_ARGUMENT(FSlateColor, SelectedColor)
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView, TSharedRef<FECResultCodeTreeNode> InNode)
+	void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView, TSharedRef<FECResultTreeNode> InNode)
 	{
 		Node = InNode;
 		SelectedColor = InArgs._SelectedColor;
@@ -231,19 +231,19 @@ public:
 					.Text(Node->GetDisplayName())
 					.ToolTipText(Node->GetToolTip())
 					.HighlightText(InArgs._HighlightText)
-					.ColorAndOpacity(this, &SECResultCodeTreeEntry::GetTextColor)
+					.ColorAndOpacity(this, &SECResultTreeEntry::GetTextColor)
 					.IsEnabled(true)
 				]
 			];
 
-		STableRow<TSharedPtr<FECResultCodeTreeNode>>::ConstructInternal(
+		STableRow<TSharedPtr<FECResultTreeNode>>::ConstructInternal(
 			STableRow::FArguments().ShowSelection(true),
 			InOwnerTableView);
 	}
 
 	FSlateColor GetTextColor() const
 	{
-		const TSharedPtr< ITypedTableView< TSharedPtr<FECResultCodeTreeNode> > > OwnerWidget = OwnerTablePtr.Pin();
+		const TSharedPtr< ITypedTableView< TSharedPtr<FECResultTreeNode> > > OwnerWidget = OwnerTablePtr.Pin();
 		const bool bIsSelected = OwnerWidget->Private_IsItemSelected(Node);
 
 		if (bIsSelected)
@@ -255,24 +255,24 @@ public:
 
 private:
 	FSlateColor SelectedColor;
-	TSharedPtr<FECResultCodeTreeNode> Node;
+	TSharedPtr<FECResultTreeNode> Node;
 };
 
 
 //------------------------------------------------------------------------------------------------------------
 // TREE WIDGET
 
-class SECResultCodeTreeWidget : public SCompoundWidget
+class SECResultTreeWidget : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS(SECResultCodeTreeWidget)
+	SLATE_BEGIN_ARGS(SECResultTreeWidget)
 		: _bAutoFocus(true)
 	{
 	}
 
 	SLATE_ARGUMENT(FString, FilterString)
 	SLATE_ARGUMENT(FECResult, DefaultSelection)
-	SLATE_EVENT(FECResultChangedDelegate, PostResultCodeSelected)
+	SLATE_EVENT(FECResultChangedDelegate, PostResultSelected)
 	SLATE_ARGUMENT(bool, bAutoFocus)
 	SLATE_END_ARGS()
 
@@ -280,7 +280,7 @@ public:
 
 	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
 
-	static void GetResultCodeSearchTerms(const FECResultCodeTreeNode& Node, TArray<FString>& OutSearchTerms)
+	static void GetResultSearchTerms(const FECResultTreeNode& Node, TArray<FString>& OutSearchTerms)
 	{
 		OutSearchTerms.Emplace(Node.GetSearchTerms());
 	}
@@ -288,59 +288,59 @@ public:
 	TSharedPtr<SSearchBox> GetSearchBox() const { return SearchBox; }
 
 private:
-	void UpdateResultCodeOptions();
+	void UpdateResultOptions();
 	void FilterRootNodes();
 
 	void UpdateFilterText(const FText& InFilterText);
 
-	TSharedRef<ITableRow> GenerateTreeRowWidget(TSharedPtr<FECResultCodeTreeNode> Data,
+	TSharedRef<ITableRow> GenerateTreeRowWidget(TSharedPtr<FECResultTreeNode> Data,
 		const TSharedRef<STableViewBase>& OwnerTable
 		);
 
-	void GetChildrenForTreeRow(TSharedPtr<FECResultCodeTreeNode> Node, TArray<TSharedPtr<FECResultCodeTreeNode>>& OutChildren);
+	void GetChildrenForTreeRow(TSharedPtr<FECResultTreeNode> Node, TArray<TSharedPtr<FECResultTreeNode>>& OutChildren);
 
-	void BroadcastResultCodeSelected(TSharedPtr<FECResultCodeTreeNode> Item, ESelectInfo::Type SelectInfo);
+	void BroadcastResultSelected(TSharedPtr<FECResultTreeNode> Item, ESelectInfo::Type SelectInfo);
 
-	void UpdateExpansionForBranch(TSharedPtr<FECResultCodeTreeNode> Root, bool bExpanded);
+	void UpdateExpansionForBranch(TSharedPtr<FECResultTreeNode> Root, bool bExpanded);
 
 	void ExpandFilteredRootNodes();
 
-	bool IsResultCodeNode(TSharedPtr<FECResultCodeTreeNode> Node) const;
+	bool IsResultNode(TSharedPtr<FECResultTreeNode> Node) const;
 	
-	using FECResultCodeTextFilter = TTextFilter<const FECResultCodeTreeNode&>;
+	using FECResultTextFilter = TTextFilter<const FECResultTreeNode&>;
 	
 	TSharedPtr<SSearchBox> SearchBox;
 
-	TSharedPtr<STreeView<TSharedPtr<FECResultCodeTreeNode>>> ResultCodeTreeView;
+	TSharedPtr<STreeView<TSharedPtr<FECResultTreeNode>>> ResultTreeView;
 
 	// All possible error code nodes
-	TArray<TSharedPtr<FECResultCodeTreeNode>> ResultCodeNodes;
+	TArray<TSharedPtr<FECResultTreeNode>> ResultNodes;
 	// All possible root nodes ('Success' and Categories)
-	TArray<TSharedPtr<FECResultCodeTreeNode>> RootNodes;
+	TArray<TSharedPtr<FECResultTreeNode>> RootNodes;
 	// All root nodes that are currently visible (some are hidden due to search filter)
-	TArray<TSharedPtr<FECResultCodeTreeNode>> FilteredRootNodes;
+	TArray<TSharedPtr<FECResultTreeNode>> FilteredRootNodes;
 
-	TSharedPtr<FECResultCodeTextFilter> SearchFilter;
+	TSharedPtr<FECResultTextFilter> SearchFilter;
 	
-	FECResult SelectedResultCode;
+	FECResult SelectedResult;
 	
 	FString FilterString;
 	
-	FECResultChangedDelegate PostResultCodeSelected;
+	FECResultChangedDelegate PostResultSelected;
 
 	bool bAwaitingFocus = false;
 };
 
-void SECResultCodeTreeWidget::Construct(const FArguments& InArgs)
+void SECResultTreeWidget::Construct(const FArguments& InArgs)
 {
 	FilterString = InArgs._FilterString;
-	SelectedResultCode = InArgs._DefaultSelection;
-	PostResultCodeSelected = InArgs._PostResultCodeSelected;
+	SelectedResult = InArgs._DefaultSelection;
+	PostResultSelected = InArgs._PostResultSelected;
 	bAwaitingFocus = InArgs._bAutoFocus;
-	SearchFilter = MakeShareable(new FECResultCodeTextFilter(
-		FECResultCodeTextFilter::FItemToStringArray::CreateStatic(&SECResultCodeTreeWidget::GetResultCodeSearchTerms)));
+	SearchFilter = MakeShareable(new FECResultTextFilter(
+		FECResultTextFilter::FItemToStringArray::CreateStatic(&SECResultTreeWidget::GetResultSearchTerms)));
 
-	UpdateResultCodeOptions();
+	UpdateResultOptions();
 	FilterRootNodes();
 
 	ChildSlot
@@ -350,8 +350,8 @@ void SECResultCodeTreeWidget::Construct(const FArguments& InArgs)
 			.AutoHeight()
 			[
 				SAssignNew(SearchBox, SSearchBox)
-				.HintText(LOCTEXT("ResultCodeList_SearchBoxHint", "Search Error Codes"))
-				.OnTextChanged(this, &SECResultCodeTreeWidget::UpdateFilterText)
+				.HintText(LOCTEXT("ResultList_SearchBoxHint", "Search Error Codes"))
+				.OnTextChanged(this, &SECResultTreeWidget::UpdateFilterText)
 				.DelayChangeNotificationsWhileTyping(true)
 			]
 			+SVerticalBox::Slot()
@@ -363,31 +363,31 @@ void SECResultCodeTreeWidget::Construct(const FArguments& InArgs)
 			+SVerticalBox::Slot()
 			.FillHeight(1.f)
 			[
-				SAssignNew(ResultCodeTreeView, STreeView<TSharedPtr<FECResultCodeTreeNode>>)
+				SAssignNew(ResultTreeView, STreeView<TSharedPtr<FECResultTreeNode>>)
 				.Visibility(EVisibility::Visible)
 				.SelectionMode(ESelectionMode::Single)
 				.TreeItemsSource(&FilteredRootNodes)
-				.OnIsSelectableOrNavigable(this, &SECResultCodeTreeWidget::IsResultCodeNode)
-				.OnGenerateRow(this, &SECResultCodeTreeWidget::GenerateTreeRowWidget)
-				.OnGetChildren(this, &SECResultCodeTreeWidget::GetChildrenForTreeRow)
-				.OnSelectionChanged(this, &SECResultCodeTreeWidget::BroadcastResultCodeSelected)
-				.OnSetExpansionRecursive(this, &SECResultCodeTreeWidget::UpdateExpansionForBranch)
+				.OnIsSelectableOrNavigable(this, &SECResultTreeWidget::IsResultNode)
+				.OnGenerateRow(this, &SECResultTreeWidget::GenerateTreeRowWidget)
+				.OnGetChildren(this, &SECResultTreeWidget::GetChildrenForTreeRow)
+				.OnSelectionChanged(this, &SECResultTreeWidget::BroadcastResultSelected)
+				.OnSetExpansionRecursive(this, &SECResultTreeWidget::UpdateExpansionForBranch)
 			]
 		];
 
-	TSharedPtr<FECResultCodeTreeNode>* SelectedEntryPtr = ResultCodeNodes.FindByPredicate([this](const TSharedPtr<FECResultCodeTreeNode>& Entry)
+	TSharedPtr<FECResultTreeNode>* SelectedEntryPtr = ResultNodes.FindByPredicate([this](const TSharedPtr<FECResultTreeNode>& Entry)
 	{
-		return Entry->GetResultCode() == SelectedResultCode;
+		return Entry->GetResult() == SelectedResult;
 	});
 	if (SelectedEntryPtr)
 	{
-		ResultCodeTreeView->SetSelection(*SelectedEntryPtr, ESelectInfo::Direct);
+		ResultTreeView->SetSelection(*SelectedEntryPtr, ESelectInfo::Direct);
 	}
 	
 	ExpandFilteredRootNodes();
 }
 
-void SECResultCodeTreeWidget::Tick(const FGeometry& AllottedGeometry,
+void SECResultTreeWidget::Tick(const FGeometry& AllottedGeometry,
 	const double InCurrentTime,
 	const float InDeltaTime
 	)
@@ -399,10 +399,10 @@ void SECResultCodeTreeWidget::Tick(const FGeometry& AllottedGeometry,
 	}
 }
 
-void SECResultCodeTreeWidget::UpdateResultCodeOptions()
+void SECResultTreeWidget::UpdateResultOptions()
 {
-	ResultCodeNodes.Reset();
-	TSharedPtr<FECResultCodeTreeNode> SuccessCode = MakeShareable(new FECResultCodeTreeNode(FECResult::Success()));
+	ResultNodes.Reset();
+	TSharedPtr<FECResultTreeNode> SuccessCode = MakeShareable(new FECResultTreeNode(FECResult::Success()));
 	RootNodes.Emplace(SuccessCode);
 
 	TArray<const UEnum*> ErrorCategories;
@@ -412,7 +412,7 @@ void SECResultCodeTreeWidget::UpdateResultCodeOptions()
 	{
 		check(IsValid(Category));
 
-		TSharedPtr<FECResultCodeTreeNode> CategoryNode = MakeShareable(new FECResultCodeTreeNode(*Category));
+		TSharedPtr<FECResultTreeNode> CategoryNode = MakeShareable(new FECResultTreeNode(*Category));
 		RootNodes.Emplace(CategoryNode);
 
 		// Skip the last entry, as it's always reserved for 'MAX'
@@ -420,6 +420,7 @@ void SECResultCodeTreeWidget::UpdateResultCodeOptions()
 		for (int32 Idx = 0; Idx < NumValues; ++Idx)
 		{
 			int64 Value = Category->GetValueByIndex(Idx);
+			// Skip the value which is reserved for 'Success'.
 			if (Value == FECResult::Success().GetCode())
 			{
 				continue;
@@ -430,9 +431,9 @@ void SECResultCodeTreeWidget::UpdateResultCodeOptions()
 				continue;
 			}
 
-			TSharedPtr<FECResultCodeTreeNode> Entry = MakeShareable(new FECResultCodeTreeNode(FECResult(*Category, Value)));
+			TSharedPtr<FECResultTreeNode> Entry = MakeShareable(new FECResultTreeNode(FECResult(*Category, Value)));
 			CategoryNode->AddChild(Entry);
-			ResultCodeNodes.Emplace(Entry);
+			ResultNodes.Emplace(Entry);
 		}
 
 		CategoryNode->SortChildren();
@@ -441,20 +442,20 @@ void SECResultCodeTreeWidget::UpdateResultCodeOptions()
 	// Sort all category nodes; always leave 'Success' at the top
 	if (RootNodes.Num() > 1)
 	{
-		TArrayView<TSharedPtr<FECResultCodeTreeNode>> SortableRootNodes(RootNodes.GetData() + 1, RootNodes.Num() - 1);
-		SortableRootNodes.Sort([](const TSharedPtr<FECResultCodeTreeNode>& A, const TSharedPtr<FECResultCodeTreeNode>& B)
+		TArrayView<TSharedPtr<FECResultTreeNode>> SortableRootNodes(RootNodes.GetData() + 1, RootNodes.Num() - 1);
+		SortableRootNodes.Sort([](const TSharedPtr<FECResultTreeNode>& A, const TSharedPtr<FECResultTreeNode>& B)
 		{
 			return A->GetSortString().Compare(B->GetSortString()) < 0;
 		});
 	}
 }
 
-void SECResultCodeTreeWidget::FilterRootNodes()
+void SECResultTreeWidget::FilterRootNodes()
 {
 	FilteredRootNodes.Reset();
 	check(RootNodes.Num() >= 1);
 	//First node is always the 'Success' node
-	const TSharedPtr<FECResultCodeTreeNode>& SuccessNode = RootNodes[0];
+	const TSharedPtr<FECResultTreeNode>& SuccessNode = RootNodes[0];
 	if (!SearchFilter.IsValid() || SearchFilter->PassesFilter(*SuccessNode))
 	{
 		FilteredRootNodes.Emplace(SuccessNode);
@@ -463,9 +464,9 @@ void SECResultCodeTreeWidget::FilterRootNodes()
 	// The rest of the nodes are categories
 	for (int32 Idx = 1; Idx < RootNodes.Num(); ++Idx)
 	{
-		const TSharedPtr<FECResultCodeTreeNode>& CategoryRootNode = RootNodes[Idx];
+		const TSharedPtr<FECResultTreeNode>& CategoryRootNode = RootNodes[Idx];
 		CategoryRootNode->SetFilteredChildren(CategoryRootNode->GetChildren().FilterByPredicate(
-			[this](const TSharedPtr<FECResultCodeTreeNode>& Node)
+			[this](const TSharedPtr<FECResultTreeNode>& Node)
 			{
 				if (SearchFilter.IsValid() && !SearchFilter->PassesFilter(*Node))
 				{
@@ -482,32 +483,32 @@ void SECResultCodeTreeWidget::FilterRootNodes()
 	}
 }
 
-void SECResultCodeTreeWidget::UpdateFilterText(const FText& InFilterText)
+void SECResultTreeWidget::UpdateFilterText(const FText& InFilterText)
 {
 	SearchFilter->SetRawFilterText(InFilterText);
 	SearchBox->SetError(SearchFilter->GetFilterErrorText());
 
 	FilterRootNodes();
-	ResultCodeTreeView->RequestTreeRefresh();
+	ResultTreeView->RequestTreeRefresh();
 	ExpandFilteredRootNodes();
 }
 
-TSharedRef<ITableRow> SECResultCodeTreeWidget::GenerateTreeRowWidget(TSharedPtr<FECResultCodeTreeNode> Data,
+TSharedRef<ITableRow> SECResultTreeWidget::GenerateTreeRowWidget(TSharedPtr<FECResultTreeNode> Data,
 	const TSharedRef<STableViewBase>& OwnerTable
 	)
 {
-	return SNew(SECResultCodeTreeEntry, OwnerTable, Data.ToSharedRef())
+	return SNew(SECResultTreeEntry, OwnerTable, Data.ToSharedRef())
 		.HighlightText(SearchBox.ToSharedRef(), &SSearchBox::GetSearchText);
 }
 
-void SECResultCodeTreeWidget::GetChildrenForTreeRow(TSharedPtr<FECResultCodeTreeNode> Node,
-	TArray<TSharedPtr<FECResultCodeTreeNode>>& OutChildren
+void SECResultTreeWidget::GetChildrenForTreeRow(TSharedPtr<FECResultTreeNode> Node,
+	TArray<TSharedPtr<FECResultTreeNode>>& OutChildren
 	)
 {
 	OutChildren = Node->GetFilteredChildren();
 }
 
-void SECResultCodeTreeWidget::BroadcastResultCodeSelected(TSharedPtr<FECResultCodeTreeNode> Item,
+void SECResultTreeWidget::BroadcastResultSelected(TSharedPtr<FECResultTreeNode> Item,
 	ESelectInfo::Type SelectInfo
 	)
 {
@@ -517,43 +518,43 @@ void SECResultCodeTreeWidget::BroadcastResultCodeSelected(TSharedPtr<FECResultCo
 	}
 
 	// If it was a category, we ignore the selection (categories are only for organization)
-	if (Item->GetMode() == EECResultCodeTreeNodeType::Category)
+	if (Item->GetMode() == EECResultTreeNodeType::Category)
 	{
 		return;
 	}
 
-	SelectedResultCode = *Item->GetResultCode();
-	PostResultCodeSelected.ExecuteIfBound(*Item->GetResultCode());
+	SelectedResult = *Item->GetResult();
+	PostResultSelected.ExecuteIfBound(*Item->GetResult());
 }
 
-void SECResultCodeTreeWidget::UpdateExpansionForBranch(TSharedPtr<FECResultCodeTreeNode> Root, bool bExpanded)
+void SECResultTreeWidget::UpdateExpansionForBranch(TSharedPtr<FECResultTreeNode> Root, bool bExpanded)
 {
-	ResultCodeTreeView->SetItemExpansion(Root, bExpanded);
+	ResultTreeView->SetItemExpansion(Root, bExpanded);
 
-	for (const TSharedPtr<FECResultCodeTreeNode>& Child : Root->GetChildren())
+	for (const TSharedPtr<FECResultTreeNode>& Child : Root->GetChildren())
 	{
 		UpdateExpansionForBranch(Child, bExpanded);
 	}
 }
 
-void SECResultCodeTreeWidget::ExpandFilteredRootNodes()
+void SECResultTreeWidget::ExpandFilteredRootNodes()
 {
-	for (const TSharedPtr<FECResultCodeTreeNode>& CategoryNode : FilteredRootNodes)
+	for (const TSharedPtr<FECResultTreeNode>& CategoryNode : FilteredRootNodes)
 	{
-		ResultCodeTreeView->SetItemExpansion(CategoryNode, true);
+		ResultTreeView->SetItemExpansion(CategoryNode, true);
 	}
 }
 
-bool SECResultCodeTreeWidget::IsResultCodeNode(TSharedPtr<FECResultCodeTreeNode> Node) const
+bool SECResultTreeWidget::IsResultNode(TSharedPtr<FECResultTreeNode> Node) const
 {
-	return Node->GetMode() == EECResultCodeTreeNodeType::ResultCode;
+	return Node->GetMode() == EECResultTreeNodeType::Result;
 }
 
 void SECWidget_Result::Construct(const FArguments& InArgs)
 {
 	FilterString = InArgs._FilterString;
 	SelectedResult = InArgs._DefaultValue;
-	PostResultChanged = InArgs._PostResultCodeChanged;
+	PostResultChanged = InArgs._PostResultChanged;
 
 	ChildSlot
 		[
@@ -570,7 +571,7 @@ void SECWidget_Result::Construct(const FArguments& InArgs)
 		];
 }
 
-void SECWidget_Result::SetSelectedResultCode(const FECResult& Result)
+void SECWidget_Result::SetSelectedResult(const FECResult& Result)
 {
 	SelectedResult = Result;
 }
@@ -586,8 +587,8 @@ TSharedRef<SWidget> SECWidget_Result::GenerateDropdownWidget()
 			.AutoHeight()
 			.MaxHeight(500)
 			[
-				SNew(SECResultCodeTreeWidget)
-				.PostResultCodeSelected(this, &SECWidget_Result::BroadcastResultCodeChanged)
+				SNew(SECResultTreeWidget)
+				.PostResultSelected(this, &SECWidget_Result::BroadcastResultChanged)
 				.FilterString(FilterString)
 				.DefaultSelection(SelectedResult)
 				.bAutoFocus(true)
@@ -597,12 +598,12 @@ TSharedRef<SWidget> SECWidget_Result::GenerateDropdownWidget()
 
 FText SECWidget_Result::FormatToolTipText() const
 {
-	return FormatResultCodeTooltip(SelectedResult);
+	return FormatResultTooltip(SelectedResult);
 }
 
 FText SECWidget_Result::GetSelectedValueCategoryAndTitle() const
 {
-	return GetResultCodeCategoryAndTitle(SelectedResult);
+	return GetResultCategoryAndTitle(SelectedResult);
 }
 
 FText SECWidget_Result::GetSelectedValueTitle() const
@@ -610,7 +611,7 @@ FText SECWidget_Result::GetSelectedValueTitle() const
 	return SelectedResult.GetTitle();
 }
 
-void SECWidget_Result::BroadcastResultCodeChanged(FECResult NewResult)
+void SECWidget_Result::BroadcastResultChanged(FECResult NewResult)
 {
 	PostResultChanged.ExecuteIfBound(NewResult);
 	SelectedResult = NewResult;

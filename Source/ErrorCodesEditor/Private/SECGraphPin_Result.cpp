@@ -31,7 +31,7 @@ TSharedRef<SWidget> SECGraphPin_Result::GetDefaultValueWidget()
 		.AutoHeight()
 		[
 			SNew(SECWidget_Result)
-			.PostResultCodeChanged(this, &SECGraphPin_Result::UpdatePinValue)
+			.PostResultChanged(this, &SECGraphPin_Result::UpdatePinValue)
 			.DefaultValue(DefaultErrorCode)
 			.Visibility(this, &SGraphPin::GetDefaultValueVisibility)
 			.IsEnabled(this, &SGraphPin::GetDefaultValueIsEditable)

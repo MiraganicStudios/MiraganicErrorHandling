@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ECLogging.h"
+#include "ECResult.h"
 
 /** Needed to force macro expansion on MSVC. */
 #define EC_EXPAND(X) X

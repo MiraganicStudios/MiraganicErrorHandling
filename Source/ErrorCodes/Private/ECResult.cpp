@@ -9,39 +9,30 @@
 
 FECResult::FECResult()
 	: Category(nullptr)
-	, Code(-1)
+	, Value(-1)
 {}
 
-FECResult::FECResult(const UEnum* InCategory, int64 InCode)
+FECResult::FECResult(const UEnum* InCategory, int64 InValue)
 	: Category(InCategory)
-	, Code(InCode)
+	, Value(InValue)
 {
 }
 
-FECResult::FECResult(const UEnum& InCategory, int64 InCode)
+FECResult::FECResult(const UEnum& InCategory, int64 InValue)
 	: Category(&InCategory)
-	, Code(InCode)
+	, Value(InValue)
 {
-	ensure(InCode != -1);
+	ensure(InValue != -1);
 }
 
 bool FECResult::IsSuccess() const
 {
-	return Code == -1 && !::IsValid(Category);
+	return Value == -1 && !::IsValid(Category);
 }
 
 bool FECResult::IsFailure() const
 {
 	return !IsSuccess();
-	// if (Code == -1 || !::IsValid(Category))
-	// {
-	// 	return false;
-	// }
-	//
-	// const int32 Idx = Category->GetIndexByValue(Code);
-	// // Subtract 1 to ignore the 'MAX' enum entry.
-	// const int32 MaxIdx = Category->NumEnums() - 1;
-	// return Idx >= 0 && Idx < MaxIdx;
 }
 
 bool FECResult::HasValidError() const
@@ -57,12 +48,12 @@ bool FECResult::IsValid() const
 
 TOptional<int32> FECResult::GetErrorIndex() const
 {
-	if (Code == -1 || !::IsValid(Category))
+	if (Value == -1 || !::IsValid(Category))
 	{
 		return {};
 	}
 
-	const int32 ErrorIdx = Category->GetIndexByValue(Code);
+	const int32 ErrorIdx = Category->GetIndexByValue(Value);
 	const int32 MaxIdx = Category->NumEnums() - 1;
 	if (ErrorIdx == -1 || ErrorIdx == MaxIdx)
 	{
@@ -74,7 +65,7 @@ TOptional<int32> FECResult::GetErrorIndex() const
 
 TOptional<int32> FECResult::GetMaxErrorIndex() const
 {
-	if (Code == -1 || !::IsValid(Category))
+	if (Value == -1 || !::IsValid(Category))
 	{
 		return {};
 	}
@@ -104,7 +95,7 @@ FText FECResult::GetFormattedMessage() const
 		if (!OptErrorIdx)
 		{
 			return FText::Format(LOCTEXT("ErrorCode_Msg_InvalidFmt", "Invalid error code: [{0}, {1}]"),
-			{FText::FromString(GetNameSafe(Category)), Code});
+			{FText::FromString(GetNameSafe(Category)), Value});
 		}
 		else
 		{
@@ -187,7 +178,7 @@ FString FECResult::ToString() const
 		if (!OptErrorIdx)
 		{
 			// Invalid error code
-			return FString::Format(TEXT("Invalid error code: [{0}, {1}]"), {*GetNameSafe(Category), Code});
+			return FString::Format(TEXT("Invalid error code: [{0}, {1}]"), {*GetNameSafe(Category), Value});
 		}
 		else
 		{
@@ -216,14 +207,14 @@ FName FECResult::GetPropertyName_Category()
 	return GET_MEMBER_NAME_CHECKED(FECResult, Category);
 }
 
-FName FECResult::GetPropertyName_Code()
+FName FECResult::GetPropertyName_Value()
 {
-	return GET_MEMBER_NAME_CHECKED(FECResult, Code);
+	return GET_MEMBER_NAME_CHECKED(FECResult, Value);
 }
 
-FECResult FECResult::ConstructRaw(const UEnum* InCategory, int64 InCode)
+FECResult FECResult::ConstructRaw(const UEnum* InCategory, int64 InValue)
 {
-	return FECResult(InCategory, InCode);
+	return FECResult(InCategory, InValue);
 }
 
 FText FECResult::GetEnumDisplayName(const UEnum& Enum)

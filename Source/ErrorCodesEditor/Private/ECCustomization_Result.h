@@ -22,12 +22,12 @@ public:
 		) override;
 
 private:
-	void UpdateErrorCodeProperties(FECResult NewErrorCode);
-	void SyncErrorCodeWidgetToProperty();
+	void UpdateResultProperties(FECResult NewResult);
+	void SyncResultWidgetToProperty();
 
 	TSharedPtr<IPropertyHandle> StructProperty;
 	TSharedPtr<IPropertyHandle> CategoryProperty;
 	TSharedPtr<IPropertyHandle> CodeProperty;
 
-	TSharedPtr<SECWidget_Result> ErrorCodeWidget;
+	TSharedPtr<SECWidget_Result> ResultWidget;
 };
