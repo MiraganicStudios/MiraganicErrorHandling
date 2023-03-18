@@ -191,7 +191,7 @@ int32 UECK2Node_SwitchResult::AddUniqueCodesFromCategory(const UEnum& Category)
 	{
 		const int64 Value = Category.GetValueByIndex(Idx);
 		// 0 is reserved for 'Success' result codes
-		if (Value == FECResult::Success().GetCode())
+		if (Value == FECResult::Success().GetValue())
 		{
 			continue;
 		}

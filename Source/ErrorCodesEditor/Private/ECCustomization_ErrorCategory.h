@@ -34,10 +34,7 @@ public:
 class FECErrorCategoryNodeBuilder : public IDetailCustomNodeBuilder, public TSharedFromThis<FECErrorCategoryNodeBuilder>
 {
 public:
-	FECErrorCategoryNodeBuilder(UECErrorCategory& InErrorCategory)
-		: TargetErrorCategory(&InErrorCategory)
-		, NextId(0)
-	{}
+	FECErrorCategoryNodeBuilder(UECErrorCategory& InErrorCategory);
 
 	void RequestRefresh();
 

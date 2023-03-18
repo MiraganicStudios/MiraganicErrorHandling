@@ -8,8 +8,7 @@
 #define LOCTEXT_NAMESPACE "ErrorCodes"
 
 FECResult::FECResult()
-	: Category(nullptr)
-	, Value(-1)
+	: FECResult(Success())
 {}
 
 FECResult::FECResult(const UEnum* InCategory, int64 InValue)
@@ -22,12 +21,12 @@ FECResult::FECResult(const UEnum& InCategory, int64 InValue)
 	: Category(&InCategory)
 	, Value(InValue)
 {
-	ensure(InValue != -1);
+	ensure(InValue != GetSuccessValue());
 }
 
 bool FECResult::IsSuccess() const
 {
-	return Value == -1 && !::IsValid(Category);
+	return Value == GetSuccessValue() && !::IsValid(Category);
 }
 
 bool FECResult::IsFailure() const
@@ -48,7 +47,7 @@ bool FECResult::IsValid() const
 
 TOptional<int32> FECResult::GetErrorIndex() const
 {
-	if (Value == -1 || !::IsValid(Category))
+	if (Value == GetSuccessValue() || !::IsValid(Category))
 	{
 		return {};
 	}
@@ -65,7 +64,7 @@ TOptional<int32> FECResult::GetErrorIndex() const
 
 TOptional<int32> FECResult::GetMaxErrorIndex() const
 {
-	if (Value == -1 || !::IsValid(Category))
+	if (Value == GetSuccessValue() || !::IsValid(Category))
 	{
 		return {};
 	}
@@ -194,7 +193,7 @@ FString FECResult::ToString() const
 
 FECResult FECResult::Success()
 {
-	return FECResult();
+	return FECResult(nullptr, GetSuccessValue());
 }
 
 const UEnum* FECResult::GetCategory() const
@@ -215,6 +214,11 @@ FName FECResult::GetPropertyName_Value()
 FECResult FECResult::ConstructRaw(const UEnum* InCategory, int64 InValue)
 {
 	return FECResult(InCategory, InValue);
+}
+
+int64 FECResult::GetSuccessValue()
+{
+	return 0;
 }
 
 FText FECResult::GetEnumDisplayName(const UEnum& Enum)

@@ -7,6 +7,7 @@
 #include "ECErrorCategory.h"
 #include "DetailLayoutBuilder.h"
 #include "ECErrorCategoryUtils.h"
+#include "ECResult.h"
 #include "IDetailChildrenBuilder.h"
 #include "PropertyCustomizationHelpers.h"
 #include "STextPropertyEditableTextBox.h"
@@ -274,6 +275,11 @@ void FECCustomization_ErrorCategory::PostRedo(bool bSuccess)
 	RequestRefresh();
 }
 
+FECErrorCategoryNodeBuilder::FECErrorCategoryNodeBuilder(UECErrorCategory& InErrorCategory)
+	: TargetErrorCategory(&InErrorCategory)
+	, NextId(FECResult::GetSuccessValue() + 1)
+{}
+
 void FECErrorCategoryNodeBuilder::RequestRefresh()
 {
 	RefreshNextId();
@@ -311,7 +317,7 @@ void FECErrorCategoryNodeBuilder::GenerateHeaderRowContent(FDetailWidgetRow& Nod
 
 void FECErrorCategoryNodeBuilder::GenerateChildContent(IDetailChildrenBuilder& ChildrenBuilder)
 {
-	NextId = 0;
+	NextId = FECResult::GetSuccessValue() + 1;
 	const int32 NumValues = FMath::Max(0, TargetErrorCategory->NumEnums() - 1);
 	for (int32 EnumIdx = 0; EnumIdx < NumValues; ++EnumIdx)
 	{
@@ -403,7 +409,7 @@ void FECErrorCategoryNodeBuilder::AddEntry()
 
 void FECErrorCategoryNodeBuilder::RefreshNextId()
 {
-	NextId = 0;
+	NextId = FECResult::GetSuccessValue() + 1;
 	const int32 NumEnums = TargetErrorCategory->NumEnums() - 1;
 	for (int32 Idx = 0; Idx < NumEnums; ++Idx)
 	{

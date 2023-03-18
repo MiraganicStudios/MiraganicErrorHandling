@@ -73,11 +73,9 @@ public:
 	FString ToShortString() const;
 	// Format this result code's category, title, and message as a string.
 	FString ToString() const;
-	// Construct a 'Success' result code.
-	static FECResult Success();
 
 	const UEnum* GetCategory() const;
-	int64 GetCode() const { return Value; }
+	int64 GetValue() const { return Value; }
 
 	FORCEINLINE bool operator==(const FECResult& Other) const
 	{
@@ -94,9 +92,15 @@ public:
 
 	static FName GetPropertyName_Category();
 	static FName GetPropertyName_Value();
+	
+	// Construct a 'Success' result code.
+	static FECResult Success();
 
 	// Construct a result code using a category and value. This can return an invalid result.
 	static FECResult ConstructRaw(const UEnum* InCategory, int64 InValue);
+
+	// Get the value that's reserved for 'Success'
+	static int64 GetSuccessValue();
 
 protected:
 	

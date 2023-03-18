@@ -421,7 +421,7 @@ void SECResultTreeWidget::UpdateResultOptions()
 		{
 			int64 Value = Category->GetValueByIndex(Idx);
 			// Skip the value which is reserved for 'Success'.
-			if (Value == FECResult::Success().GetCode())
+			if (Value == FECResult::GetSuccessValue())
 			{
 				continue;
 			}
