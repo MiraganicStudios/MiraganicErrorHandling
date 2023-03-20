@@ -35,7 +35,8 @@ public class ErrorCodesEditor : ModuleRules
 				"PropertyEditor",
 				"EditorStyle",
 				"EditorWidgets",
-				"ApplicationCore"
+				"ApplicationCore",
+				"KismetCompiler"
 			}
 		);
 	}

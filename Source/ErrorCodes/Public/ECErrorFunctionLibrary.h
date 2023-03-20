@@ -126,4 +126,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Errors", DisplayName = "To String (Error Code)",
 		meta = (BlueprintAutocast, Keywords = "cast convert", CompactNodeTitle = "->"))
 	static FString Conv_ErrorCodeToString(FECResult Result);
+
+	/**
+	 * Construct a result from an enum and its value. Note that this can return invalid Results.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Errors", meta = (BlueprintInternalUseOnly = true))
+	static FECResult EnumToResult(const UEnum* Enum, uint8 EnumValue);
 };

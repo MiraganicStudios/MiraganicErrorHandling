@@ -3,6 +3,7 @@
 #include "ECErrorFunctionLibrary.h"
 
 #include "ECLogging.h"
+#include "Misc/RuntimeErrors.h"
 
 FECResult UECErrorFunctionLibrary::MakeResult(FECResult Result)
 {
@@ -112,4 +113,10 @@ FString UECErrorFunctionLibrary::ToShortString(FECResult Result)
 FString UECErrorFunctionLibrary::Conv_ErrorCodeToString(FECResult Result)
 {
 	return Result.ToString();
+}
+
+FECResult UECErrorFunctionLibrary::EnumToResult(const UEnum* Enum, uint8 EnumValue)
+{
+	ensureAsRuntimeWarning(Enum != nullptr);
+	return FECResult::ConstructRaw(Enum, static_cast<int64>(EnumValue));
 }
