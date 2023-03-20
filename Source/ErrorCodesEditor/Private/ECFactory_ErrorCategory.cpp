@@ -4,8 +4,7 @@
 #include "ECFactory_ErrorCategory.h"
 
 #include "ECErrorCategory.h"
-#include "Engine/UserDefinedEnum.h"
-#include "Kismet2/EnumEditorUtils.h"
+#include "ECErrorCategoryUtils.h"
 
 UECFactory_ErrorCategory::UECFactory_ErrorCategory(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -28,20 +27,21 @@ UObject* UECFactory_ErrorCategory::FactoryCreateNew(UClass* InClass,
 	FFeedbackContext* Warn
 	)
 {
-	UEnum* Enum = NewObject<UECErrorCategory>(InParent, InName, Flags);
-	if (Enum)
+	UECErrorCategory* ErrorCategory = NewObject<UECErrorCategory>(InParent, InName, Flags);
+	if (ErrorCategory)
 	{
 		TArray<TPair<FName, int64>> EmptyNames;
-		Enum->SetEnums(EmptyNames, UEnum::ECppForm::Namespaced);
+		ErrorCategory->SetEnums(EmptyNames, UEnum::ECppForm::Namespaced);
+
+		// Enable as an enum in BP
+		ErrorCategory->SetMetaData(TEXT("BlueprintType"), TEXT("true"));
 		
-		// Error categories are not exposed as enums at the moment
-		// This makes it clearer that they're only intended to be used as error codes
-		// We don't have a conversion node for Enum -> ErrorCode for BP yet
-		//Enum->SetMetaData(TEXT("BlueprintType"), TEXT("true"));
-		
-		// Enable the enum for error codes
-		Enum->SetMetaData(TEXT("ErrorCategory"), TEXT("true"));
+		// Enable the enum for Results
+		ErrorCategory->SetMetaData(TEXT("ErrorCategory"), TEXT("true"));
+
+		// Add the default 'Success' value 
+		ErrorCodes::AddSuccessValueToCategory(*ErrorCategory);
 	}
 
-	return Enum;
+	return ErrorCategory;
 }

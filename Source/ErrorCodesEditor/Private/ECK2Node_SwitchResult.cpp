@@ -47,12 +47,12 @@ void UECK2Node_SwitchResult::PostLoad()
 
 FText UECK2Node_SwitchResult::GetTooltipText() const
 {
-	return NSLOCTEXT("ErrorCodes", "K2Node_SwitchErrorCode_ToolTip", "Selects an output that matches the input value");
+	return NSLOCTEXT("ErrorCodes", "K2Node_SwitchResult_ToolTip", "Selects an output that matches the input value");
 }
 
 FText UECK2Node_SwitchResult::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	return NSLOCTEXT("ErrorCodes", "K2Node_SwitchErrorCode_Title", "Switch on Error Code");
+	return NSLOCTEXT("ErrorCodes", "K2Node_SwitchResult_Title", "Switch on Result");
 }
 
 FString UECK2Node_SwitchResult::GetExportTextForPin(const UEdGraphPin* Pin) const
@@ -78,7 +78,7 @@ void UECK2Node_SwitchResult::ValidateNodeDuringCompilation(FCompilerResultsLog& 
 	{
 		if (!PinResultCode.HasValidError())
 		{
-			MessageLog.Error(*NSLOCTEXT("ErrorCodes", "SwitchErrorCode_SuccessCase", "@@ contains invalid case(s).").ToString(), this);
+			MessageLog.Error(*NSLOCTEXT("ErrorCodes", "SwitchResult_SuccessCase", "@@ contains invalid case(s).").ToString(), this);
 			return;
 		}
 	}
@@ -260,7 +260,7 @@ void UECK2Node_SwitchResult::CreateCasePins()
 
 	// Always have a success pin
 	UEdGraphPin* SuccessPin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, GetSuccessPinName());
-	SuccessPin->PinFriendlyName = NSLOCTEXT("ErrorCodesEditor_K2NodeSwitchErrorCode", "FriendlyName_SuccessPin", "Success");
+	SuccessPin->PinFriendlyName = NSLOCTEXT("ErrorCodesEditor_K2NodeSwitchResult", "FriendlyName_SuccessPin", "Success");
 	SuccessPin->PinToolTip = TEXT("No error.");
 
 	for (int32 Index = 0; Index < PinResultCodes.Num(); ++Index)
@@ -312,7 +312,7 @@ FString UECK2Node_SwitchResult::GetTooltipForErrorCodePin(const FECResult& Resul
 	}
 	else if (ResultCode.IsSuccess())
 	{
-		return TEXT("Invalid result code: Success (Cannot add extra 'Success' pins).");
+		return TEXT("Invalid case: Success (Cannot add extra 'Success' pins).");
 	}
 	else
 	{

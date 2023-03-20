@@ -129,6 +129,13 @@ public:
 
 	/**
 	 * Construct a result from an enum and its value. Note that this can return invalid Results.
+	 *
+	 * This is not the same as 'ConstructRaw', because in blueprint we want to display an error when the enum
+	 * is invalid. For each case:
+	 * Valid Enum  , Value == 0: Success (Success value for user-defined enum)
+	 * Valid Enum  , Value >  0: Some user-defined error
+	 * Invalid Enum, Value == 0: Success, but print runtime warning (Enum input was invalid)
+	 * Invalid Enum, Value >  0: Invalid, print runtime warning (Enum input was invalid)
 	 */
 	UFUNCTION(BlueprintPure, Category = "Errors", meta = (BlueprintInternalUseOnly = true))
 	static FECResult EnumToResult(const UEnum* Enum, uint8 EnumValue);

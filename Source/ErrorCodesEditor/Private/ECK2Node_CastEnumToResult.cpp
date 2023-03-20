@@ -60,9 +60,16 @@ FSlateIcon UECK2Node_CastEnumToResult::GetIconAndTint(FLinearColor& OutColor) co
 void UECK2Node_CastEnumToResult::ValidateNodeDuringCompilation(FCompilerResultsLog& MessageLog) const
 {
 	Super::ValidateNodeDuringCompilation(MessageLog);
+
+	UEdGraphPin* EnumPin = FindPinChecked(GetEnumInputPinName(), EGPD_Input);
+	
 	if (!Enum)
 	{
 		MessageLog.Error(*LOCTEXT("CastFromNullEnumError", "Undefined Enum in @@").ToString(), this);
+	}
+	else if (Enum->GetIndexByNameString(EnumPin->GetDefaultAsString()) == INDEX_NONE)
+	{
+		MessageLog.Error(*LOCTEXT("InvalidValueError", "Invalid value for Enum in @@").ToString(), this);
 	}
 }
 
@@ -170,7 +177,7 @@ FName UECK2Node_CastEnumToResult::GetFunctionName() const
 
 FName UECK2Node_CastEnumToResult::GetEnumInputPinName()
 {
-	return TEXT("InputEnum");
+	return TEXT("Enum");
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -2,6 +2,7 @@
 
 #include "ECErrorFunctionLibrary.h"
 
+#include "ECErrorMacros.h"
 #include "ECLogging.h"
 #include "Misc/RuntimeErrors.h"
 
@@ -117,6 +118,14 @@ FString UECErrorFunctionLibrary::Conv_ErrorCodeToString(FECResult Result)
 
 FECResult UECErrorFunctionLibrary::EnumToResult(const UEnum* Enum, uint8 EnumValue)
 {
-	ensureAsRuntimeWarning(Enum != nullptr);
+	if (!::IsValid(Enum))
+	{
+		UE_LOG(LogErrorCodes, Warning, TEXT("%s: Invalid enum ('EnumToResult' node was invalidated, usually due to error category being removed)."), EC_FUNCNAME);
+	}
+	if (EnumValue == FECResult::GetSuccessValue())
+	{
+		return FECResult::Success();
+	}
+	
 	return FECResult::ConstructRaw(Enum, static_cast<int64>(EnumValue));
 }

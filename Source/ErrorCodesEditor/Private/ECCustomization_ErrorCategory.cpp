@@ -40,6 +40,10 @@ public:
 
 	virtual bool IsReadOnly() const override
 	{
+		if (::IsValid(TargetEnum) && TargetEnum->GetValueByIndex(EnumeratorIndex) == FECResult::GetSuccessValue())
+		{
+			return true;
+		}
 		return false;
 	}
 
@@ -73,7 +77,7 @@ public:
 		}
 		
 		TGuardValue<bool> bCausingChange(bCausedChange, true);
-		ErrorCodes::SetResultCodeDisplayName(*TargetEnum, EnumeratorIndex, InText);
+		ErrorCodes::SetErrorValueDisplayName(*TargetEnum, EnumeratorIndex, InText);
 	}
 
 	virtual bool IsValidText(const FText& InText, FText& OutErrorMsg) const override
@@ -146,6 +150,10 @@ public:
 
 	virtual bool IsReadOnly() const override
 	{
+		if (::IsValid(TargetEnum) && TargetEnum->GetValueByIndex(EnumeratorIndex) == FECResult::GetSuccessValue())
+		{
+			return true;
+		}
 		return false;
 	}
 
@@ -177,7 +185,7 @@ public:
 	{
 		check(InIndex == 0);
 		TGuardValue<bool> CausingChange(bCausedChange, true);
-		ErrorCodes::SetResultCodeMessage(*TargetEnum, EnumeratorIndex, InText);
+		ErrorCodes::SetErrorValueMessage(*TargetEnum, EnumeratorIndex, InText);
 	}
 
 	virtual bool IsValidText(const FText& InText, FText& OutErrorMsg) const override
@@ -323,23 +331,30 @@ void FECErrorCategoryNodeBuilder::GenerateChildContent(IDetailChildrenBuilder& C
 	{
 		TSharedRef<FECErrorTitleEditableText> ErrorTitleEditText = MakeShareable(new FECErrorTitleEditableText(TargetErrorCategory.Get(), EnumIdx));
 		TSharedRef<FECErrorMessageEditableText> ErrorMessageEditText = MakeShareable(new FECErrorMessageEditableText(TargetErrorCategory.Get(), EnumIdx));
+
+		const int64 EnumValue = TargetErrorCategory->GetValueByIndex(EnumIdx);
 		
-		const bool bIsEditable = true;
+		// The index '0' is reserved for the 'Success' value, which is not editable.
+		const bool bIsEditable = EnumValue != FECResult::GetSuccessValue();
+		
+		NextId = FMath::Max(NextId, EnumValue + 1);
+
+		FText IdText = FText::AsNumber(EnumValue);
+		FText IdTooltip = LOCTEXT("Tooltip_ErrorId", "This error's unique id. This is internal data which you don't need to change.");
+		
 		TSharedRef<SWidget> RemoveButton = PropertyCustomizationHelpers::MakeDeleteButton(FSimpleDelegate::CreateSP(this, &FECErrorCategoryNodeBuilder::RemoveEntryAtIndex, EnumIdx),
 			LOCTEXT("Tooltip_RemoveErrorCode", "Remove Error Code"));
 		RemoveButton->SetEnabled(bIsEditable);
 
 		const FText TitleText = TargetErrorCategory->GetDisplayNameTextByIndex(EnumIdx);
 		const FText MessageText = TargetErrorCategory->GetToolTipTextByIndex(EnumIdx);
-		int64 EnumValue = TargetErrorCategory->GetValueByIndex(EnumIdx);
-		NextId = FMath::Max(NextId, EnumValue + 1);
-		FText IdText = FText::AsNumber(EnumValue);
-		FText IdTooltip = LOCTEXT("Tooltip_ErrorId", "This error's unique id. This is internal data which you don't need to change.");
-
+		
 		FText SearchString = FText::Format(LOCTEXT("SearchStringFmt", "{0}: {1}"), {TitleText, MessageText});
 
 		const FEditableTextBoxStyle& TextBoxStyle = FCoreStyle::Get().GetWidgetStyle<FEditableTextBoxStyle>("NormalEditableTextBox");
 		FSlateFontInfo DetailFont = IDetailLayoutBuilder::GetDetailFont();
+
+		TSharedPtr<SHorizontalBox> MessageHBox;
 		
 		ChildrenBuilder.AddCustomRow(SearchString)
 			.NameContent()
@@ -377,34 +392,41 @@ void FECErrorCategoryNodeBuilder::GenerateChildContent(IDetailChildrenBuilder& C
 					SNew(STextPropertyEditableTextBox, ErrorTitleEditText)
 					.MinDesiredWidth(200.f)
 					.Font(DetailFont)
+					.IsEnabled(bIsEditable)
 				]
 			]
 			.ValueContent()
 			.HAlign(HAlign_Fill)
 			[
-				SNew(SHorizontalBox)
+				SAssignNew(MessageHBox, SHorizontalBox)
 				+SHorizontalBox::Slot()
 				.MaxWidth(800.f)
 				.FillWidth(1.f)
 				[
 					SNew(STextPropertyEditableTextBox, ErrorMessageEditText)
 					.Font(DetailFont)
+					.IsEnabled(bIsEditable)
 				]
-				+SHorizontalBox::Slot()
+			];
+
+		// Create the remove button for all rows but the 'Success' value
+		if (EnumIdx != 0)
+		{
+			MessageHBox->AddSlot()
 				.Padding(2.f, 0.f, 2.f, 0.f)
 				.HAlign(HAlign_Center)
 				.VAlign(VAlign_Center)
 				.AutoWidth()
 				[
 					RemoveButton
-				]
-			];
+				];
+		}
 	}
 }
 
 void FECErrorCategoryNodeBuilder::AddEntry()
 {
-	ErrorCodes::AddResultCodeToCategory(*TargetErrorCategory, NextId++);
+	ErrorCodes::AddErrorValueToCategory(*TargetErrorCategory, NextId++);
 }
 
 void FECErrorCategoryNodeBuilder::RefreshNextId()
@@ -419,7 +441,7 @@ void FECErrorCategoryNodeBuilder::RefreshNextId()
 
 void FECErrorCategoryNodeBuilder::RemoveEntryAtIndex(int32 Index)
 {
-	ErrorCodes::RemoveResultCodeFromCategory(*TargetErrorCategory, Index);
+	ErrorCodes::RemoveErrorValueFromCategory(*TargetErrorCategory, Index);
 }
 
 void FECErrorCategoryNodeBuilder::CopyEnumsWithoutMax(TArray<TPair<FName, int64>>& OutEnumPairs, const UEnum& Enum)

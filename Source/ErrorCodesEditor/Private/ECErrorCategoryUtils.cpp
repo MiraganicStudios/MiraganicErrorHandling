@@ -3,6 +3,7 @@
 
 #include "ECErrorCategoryUtils.h"
 #include "ECErrorCategory.h"
+#include "ECResult.h"
 #include "IECNodeDependingOnErrorCategory.h"
 #include "K2Node_Variable.h"
 #include "NodeDependingOnEnumInterface.h"
@@ -262,7 +263,7 @@ void ErrorCodes::BroadcastPostChange(const UECErrorCategory& ErrorCategory,
 	FEnumEditorUtils::FEnumEditorManager::Get().PostChange(&ErrorCategory, FEnumEditorUtils::Changed);
 }
 
-void ErrorCodes::SetResultCodeDisplayName(UECErrorCategory& Category,
+void ErrorCodes::SetErrorValueDisplayName(UECErrorCategory& Category,
 	int32 Idx,
 	const FText& NewDisplayName
 	)
@@ -303,22 +304,22 @@ void ErrorCodes::SetResultCodeDisplayName(UECErrorCategory& Category,
 	ErrorCodes::BroadcastPostChange(Category, TArray<TPair<FName, int64>>(), false);
 }
 
-void ErrorCodes::SetResultCodeMessage(UECErrorCategory& Category, int32 Idx, const FText& NewMessage)
+void ErrorCodes::SetErrorValueMessage(UECErrorCategory& Category, int32 Idx, const FText& NewMessage)
 {
-	//@TODO: Metadata is not transactional right now, so we cannot transact a tooltip edit
+	//TODO: Metadata is not transactional right now, so we cannot transact a tooltip edit
 	// const FScopedTransaction Transaction(NSLOCTEXT("EnumEditor", "SetEnumeratorTooltip", "Set Description"));
 	Category.Modify();
 	Category.SetMetaData(TEXT("ToolTip"), *NewMessage.ToString(), Idx);
 }
 
-void ErrorCodes::AddResultCodeToCategory(UECErrorCategory& Category, int64 NewCode)
+void ErrorCodes::AddErrorValueToCategory(UECErrorCategory& Category, int64 NewCode)
 {
 	const FScopedTransaction Transaction(LOCTEXT("Transaction_AddEntry", "Add Error Code"));
 
 	ErrorCodes::BroadcastPreChange(Category);
 	
 	TArray<TPair<FName, int64>> OldNames;
-	CopyResultCodesWithoutMax(OldNames, Category);
+	CopyErrorValuesWithoutMax(OldNames, Category);
 	TArray<TPair<FName, int64>> Names = OldNames;
 
 	FString EnumNameStr = Category.GenerateNewErrorCodeName();
@@ -336,19 +337,40 @@ void ErrorCodes::AddResultCodeToCategory(UECErrorCategory& Category, int64 NewCo
 	Category.MarkPackageDirty();
 }
 
-void ErrorCodes::RemoveResultCodeFromCategory(UECErrorCategory& Category, int32 Idx)
+void ErrorCodes::AddSuccessValueToCategory(UECErrorCategory& Category)
 {
-	if (Idx < 0 || Idx >= Category.NumEnums() - 1)
+	TArray<TPair<FName, int64>> OldNames;
+	CopyErrorValuesWithoutMax(OldNames, Category);
+	TArray<TPair<FName, int64>> Names = OldNames;
+
+	FString EnumNameStr = TEXT("Success");
+	const FString FullNameStr = Category.GenerateFullEnumName(*EnumNameStr);
+	Names.Emplace(*FullNameStr, FECResult::GetSuccessValue());
+
+	// Note that we do NOT clean up enum values as it will invalidate error code references
+
+	const UEnum::ECppForm EnumType = Category.GetCppForm();
+	Category.SetEnums(Names, EnumType);
+	Category.EnsureAllDisplayNamesExist();
+	
+	ErrorCodes::SetErrorValueMessage(Category, 0, LOCTEXT("Message_Success", "Successful result."));
+
+	Category.MarkPackageDirty();
+}
+
+void ErrorCodes::RemoveErrorValueFromCategory(UECErrorCategory& Category, int32 Idx)
+{
+	if (Idx <= 0 || Idx >= Category.NumEnums() - 1)
 	{
 		return;
 	}
 	
-	const FScopedTransaction Transaction(LOCTEXT("RemoveErrorCode", "Remove Error Code"));
+	const FScopedTransaction Transaction(LOCTEXT("Transaction_RemoveErrorCode", "Remove Error Code"));
 
 	ErrorCodes::BroadcastPreChange(Category);
 
 	TArray<TPair<FName, int64>> OldNames;
-	CopyResultCodesWithoutMax(OldNames, Category);
+	CopyErrorValuesWithoutMax(OldNames, Category);
 	TArray<TPair<FName, int64>> Names = OldNames;
 
 	Names.RemoveAt(Idx);
@@ -363,7 +385,7 @@ void ErrorCodes::RemoveResultCodeFromCategory(UECErrorCategory& Category, int32 
 	Category.MarkPackageDirty();
 }
 
-void ErrorCodes::CopyResultCodesWithoutMax(TArray<TPair<FName, int64>>& OutEnumPairs, const UECErrorCategory& Category)
+void ErrorCodes::CopyErrorValuesWithoutMax(TArray<TPair<FName, int64>>& OutEnumPairs, const UECErrorCategory& Category)
 {
 	const int32 NumEnums = Category.NumEnums() - 1;
 	for (int32 Idx = 0; Idx < NumEnums; ++Idx)

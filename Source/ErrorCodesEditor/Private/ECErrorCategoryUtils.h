@@ -22,18 +22,35 @@ void BroadcastPostChange(const UECErrorCategory& ErrorCategory,
 	bool bResolveData = true
 );
 
-void SetResultCodeDisplayName(UECErrorCategory& Category, int32 Idx, const FText& NewDisplayName);
+/**
+ * Set an error value's display name.
+ */
+void SetErrorValueDisplayName(UECErrorCategory& Category, int32 Idx, const FText& NewDisplayName);
 
-void SetResultCodeMessage(UECErrorCategory& Category, int32 Idx, const FText& NewMessage);
+/**
+ * Set an error value's message.
+ */
+void SetErrorValueMessage(UECErrorCategory& Category, int32 Idx, const FText& NewMessage);
 
-void AddResultCodeToCategory(UECErrorCategory& Category, int64 NewCode);
+/**
+ * Add a new error value to an error category.
+ */
+void AddErrorValueToCategory(UECErrorCategory& Category, int64 NewCode);
 
-void RemoveResultCodeFromCategory(UECErrorCategory& Category, int32 Idx);
+/**
+ * Add the default 'Success' value to an error category.
+ */
+void AddSuccessValueToCategory(UECErrorCategory& Category);
+
+/**
+ * Remove the error value at the specified index from an error category.
+ */
+void RemoveErrorValueFromCategory(UECErrorCategory& Category, int32 Idx);
 
 /**
  * Copy all enum pairs, excluding the 'MAX' value.
  */
-void CopyResultCodesWithoutMax(TArray<TPair<FName, int64>>& OutEnumPairs, const UECErrorCategory& Category);
+void CopyErrorValuesWithoutMax(TArray<TPair<FName, int64>>& OutEnumPairs, const UECErrorCategory& Category);
 
 /**
  * Get all Error Categories. Order is non-deterministic.

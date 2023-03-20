@@ -43,7 +43,7 @@ public:
 		// EMyError MyFunction();
 		// FECResult MyWrapperFunction() { return MyFunction(); } // Can implicitly convert; EMyError::Success
 		// converts to FECResult::Success
-		if (Value == -1)
+		if (Value == GetSuccessValue())
 		{
 			Category = nullptr;
 		}
