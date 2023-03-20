@@ -17,8 +17,8 @@ private:
 		bool bResolveData
 	);
 	
-	TSharedPtr<class FECGraphPinFactory_Result> ErrorCodePinFactory;
-	TSharedPtr<class FECGraphNodeFactory_SwitchResult> SwitchErrorCodeNodeFactory;
+	TSharedPtr<class FECGraphPinFactory_Result> ResultPinFactory;
+	TSharedPtr<class FECGraphNodeFactory_SwitchResult> SwitchResultNodeFactory;
 
 	TSharedPtr<class IAssetTypeActions> ErrorCategoryAssetActions;
 };

@@ -16,10 +16,10 @@
 
 void FECErrorCodesEditorModule::StartupModule()
 {
-	ErrorCodePinFactory = MakeShareable(new FECGraphPinFactory_Result());
-	FEdGraphUtilities::RegisterVisualPinFactory(ErrorCodePinFactory);
-	SwitchErrorCodeNodeFactory = MakeShareable(new FECGraphNodeFactory_SwitchResult());
-	FEdGraphUtilities::RegisterVisualNodeFactory(SwitchErrorCodeNodeFactory);
+	ResultPinFactory = MakeShareable(new FECGraphPinFactory_Result());
+	FEdGraphUtilities::RegisterVisualPinFactory(ResultPinFactory);
+	SwitchResultNodeFactory = MakeShareable(new FECGraphNodeFactory_SwitchResult());
+	FEdGraphUtilities::RegisterVisualNodeFactory(SwitchResultNodeFactory);
 
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyModule.RegisterCustomPropertyTypeLayout(FECResult::StaticStruct()->GetFName(),
@@ -36,16 +36,16 @@ void FECErrorCodesEditorModule::StartupModule()
 
 void FECErrorCodesEditorModule::ShutdownModule()
 {
-	if (ErrorCodePinFactory.IsValid())
+	if (ResultPinFactory.IsValid())
 	{
-		FEdGraphUtilities::UnregisterVisualPinFactory(ErrorCodePinFactory);
-		ErrorCodePinFactory.Reset();		
+		FEdGraphUtilities::UnregisterVisualPinFactory(ResultPinFactory);
+		ResultPinFactory.Reset();
 	}
 
-	if (SwitchErrorCodeNodeFactory.IsValid())
+	if (SwitchResultNodeFactory.IsValid())
 	{
-		FEdGraphUtilities::UnregisterVisualNodeFactory(SwitchErrorCodeNodeFactory);
-		SwitchErrorCodeNodeFactory.Reset();
+		FEdGraphUtilities::UnregisterVisualNodeFactory(SwitchResultNodeFactory);
+		SwitchResultNodeFactory.Reset();
 	}
 
 	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))

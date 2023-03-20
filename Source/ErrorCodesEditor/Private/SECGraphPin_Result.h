@@ -23,4 +23,5 @@ public:
 	virtual TSharedRef<SWidget> GetDefaultValueWidget() override;
 
 	void UpdatePinValue(FECResult NewValue);
+
 };
