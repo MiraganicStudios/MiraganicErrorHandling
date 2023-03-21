@@ -105,12 +105,21 @@ void UECK2Node_CastEnumToResult::ExpandNode(FKismetCompilerContext& CompilerCont
 
 	// Enum value pin
 	UEdGraphPin* OrgInputPin = FindPinChecked(GetEnumInputPinName());
-	UEdGraphPin* FunctionIndexPin = FunctionCall->FindPinChecked(TEXT("EnumValue"));
+	UEdGraphPin* FunctionValuePin = FunctionCall->FindPinChecked(TEXT("EnumValue"));
 	
-	int32 Index = Enum->GetIndexByName(*OrgInputPin->DefaultValue);
-	if (Index != INDEX_NONE)
+	if (OrgInputPin->LinkedTo.Num() == 0)
 	{
-		FunctionIndexPin->DefaultValue = FString::FromInt(Enum->GetValueByIndex(Index));
+		// Pass default value as byte
+		int32 Index = Enum->GetIndexByName(*OrgInputPin->DefaultValue);
+		if (Index != INDEX_NONE)
+		{
+			FunctionValuePin->DefaultValue = FString::FromInt(Enum->GetValueByIndex(Index));
+		}
+	}
+	else
+	{
+		// Connect directly
+		CompilerContext.MovePinLinksToIntermediate(*OrgInputPin, *FunctionValuePin);
 	}
 	
 	// Output pin
