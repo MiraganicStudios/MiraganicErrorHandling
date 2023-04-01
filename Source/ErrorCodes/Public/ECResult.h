@@ -49,6 +49,20 @@ public:
 		}
 	}
 
+	/**
+	 * Convert results to other results. E.g., if you're calling a generic function, you might want to convert
+	 * its generic errors to more specific errors for additional context.
+	 */
+	FECResult& Convert(FECResult From, FECResult To);
+	
+	/**
+	 * Map results to other results. E.g., if you're calling a generic function, you might want to map its
+	 * generic errors to more specific errors for additional context.
+	 * MapFunctor Signature: (FECResult) -> FECResult
+	 */
+	template<typename MapFuncT, typename = typename TEnableIf<TIsInvocable<MapFuncT, FECResult>::Value>::Type>
+	FECResult& Map(MapFuncT&& MapFunctor);
+
 	// Check if this is a success.
 	bool IsSuccess() const;
 	// Check if this is a failure (anything but success).
@@ -120,3 +134,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Error")
 	int64 Value;
 };
+
+template <typename MapFuncT, typename>
+FECResult& FECResult::Map(MapFuncT&& MapFunctor)
+{
+	*this = Invoke(MapFunctor, *this);
+	return *this;
+}

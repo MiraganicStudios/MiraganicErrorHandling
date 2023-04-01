@@ -31,7 +31,7 @@
 
 #define _EC_VALIDATE_IMPL(TempName, Expr) \
 	auto TempName = Expr; \
-	if (!TempName.IsSuccess()) \
+	if (TempName.IsFailure()) \
 	{ \
 		return TempName; \
 	}

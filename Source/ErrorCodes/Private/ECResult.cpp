@@ -24,6 +24,16 @@ FECResult::FECResult(const UEnum& InCategory, int64 InValue)
 	ensure(InValue != GetSuccessValue());
 }
 
+FECResult& FECResult::Convert(FECResult From, FECResult To)
+{
+	if (*this == From)
+	{
+		*this = To;
+	}
+
+	return *this;
+}
+
 bool FECResult::IsSuccess() const
 {
 	return Value == GetSuccessValue() && !::IsValid(Category);
