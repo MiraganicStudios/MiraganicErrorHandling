@@ -29,6 +29,12 @@
 #define EC_LOG_RESULT(LogCategory, Verbosity, Enum) \
 	UE_LOG(LogCategory, Verbosity, TEXT("%s: %s"), EC_FUNCNAME, *FECResult(Enum).ToString());
 
+/**
+ * Log the current function name and use the result's message as the formatting string.
+ */
+#define EC_LOG_RESULT_FMT(LogCategory, Verbosity, Enum, ...) \
+UE_LOG(LogCategory, Verbosity, TEXT("%s: %s"), EC_FUNCNAME, *FString::Format(*FECResult(Enum).GetMessage().ToString(), {##__VA_ARGS__}));
+
 #define _EC_VALIDATE_IMPL(TempName, Expr) \
 	auto TempName = Expr; \
 	if (TempName.IsFailure()) \
@@ -37,7 +43,7 @@
 	}
 
 /**
- * If 'Expr' succeeded, continue execution. Else, return the Result Code from 'Expr'.
+ * If 'Expr' succeeded, continue execution. Else, return the Result from 'Expr'.
  */
 #define EC_VALIDATE(Expr) \
 	EC_EXPAND(_EC_VALIDATE_IMPL(EC_UNIQUE_NAME, Expr))
