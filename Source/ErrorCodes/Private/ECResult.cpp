@@ -34,6 +34,28 @@ FECResult& FECResult::Convert(FECResult From, FECResult To)
 	return *this;
 }
 
+FECResult& FECResult::Invert(FECResult NewError)
+{
+	if (IsSuccess())
+	{
+		*this = NewError;
+	}
+	else
+	{
+		*this = Success();
+	}
+	return *this;
+}
+
+FECResult& FECResult::Ignore(FECResult Error)
+{
+	if (*this == Error)
+	{
+		*this = Success();
+	}
+	return *this;
+}
+
 bool FECResult::IsSuccess() const
 {
 	return Value == GetSuccessValue() && !::IsValid(Category);

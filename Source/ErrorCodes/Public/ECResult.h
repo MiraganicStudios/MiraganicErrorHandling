@@ -63,6 +63,18 @@ public:
 	template<typename MapFuncT, typename = typename TEnableIf<TIsInvocable<MapFuncT, FECResult>::Value>::Type>
 	FECResult& Map(MapFuncT&& MapFunctor);
 
+	/**
+	 * Invert this result, mapping:
+	 * - Any errors -> 'Success'
+	 * - 'Success'  -> 'NewError'
+	 */
+	FECResult& Invert(FECResult NewError);
+
+	/**
+	 * Ignore a specific error, converting it into success.
+	 */
+	FECResult& Ignore(FECResult Error);
+
 	// Check if this is a success.
 	bool IsSuccess() const;
 	// Check if this is a failure (anything but success).
