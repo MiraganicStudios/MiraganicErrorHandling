@@ -98,7 +98,7 @@ void FECAssetEditor_ErrorCategory::RegisterTabSpawners(const TSharedRef<FTabMana
 	InTabManager->RegisterTabSpawner( GetErrorCodesTabId(), FOnSpawnTab::CreateSP(this, &FECAssetEditor_ErrorCategory::SpawnErrorCodesTab) )
 		.SetDisplayName( LOCTEXT("DisplayName_ErrorCodesTab", "Error Codes") )
 		.SetGroup(WorkspaceMenuCategory.ToSharedRef())
-		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "GraphEditor.Enum_16x"));
+		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.Enum_16x"));
 }
 
 void FECAssetEditor_ErrorCategory::UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)

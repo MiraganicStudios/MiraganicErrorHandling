@@ -413,7 +413,7 @@ void ErrorCodes::FindAllErrorCategories(TArray<const UEnum*>& OutErrorCategories
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
 	TArray<FAssetData> EnumList;
 	FARFilter AssetFilter;
-	AssetFilter.ClassNames.Add(UECErrorCategory::StaticClass()->GetFName());
+	AssetFilter.ClassPaths.Add(UECErrorCategory::StaticClass()->GetClassPathName());
 	AssetFilter.bRecursiveClasses = true;
 	AssetRegistryModule.Get().GetAssets(AssetFilter, EnumList);
 	for (const FAssetData& AssetData : EnumList)

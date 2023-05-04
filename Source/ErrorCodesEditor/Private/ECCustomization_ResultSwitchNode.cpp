@@ -57,7 +57,7 @@ void FECCustomization_ResultSwitchNode::CustomizeDetails(IDetailLayoutBuilder& D
 					.AutoWidth()
 					[
 						SNew(SImage)
-						.Image(FEditorStyle::GetBrush(TEXT("Icons.PlusCircle")))
+						.Image(FAppStyle::GetBrush(TEXT("Icons.PlusCircle")))
 						.ColorAndOpacity(FSlateColor::UseForeground())
 					]
 					+SHorizontalBox::Slot()
