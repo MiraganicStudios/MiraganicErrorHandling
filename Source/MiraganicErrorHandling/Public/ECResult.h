@@ -9,7 +9,7 @@
  * Generic result which can be a 'Success' or a specific type of error.
  */
 USTRUCT(BlueprintType, meta = (DisableSplitPin, 
-	HasNativeMake = "ErrorCodes.ECErrorFunctionLibrary.MakeResult"))
+	HasNativeMake = "MiraganicErrorHandling.ECErrorFunctionLibrary.MakeResult"))
 struct MIRAGANICERRORHANDLING_API FECResult
 {
 	GENERATED_BODY()
