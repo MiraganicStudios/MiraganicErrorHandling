@@ -31,18 +31,17 @@ public:
 		: Category(StaticEnum<T>())
 		, Value(static_cast<int64>(InEnum))
 	{
-		// Set to 'Success' if the code is -1. This allows easy implicit conversion from functions returning
+		// Set to 'Success' if the code is 0. This allows easy implicit conversion from functions returning
 		// enums as errors to FECResult.
 		// E.g.,:
 		// 
-		// enum class EMyError : int64
+		// enum class EMyResult : uint8
 		// {
-		//     Success = -1,
+		//     Success = 0,
 		//     ErrorA
 		// }
-		// EMyError MyFunction();
-		// FECResult MyWrapperFunction() { return MyFunction(); } // Can implicitly convert; EMyError::Success
-		// converts to FECResult::Success
+		// FECResult MyWrapperFunction() { return EMyResult::Success; } // Can implicitly convert;
+		// EMyResult::Success converts to FECResult::Success
 		if (Value == GetSuccessValue())
 		{
 			Category = nullptr;
