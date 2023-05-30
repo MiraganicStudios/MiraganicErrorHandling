@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ECResult.h"
-#include "UObject/Object.h"
+#include "Kismet/BlueprintFunctionLibrary.h"
 
 #include "ECErrorFunctionLibrary.generated.h"
 

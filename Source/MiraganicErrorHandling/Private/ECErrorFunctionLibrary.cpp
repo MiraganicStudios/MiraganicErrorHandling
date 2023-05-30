@@ -4,6 +4,7 @@
 
 #include "ECErrorMacros.h"
 #include "ECLogging.h"
+#include "Logging/MessageLog.h"
 #include "Misc/RuntimeErrors.h"
 
 FECResult UECErrorFunctionLibrary::MakeResult(FECResult Result)

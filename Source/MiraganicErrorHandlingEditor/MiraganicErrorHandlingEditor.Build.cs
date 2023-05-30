@@ -16,7 +16,8 @@ public class MiraganicErrorHandlingEditor : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core"
+				"Core",
+				"MiraganicErrorHandling",
 			}
 		);
 
@@ -27,17 +28,25 @@ public class MiraganicErrorHandlingEditor : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"UnrealEd",
-				"MiraganicErrorHandling",
-				"GraphEditor",
-				"BlueprintGraph",
 				"InputCore",
-				"PropertyEditor",
-				"EditorStyle",
-				"EditorWidgets",
 				"ApplicationCore",
-				"KismetCompiler"
+				"BlueprintGraph",
 			}
 		);
+
+		if (Target.bBuildEditor)
+		{
+			PrivateDependencyModuleNames.AddRange(
+				new string[]
+				{
+					"UnrealEd",
+					"GraphEditor",
+					"PropertyEditor",
+					"EditorStyle",
+					"EditorWidgets",
+					"KismetCompiler",
+				}
+			);
+		}
 	}
 }
