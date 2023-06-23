@@ -1,13 +1,13 @@
-﻿{
+{
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "1.0",
+	"VersionName": "1.0.0",
 	"EngineVersion": "5.1.0",
 	"FriendlyName": "Miraganic Error Handling",
 	"Description": "Error handling gameplay errors in Blueprint and C++.",
 	"Category": "Other",
 	"CreatedBy": "MiraganicStudios",
-	"CreatedByURL": "",
+	"CreatedByURL": "https://github.com/MiraganicStudios/MiraganicErrorHandling",
 	"DocsURL": "",
 	"MarketplaceURL": "",
 	"CanContainContent": true,
