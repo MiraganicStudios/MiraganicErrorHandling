@@ -2,7 +2,7 @@
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.0.0",
-	"EngineVersion": "5.1.0",
+	"EngineVersion": "5.2.0",
 	"FriendlyName": "Miraganic Error Handling",
 	"Description": "Error handling gameplay errors in Blueprint and C++.",
 	"Category": "Other",
@@ -18,12 +18,18 @@
 		{
 			"Name": "MiraganicErrorHandling",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [
+				"Win64"
+			]
 		},
 		{
 			"Name": "MiraganicErrorHandlingEditor",
 			"Type": "UncookedOnly",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [
+				"Win64"
+			]
 		}
 	]
 }
