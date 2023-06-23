@@ -1,6 +1,12 @@
-# Miraganic Error Handling
+<p align="center">
+    <a href="https://github.com/MiraganicStudios/MiraganicErrorHandling/blob/main/LICENSE.txt">
+        <img  src="https://img.shields.io/badge/License-MIT-yellow.svg">
+    </a>
+</p>
 
-An error handling plugin for Unreal Engine, meant to handle errors originating in both C++ code and Blueprints.
+# Introduction
+
+An Unreal Engine plugin for handling errors in both C++ code and Blueprints.
 
 ## Goals
 
@@ -90,7 +96,7 @@ Results can be defined in blueprint using the `Error Category` asset:
 
 ![](/docs/static/img/bp_error_category.png)
 
-Error categories are very similar to defining enumerations.
+Error categories are very similar to defining `Enumerations` in blueprint.
 
 Results in blueprint can be selected using a handy combo box:
 
