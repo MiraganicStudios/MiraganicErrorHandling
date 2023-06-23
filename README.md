@@ -86,6 +86,8 @@ FECResult MyFunction(int32& OutValue, int32 A, int32 B)
 
 Results can be defined in blueprint using the `Error Category` asset:
 
+![](/docs/static/img/bp_create_error_category.png)
+
 ![](/docs/static/img/bp_error_category.png)
 
 Error categories are very similar to defining enumerations.
