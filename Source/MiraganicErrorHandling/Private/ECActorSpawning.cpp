@@ -5,6 +5,7 @@
 
 
 #include "ECActorSpawning.h"
+#include "Engine/Level.h"
 
 FECResult Mgnc::Can_SpawnActor(UWorld& World,
 	UClass& ActorClass,
