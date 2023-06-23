@@ -86,18 +86,18 @@ FECResult MyFunction(int32& OutValue, int32 A, int32 B)
 
 Results can be defined in blueprint using the `Error Category` asset:
 
-[](/docs/static/img/bp_error_category.png)
+![](/docs/static/img/bp_error_category.png)
 
 Error categories are very similar to defining enumerations.
 
 Results in blueprint can be selected using a handy combo box:
 
-[](/docs/static/img/bp_result_combobox.png)
+![](/docs/static/img/bp_result_combobox.png)
 
 And to handle results, you may use the `Switch on Result` node:
 
-[](/docs/static/img/bp_result_switch.png)
+![](/docs/static/img/bp_result_switch.png)
 
 Or you may opt to simply log failures:
 
-[](/docs/static/img/bp_result_log.png)
+![](/docs/static/img/bp_result_log.png)
