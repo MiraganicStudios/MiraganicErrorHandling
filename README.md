@@ -12,9 +12,10 @@ An Unreal Engine plugin for handling errors in both C++ code and Blueprints.
 
 - Make it possible to pass errors between C++ and Blueprint.
 - Make defining error types easier in both C++ and Blueprint.
-- Pass errors across interfaces. This isn't possible with a static enum type.
+- Pass implementation-defined errors across interfaces. This isn't possible with a static enum type.
 - Give feedback to players depending on the error that occurs. (E.g., 'Can't deposit items because the item stack is full')
-- Allow functions to decide whether they want to handle errors or simply log them.
+- Allow library functions to pass errors to callers. This is especially useful when the library's user would want to handle the error, rather than the library itself.
+- Make tests easier to define (expect a specific error type in the test, rather than the error message it sends).
 
 ## Overview
 
