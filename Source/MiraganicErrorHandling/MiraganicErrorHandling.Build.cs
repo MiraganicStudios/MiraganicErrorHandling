@@ -28,11 +28,21 @@ public class MiraganicErrorHandling : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
+				"Core",
 				"CoreUObject",
 				"Engine",
 				"Slate",
-				"SlateCore"
+				"SlateCore",
 			}
 		);
+
+		if (Target.bBuildEditor)
+		{
+			PrivateDependencyModuleNames.AddRange(new string[]
+				{
+					"MessageLog"
+				}
+			);
+		}
 	}
 }

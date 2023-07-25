@@ -99,7 +99,7 @@ UE_NODISCARD FECResult Try_SpawnActor(
 {
 	static_assert(TIsDerivedFrom<T, AActor>::Value, "T must be derived from AActor.");
 	AActor* SpawnedActor = nullptr;
-	EC_VALIDATE(Try_SpawnActor(SpawnedActor, World, ActorClass, Transform, SpawnParams));
+	EC_TRY(Try_SpawnActor(SpawnedActor, World, ActorClass, Transform, SpawnParams));
 	OutSpawnedActor = Cast<T>(SpawnedActor);
 	return {};
 }
@@ -125,7 +125,7 @@ UE_NODISCARD FECResult Try_SpawnActor(
 {
 	static_assert(TIsDerivedFrom<T, AActor>::Value, "T must be derived from AActor.");
 	AActor* SpawnedActor = nullptr;
-	EC_VALIDATE(Try_SpawnActor(SpawnedActor, World, Transform, SpawnParams));
+	EC_TRY(Try_SpawnActor(SpawnedActor, World, Transform, SpawnParams));
 	OutSpawnedActor = Cast<T>(SpawnedActor);
 	return {};
 }
@@ -177,7 +177,7 @@ UE_NODISCARD FECResult Try_SpawnActorDeferred(
 	const FActorSpawnParameters SpawnParams = Detail::InitDeferredActorSpawnParams(Owner, Instigator,
 		CollisionHandlingOverride);
 	AActor* SpawnedActor = nullptr;
-	EC_VALIDATE(Try_SpawnActor(SpawnedActor, World, ActorClass, Transform, SpawnParams));
+	EC_TRY(Try_SpawnActor(SpawnedActor, World, ActorClass, Transform, SpawnParams));
 	OutSpawnedActor = Cast<T>(SpawnedActor);
 	return {};
 }
@@ -199,7 +199,7 @@ UE_NODISCARD FECResult Exec_SpawnActorDeferred(
 	const FActorSpawnParameters SpawnParams = Detail::InitDeferredActorSpawnParams(Owner, Instigator,
 		CollisionHandlingOverride);
 	AActor* SpawnedActor = nullptr;
-	EC_VALIDATE(Exec_SpawnActor(SpawnedActor, World, ActorClass, Transform, SpawnParams));
+	EC_TRY(Exec_SpawnActor(SpawnedActor, World, ActorClass, Transform, SpawnParams));
 	OutSpawnedActor = Cast<T>(SpawnedActor);
 	return {};
 }

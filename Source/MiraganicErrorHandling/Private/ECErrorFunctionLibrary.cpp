@@ -17,37 +17,12 @@ FECResult UECErrorFunctionLibrary::MakeResult(FECResult Result)
 
 void UECErrorFunctionLibrary::LogResultToOutputLog(EECLogVerbosity Verbosity, FECResult Result)
 {
-	switch (Verbosity)
-	{
-		default:
-		case EECLogVerbosity::Normal:
-			UE_LOG(LogErrorHandling, Display, TEXT("%s"), *Result.ToString());
-			return;
-		case EECLogVerbosity::Warning:
-			UE_LOG(LogErrorHandling, Warning, TEXT("%s"), *Result.ToString());
-			return;
-		case EECLogVerbosity::Error:
-			UE_LOG(LogErrorHandling, Error, TEXT("%s"), *Result.ToString());
-			return;
-	}
+	Mgnc::Log::LogWithVerbosity(EC_FUNCNAME, Result.ToString(), Mgnc::Log::ToLogVerbosity(Verbosity));
 }
 
 void UECErrorFunctionLibrary::LogResultToMessageLog(EECLogVerbosity Verbosity, FECResult Result)
 {
-	FMessageLog MessageLog("PIE");
-	switch (Verbosity)
-	{
-		default:
-		case EECLogVerbosity::Normal:
-			MessageLog.Info(Result.GetFormattedMessage());
-		return;
-		case EECLogVerbosity::Warning:
-			MessageLog.Warning(Result.GetFormattedMessage());
-		return;
-		case EECLogVerbosity::Error:
-			MessageLog.Error(Result.GetFormattedMessage());
-		return;
-	}
+	Mgnc::Log::LogToMessageLog(Result.GetFormattedMessage(), Mgnc::Log::ToMessageVerbosity(Verbosity));
 }
 
 void UECErrorFunctionLibrary::LogResultToOutputLogIfFailure(EECLogVerbosity Verbosity, FECResult Result)

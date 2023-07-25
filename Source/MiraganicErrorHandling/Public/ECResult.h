@@ -6,6 +6,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ECLogging.h"
 #include "ECResult.generated.h"
 
 /**

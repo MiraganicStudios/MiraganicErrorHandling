@@ -158,7 +158,7 @@ FECResult Mgnc::Try_SpawnActor(AActor*& OutSpawnedActor,
 	const FActorSpawnParameters& SpawnParams
 	)
 {
-	EC_VALIDATE(Can_SpawnActor(World, ActorClass, Transform, SpawnParams));
+	EC_TRY(Can_SpawnActor(World, ActorClass, Transform, SpawnParams));
 
 	return Exec_SpawnActor(OutSpawnedActor, World, ActorClass, Transform, SpawnParams);
 }

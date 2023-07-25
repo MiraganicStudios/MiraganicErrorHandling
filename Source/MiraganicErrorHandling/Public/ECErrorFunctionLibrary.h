@@ -6,21 +6,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ECLogging.h"
 #include "ECResult.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 
 #include "ECErrorFunctionLibrary.generated.h"
-
-UENUM(BlueprintType)
-enum class EECLogVerbosity : uint8
-{
-	// Failure (Printed in red)
-	Error,
-	// Warning (Printed in yellow)
-	Warning,
-	// Normal (Printed in white)
-	Normal,
-};
 
 /**
  * Function library for blueprint error handling.
