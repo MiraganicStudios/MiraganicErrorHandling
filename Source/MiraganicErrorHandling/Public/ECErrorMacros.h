@@ -36,7 +36,13 @@
  * Log the current function name and use the result's message as the formatting string.
  */
 #define EC_LOG_RESULT_FMT(LogCategory, Verbosity, Enum, ...) \
-UE_LOG(LogCategory, Verbosity, TEXT("%s: %s"), EC_FUNCNAME, *FString::Format(*FECResult(Enum).GetMessage().ToString(), {##__VA_ARGS__}));
+	UE_LOG(LogCategory, Verbosity, TEXT("%s: %s"), EC_FUNCNAME, *FString::Format(*FECResult(Enum).GetMessage().ToString(), {##__VA_ARGS__}));
+
+/**
+ * Log a result's message if a condition passes.
+ */
+#define EC_CLOG_RESULT(Condition, LogCategory, Verbosity, Result) \
+	UE_CLOG(Condition, LogCategory, Verbosity, TEXT("%s: %s"), EC_FUNCNAME, *FECResult(Result).ToString());
 
 #define _EC_TRY_IMPL(TempName, Expr) \
 	auto TempName = Expr; \
